@@ -138,12 +138,10 @@ var
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
 	countDeletedObjects: byte;
-	dynObjectListBack2 : Array[@MAX_OBJECTS] of byte;
-	dynObjectListBack1 : Array[@MAX_OBJECTS] of byte;	
-	dynObjectListMain : Array[@MAX_OBJECTS] of byte;
-	dynObjectListFront : Array[@MAX_OBJECTS] of byte;		
-	animObjectList 
-	countDynBack2, countDynBack1,countDynMain,countDynFront: byte = 0;
+	dynObjectList : Array[@MAX_OBJECTS] of byte;
+	animObjectList : Array[@MAX_OBJECTS] of byte;
+	countDyn: byte = 0;
+	countAnim: byte = 0;
 	mapback2 : Array[@DIMTILES] of byte;
 	mapback1 : Array[@DIMTILES] of byte;
 	mapmain : Array[@DIMTILES] of byte;
@@ -591,25 +589,18 @@ begin
  	end;
 end;
 
-procedure AddDynItem(i: byte, z: byte);
+procedure AddDynItem(i: byte);
 begin
-	if(z = @Z_BACK2) then begin
-		dynObjectListBack2[countDynBack2] := i;
-		countDynBack2 := countDynBack2 + 1;
-	end;
-	if(z = @Z_BACK1) then begin
-		dynObjectListBack1[countDynBack1] := i;
-		countDynBack1 := countDynBack1 + 1;
-	end;
-	if(z = @Z_MAIN) then begin
-		dynObjectListMain[countDynMain] := i;
-		countDynMain := countDynMain + 1;
-	end;
-	if(z = @Z_FRONT) then begin
-		dynObjectListFront[countDynFront] := i;
-		countDynFront := countDynFront + 1;
-	end;
+	dynObjectList[countDyn] := i;
+	inc(countDyn);
 end;
+
+procedure AddAnimItem(i: byte);
+begin
+	animObjectList[countAnim] := i;
+	inc(countAnim);
+end;
+
 
 function PopDeletedIndex() : byte;
 var
@@ -731,28 +722,9 @@ var
 begin
 	ReadJoy2();
 
-	if(countDynBack2 <> 0) then begin
-		for i:=0 to countDynBack2 do	begin
-			id := dynObjectListBack2[i];
-			UpdateObject(id);
-		end;
-	end;
-	if(countDynBack1 <> 0) then begin
-		for i:=0 to countDynBack1 do begin
-			id := dynObjectListBack1[i];
-			UpdateObject(id);
-		end;
-	end;
-	if(countDynMain <> 0) then begin
-		for i:=0 to countDynMain do begin
-			id := dynObjectListMain[i];
-			UpdateObject(id);
-		end;
-	end;
-
-	if(countDynFront <> 0) then begin
-		for i:=0 to countDynFront do begin
-			id := dynObjectListFront[i];
+	if(countDyn <> 0) then begin
+		for i:=0 to countDyn do	begin
+			id := dynObjectList[i];
 			UpdateObject(id);
 		end;
 	end;
@@ -843,10 +815,8 @@ var
 	i,x,y,c : byte;
 begin
 	ClearMap();
-	countDynBack2 := 0;
-	countDynBack1 := 0;	
-	countDynMain := 0;	
-	countDynFront := 0;
+	countDyn := 0;
+	countAnim := 0;	
 	
 	for i := 0 to @DIMTILES do
 	begin

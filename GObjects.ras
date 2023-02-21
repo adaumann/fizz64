@@ -33,7 +33,8 @@ begin
 	pg.physGravity := @DOWN;
 	pg.physRollLeftRight := false;
 	pg.shiftDir := @UP;
-	AddDynItem(id, @Z_MAIN);
+	AddDynItem(id);
+	AddAnimItem(id);
 	AddMapItem(id, x, y, @Z_MAIN);
 end;
 
@@ -82,7 +83,7 @@ begin
 	pg.transZ := @Z_MAIN;
 	pg.physGravity := @RIGHT;
 	pg.physRollLeftRight := true;
-	AddDynItem(id, @Z_MAIN);
+	AddDynItem(id);
 	AddMapItem(id, x, y, @Z_MAIN);
 end;
 
