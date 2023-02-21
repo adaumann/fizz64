@@ -1,0 +1,61 @@
+@define TRANS_ROT_N 0
+@define TRANS_ROT_E 1
+@define TRANS_ROT_S 2
+@define TRANS_ROT_W 3
+
+gobject = class
+	id: byte;
+	isActive : boolean;
+	
+	// TransformTile
+	transX, transY, transZ, transPriority, transRot: byte;
+
+	// Render
+	rendToMove, rendDrawEnergy, rendInAnimCycle : boolean;
+	rendPathStep: Array[] of byte;
+	rendLastXpos, rendLastYpos, rendLastPathElem, rendMoveoffsetx, rendMoveoffsety, rendCenterX, rendCentery: byte;
+	rendEnergyX, rendEnergyY, rendEnergyPercent, rendTilePos: byte;	
+// TODO: Animation
+	
+	procedure InitBrick(id: byte, x: byte, y: byte);
+	begin
+		this.id := id;
+		this.rendTilePos := 0;
+		this.isActive := true;
+		this.transX := x;
+		this.transY := y;
+		this.transZ := @Z_MAIN;
+	end;
+		
+	
+	procedure SetPos(x: byte, y: byte, z: byte, registerChange: boolean);
+	var
+		oldx, oldy, oldz: byte
+	begin
+		if(oldx <> 255) do begin
+			oldx := this.transX;
+			oldy := this.transY;
+			oldz := this.transZ;
+		else
+			
+		end; 
+		this.transX := x;
+		this.transY := y;
+		this.transZ := z;
+		actualScene.ChangeMapItem(this.id, oldx, oldy, oldz, x, y, z);
+	end;
+	
+	procedure DeletePos();
+	begin
+		this.isActive := false;
+		actualScene.DeleteMapItem(this.transX, this.transY);
+	end;
+	
+	procedure Paint();
+	begin
+		
+	end;
+	
+	// TransformTileComponent
+		
+end;

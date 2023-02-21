@@ -1,0 +1,119 @@
+@define DIMX 20
+@define DIMY 12
+@define DIMZ 4
+
+@define ID_TEXTBOX 128
+@define ID_IMAGEBOX 129
+@define ID_MENU 130
+@define STATE_PLAY 0
+@define STATE_DO_NOTHING 1
+@define STATE_PAUSE_TAGS 2
+@define STATE_PAUSE_ALL 3
+
+@define DURATION_KILL 50
+
+@define SCRIPT_INIT 0
+@define SCRIPT_PLAY 1
+
+scene = class
+	id : byte;
+	objectList : Array[254] of gobject;
+	mapback2 : Array[@DIMX*@DIMY] of byte;
+	mapback1 : Array[@DIMX*@DIMY] of byte;
+	mapmain : Array[@DIMX*@DIMY] of byte;
+	mapfront : Array[@DIMX*@DIMY] of byte;
+	script : byte;
+	frame, newSceneId, state, oldState: byte;
+	counter: integer;
+	killDuration, killTimer: byte;
+	// TODO: TextBox pause
+	newSceneAfterKill: boolean;
+	
+	procedure Init();
+	begin
+		this.counter := 0;
+		this.frame := 0;
+		this.newSceneId := 255;
+		this.state := @STATE_PLAY;
+		this.oldState := 255;
+		this.script := @SCRIPT_INIT;
+		this.killDuration := 0;
+		this.killTimer := 0;
+		this.newSceneAfterKill := true;
+		xmap.	
+	end;
+	
+	procedure InitMap(mapData: string);
+	var 
+		i,x,y,c : byte;
+	begin
+		for i := 0 to @DIMX*@DIMY do
+		c := mapData[i];
+		x := mod(i+1,@DIMY);
+		y := i / @DIMX
+		
+		begin
+			case c of
+				"a": this.objectList[i].InitBrick(x,y);
+		    end;
+		end;
+	end;
+	
+	procedure AddMapItem(id: byte, x: byte, y: byte, z:byte)
+	var
+		pos: byte;
+	begin;
+		pos := x + y * @DIMX;
+		case z of
+			@Z_BACK2: this.mapback2[pos] := id;
+			@Z_BACK1: this.mapback1[pos] := id;
+			@Z_MAIN: this.mapmain[pos] := id;
+			@Z_FRONT: this.mapfront[pos] := id;
+		end;
+	end
+	
+	procedure ChangeMapItem(id: byte, oldx: byte, oldy: byte, x: byte, y: byte, z:byte);
+	var
+		oldPos: byte;
+		pos: byte;
+	begin
+		oldpos := oldx + oldy * @DIMX;
+		pos := x + y * @DIMX;
+		case z of
+			@Z_BACK2: this.mapback2[oldpos] := 255; this.mapback2[pos] := id;
+			@Z_BACK1: this.mapback1[oldpos] := 255; this.mapback1[pos] := id;
+			@Z_MAIN: this.mapmain[oldpos] := 255; this.mapmain[pos] := id;
+			@Z_FRONT: this.mapfront[oldpos] := 255; this.mapfront[pos] := id;
+		end;
+	end;
+	
+	
+	procedure PaintFull();
+	var
+		x: byte;
+	begin
+	    for x := 0 to @DIMX*@DIMY do
+  	 	begin
+	  	 	if(this.mapback2[x] <> 255) then begin
+		  	 	
+	  	 	end;
+  	 	end;
+	    for x := 0 to @DIMX*@DIMY do
+  	 	begin
+	  	 	if(this.mapback1[x] <> 255) then begin
+	  	 	end;
+  	 	end;
+	    for x := 0 to @DIMX*@DIMY do
+  	 	begin
+	  	 	if(this.mapmain[x] <> 255) then begin
+		  	 	
+	  	 	end;
+  	 	end;
+	    for x := 0 to @DIMX*@DIMY do
+  	 	begin
+	  	 	if(this.mapfront[x] <> 255) then begin
+		  	 	
+	  	 	end;
+  	 	end;
+	end;
+end;
