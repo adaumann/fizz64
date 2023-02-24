@@ -21,7 +21,7 @@ begin
 	pg.controlPressDown := false;
 	pg.animId := @ANIM_WALK_L;
 	pg.animPos := 0;
-	pg.animFinish := false;
+	pg.animFinish := true;
 	pg.transIsStatic := false;
 	pg.controlFollowKeyLeft := false;
 	pg.controlFollowKeyRight := false;

@@ -42,6 +42,7 @@ var
 	@define DIMZ 4
 	@define MAX_OBJECTS 128
 	@define DIMTILES 240
+	@define DIMANIMS 7
 	@define Z_BACK2 3
 	@define Z_BACK1 2
 	@define Z_MAIN 1
@@ -149,29 +150,20 @@ var
 	state, oldState: byte;
 	killDuration, killTimer: byte;
 	newSceneAfterKill: boolean;
-//	x1,y1: byte;
 	pa: pointer of byte;
 
+	@define ANIM_CONSIDER_GRAV_IGNORE 0
+	@define ANIM_CONSIDER_GRAV_FULL 1
+	@define ANIM_CONSIDER_GRAV_IGNOREUD 2
+	
 	animObject = class
 		animSeq: array[4] of byte;
-		considerGravity: boolean;
+		considerGravity: byte;
 		size: byte;
 		speed: byte;
 		mode: byte;
 	end;
-	animList : Array[2] of animObject;
-
-
-	@ifdef DEBUG
-		testarea: array[9] of byte = ($00,$10,$20,$30,$40,$50,$60,$70,$80);
-		ret: byte;
-		iret: integer;
-		i,j,c: byte;
-		pg: pointer of gobject;
-		pa: pointer of byte;
-		x0: byte;
-//		tempColArea: array[9] of byte = ( $ff, $ff, $ff,  $ff, $ff, $ff, $ff, $ff, $ff );
-	@endif
+	animList : Array[@DIMANIMS] of animObject;
 
 @endblock
 
@@ -334,7 +326,7 @@ begin
 	end;
 end;
 
-procedure PaintPos(pos: byte);
+procedure PaintPos(pos: byte, considerAnimation: boolean);
 var
 	x,y: byte;
 	t: byte;
@@ -373,49 +365,36 @@ begin
  	if(t <> 255) then begin
 	 	pg := #objectList[t];
 		pa := #animList[pg.animId];
-	 	if((pg.components[0] & @COMP_ANIMATION_0) = @COMP_ANIMATION_0) then begin
+	 	if(considerAnimation = true and (pg.components[0] & @COMP_ANIMATION_0) = @COMP_ANIMATION_0) then begin
 			if(pg.animFinish = true) then begin
 				currentTile := pa.animSeq[pg.animPos];
-				moveto(16,24,screen);
-				printnumber(pg.animPos);
 			end
 			else begin
-				moveto(2,24,screen);
-				printnumber(pg.animPos);
-//				if(pg.animPos >= 0) then begin
-					shiftAnim := 0;
-					if(pa.considerGravity = true) then begin
-						gravity := @DOWN;
-						if((pg.components[0] & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := pg.physGravity;
-						if(gravity = @UP) then shiftAnim := 1
-						else if(gravity = @LEFT) then shiftAnim := 2
-						else if(gravity = @RIGHT) then shiftAnim := 3;
-					end;
-					currentTile := pa.animSeq[pg.animPos];
-					currentTile := currentTile + shiftAnim;
-					moveto(4,24,screen);
-					printnumber(currentTile);
-										moveto(6,24,screen);
-					printnumber(pa.size);
-
-					if(pa.mode = @ANIM_MODE_FIX) then pg.animPos := 0
-					else if(pa.mode = @ANIM_MODE_LR) then begin
-						if(pg.animPos = pa.size - 1) then begin
-							pg.animPos := 0;
-							pg.animFinish := true;
-						end
-						else inc(pg.animPos);
+				shiftAnim := 0;
+				if(pa.considerGravity = true) then begin
+					gravity := @DOWN;
+					if((pg.components[0] & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := pg.physGravity;
+					if(gravity = @UP) then shiftAnim := 1
+					else if(gravity = @LEFT) then shiftAnim := 2
+					else if(gravity = @RIGHT) then shiftAnim := 3;
+				end;
+				currentTile := pa.animSeq[pg.animPos];
+				currentTile := currentTile + shiftAnim;
+				if(pa.mode = @ANIM_MODE_FIX) then pg.animPos := 0
+				else if(pa.mode = @ANIM_MODE_LR) then begin
+					if(pg.animPos = pa.size - 1) then begin
+						pg.animPos := 0;
+						pg.animFinish := true;
 					end
-					else if(pa.mode = @ANIM_MODE_LR_REPEAT) then begin
-						if(pg.animPos = pa.size - 1) then begin
-							pg.animPos := 0;
-							pg.animFinish := false;
-						end
-						else inc(pg.animPos);
-					end;
-//				end
-//				else currentTile := pa.animSeq[pg.animPos];
-			
+					else inc(pg.animPos);
+				end
+				else if(pa.mode = @ANIM_MODE_LR_REPEAT) then begin
+					if(pg.animPos = pa.size - 1) then begin
+						pg.animPos := 0;
+						pg.animFinish := false;
+					end
+					else inc(pg.animPos);
+				end;				
 			end;
 		end
 		else currentTile := pg.rendTilePos;
@@ -535,8 +514,21 @@ begin
 	@ENDIF
 	tempPointer[oldpos] := $FF;
 	tempPointer[pos] := id;
-	PaintPos(oldpos);
-	PaintPos(pos);
+	PaintPos(oldpos, false);
+	PaintPos(pos, false);
+end;
+
+procedure UpdateMapItem(id: byte, x: byte, y: byte);
+var
+	oldpos: byte;
+	pos: byte;
+	pg: pointer of gobject;
+begin
+	pos := x + y * @DIMX;
+	@IFDEF OVERFLOW_CHECK
+		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
+	@ENDIF
+	PaintPos(pos, true);
 end;
 
 procedure SetPos(i: byte,oldx:byte, oldy:byte, x: byte, y: byte, z: byte);
@@ -647,7 +639,7 @@ var
 begin
     for i := 0 to @DIMTILES do
 	begin
-		PaintPos(i);
+		PaintPos(i, false);
 	end;
 end;
 
@@ -730,6 +722,21 @@ begin
 	end;
 end;
 
+procedure Animate();
+var 
+	i: byte;
+	id: byte;
+	pg: pointer of gobject;
+begin
+	if(countAnim <> 0) then begin
+		for i:=0 to countAnim do	begin
+			id := animObjectList[i];
+			pg := #objectList[id];
+			UpdateMapItem(id, pg.transX, pg.transY); 
+		end;
+	end;
+end;
+
 
 interrupt RasterBottomText();
 
@@ -779,15 +786,110 @@ var
 	pa: pointer of animObject;
 
 begin
+	// walk left
+	// l            r            u            d
+	// 00 01 02 03  04 05 06 07  08 09 0a 0b  0c 0d 0e 0f 
+
+	// walk right
+	// l            r            u            d
+	// 10 11 12 13  14 15 16 17  18 19 1a 1b  1c 1d 1e 1f 
+
+	// stand
+	// l  r  u  d
+	// 20 21 22 23
+	
+	// swim l
+	// l     r     u     d
+	// 24 25 26 27 24 25 26 27
+
+	// swim r
+	// l     r     u     d
+	// 28 29 2a 2b 28 29 2a 2b
+
+	// TODO	
+	// climb
+	// l     r     u     d
+	// 2c 2d 2e 2f 30 31 32 33
+
+	// TODO	
+	// robe
+	// l     r     u     d
+	// 34 35 36 37 48 49 4a 4b
+
+ 
+	
 	pa := #animList[@ANIM_WALK_L];
 	pa.animSeq[0] := $00;
 	pa.animSeq[1] := $04;
+	pa.animSeq[2] := $08;
+	pa.animSeq[3] := $0c;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
+	pa.size := 4;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR;
+
+	pa := #animList[@ANIM_WALK_R];
+	pa.animSeq[0] := $10;
+ 	pa.animSeq[1] := $14;
+	pa.animSeq[2] := $18;
+	pa.animSeq[3] := $1c;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
+	pa.size := 4;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR;
+
+
+	pa := #animList[@ANIM_STAND];
+	pa.animSeq[0] := $20; 
+ 	pa.animSeq[1] := $FF;
 	pa.animSeq[2] := $FF;
 	pa.animSeq[3] := $FF;
-	pa.considerGravity := true;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
+	pa.size := 1;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_FIX;
+
+	pa := #animList[@ANIM_SWIM_L];
+	pa.animSeq[0] := $24; 
+ 	pa.animSeq[1] := $26;
+	pa.animSeq[2] := $FF;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNOREUD;
 	pa.size := 2;
 	pa.speed := 1;
-	pa.mode := @ANIM_MODE_LR_REPEAT;
+	pa.mode := @ANIM_MODE_LR;
+
+	pa := #animList[@ANIM_SWIM_R];
+	pa.animSeq[0] := $28; 
+ 	pa.animSeq[1] := $2a;
+	pa.animSeq[2] := $FF;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNOREUD;
+	pa.size := 2;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR;
+
+	pa := #animList[@ANIM_CLIMB];
+	pa.animSeq[0] := $2c; 
+ 	pa.animSeq[1] := $2f;
+	pa.animSeq[2] := $FF;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
+	pa.size := 2;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR;
+
+	pa := #animList[@ANIM_ROBE];
+	pa.animSeq[0] := $34; 
+ 	pa.animSeq[1] := $36;
+	pa.animSeq[2] := $FF;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
+	pa.size := 2;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR;
+
+
 end;
 
 procedure InitSprites();
@@ -842,77 +944,6 @@ begin
 	disableciainterrupts();
 	setmemoryconfig(1,0,0);
 		
-	@IFDEF DEBUG
-		clearscreen($20,^$0400);
-		InitMap();
-		moveto(0,0,$04);
-		pg := #objectList[21];
-		pg.physGravity := @DOWN;
-
-		moveto(0,10,$04);
-		printnumber(lev0[0]);
-		GetCollisionArea(#tempColArea, $1C, @Z_MAIN, 0, @COMP_COLLIDE_ABLE_0,0);
-		pa := #tempColArea;
-		c := 0;
-		for i := 0 to 3 do begin
-			for j := 0 to 3 do begin
-				moveto(j*2,i*2,$04);
-				x0 := pa[c];
-				printnumber(x0);
-				c := c + 1;
-			end;
-		end;		
-		ret := GetObjArea($1C, #tempColArea, 7);		
-		moveto(0,10,$04);
-		printnumber(ret);
-		Loop(); 
-		
-		
-//		ret := (objectList[21].components[0] & @COMP_PHYSICS_0);
-//		if(ret = @COMP_PHYSICS_0) then ret:=$FF;
-		//ret := HasPhysicsComponent(21);
-		//ret := GetObjArea(21, #testarea, 2);
-		//iret := CalcPosition(1,12,1,1);
-//		UpdatePhysics(21);
-//		UpdatePhysics(21);
-		SetPos(21,1,1,@Z_MAIN);
-		GetCollisionArea(#tempColArea, 21, @Z_MAIN, 0, @COMP_COLLIDE_ABLE_0,0);
-//		SetPos(21,1,2,@Z_MAIN);
-//		GetCollisionArea(#tempColArea, 21, @Z_MAIN, 0, @COMP_COLLIDE_ABLE_0,10);
-		ret := GetObjArea(21, #tempColArea, 8);
-
-		pa := #tempColArea;
-		c := 0;
-		for i := 0 to 3 do begin
-			for j := 0 to 3 do begin
-				moveto(j*2,i*2,$04);
-				x0 := pa[c];
-				printnumber(x0);
-				c := c + 1;
-			end;
-		end;		
-		SetPos(21,1,2,@Z_MAIN);
-		GetCollisionArea(#tempColArea, 21, @Z_MAIN, 0, @COMP_COLLIDE_ABLE_0,10);
-		ret := GetObjArea(21, #tempColArea, 8);
-
-		pa := #tempColArea;
-		c := 0;
-		for i := 0 to 3 do begin
-			for j := 0 to 3 do begin
-				moveto(j*2,10+i*2,$04);
-				x0 := pa[c];
-				printnumber(x0);
-				c := c + 1;
-			end;
-		end;		
-
-/*		moveto(0,10,$04);
-		printnumber(ret); 
-		printnumber(hi(iret));
-		moveto(0,10,$04);
-		printnumber(lo(iret)); */
-		Loop();
-	@ENDIF
 	SCREEN_BG_COL:=BLACK;
 	SCREEN_FG_COL:=BLACK;
 	multicolor_char_col[1]:=brown;
@@ -938,6 +969,7 @@ begin
 		if(frameStatus = 0)	then begin
 			inc(globaltime);	
 			Update();
+			Animate();
 	//		PaintFull();
 			frameStatus := 1;
 		end;

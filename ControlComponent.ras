@@ -256,6 +256,11 @@ begin
 		shift := ConvertShift(gravity, 3);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
+		if(pg.animFinish = true) then begin
+			pg.animId := @ANIM_WALK_L;
+			pg.animPos := 0;
+			pg.animFinish := false;
+		end;
 	end
 	else if(moveDir = @RIGHT) then begin
 		eraseObj := GetObjArea(id, pg.transZ, 5, @COMP_ERASE_ABLE_0,0);
