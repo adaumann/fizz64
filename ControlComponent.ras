@@ -17,30 +17,30 @@ var
 	defWalk: boolean;
 	gravity: byte;
 	backObj, backObj2: byte;
+	pos,v: byte;
 begin
 	// TODO: Check for portal component
 	//	if (backObj == null || backObj.getPortalComponent() == null) {
 	//		lastPortal = null;
 	//	}	
 	pg := #objectList[id];
-	
 
-	if(pg.components[0] & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then gravity := @DOWN else gravity := pg.physGravity; 
-	
+	if(pg.component0 & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then gravity := @DOWN else gravity := pg.physGravity; 
+
 	defWalk := true;
 	
-	backObj2 := GetObjArea(id, @Z_BACK2, 7, @COMP_WATER_0,0);
-
-	if(backObj2 <> $FF or pg.controlPermanentSwim = true) then begin
+	if(GetObjectByPosFilterComp(pg.transX, pg.transY, @Z_BACK2, @COMP_WATER_0, 0) <> $FF or pg.controlPermanentSwim = true) then begin
+		moveto(14,24,screen);
+		printnumber(id);
+	
+		pg := #objectList[id];
 		pg.controlJump := true;
 		// TODO:Anim Swim
 		pg.controlState := @CTRL_STATE_SWIM;
 		defWalk := false;
 	end;
-	if(defWalk = true) then pg.controlState := @CTRL_STATE_WALK;
-
 	
-	
+	if(defWalk = true) then pg.controlState := @CTRL_STATE_WALK; 
 	
 end;
 
@@ -50,7 +50,7 @@ var
 	pg: pointer of gobject;
 begin
 	pg := #objectList[id];
-	if(pg.components[0] & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then gravity := @DOWN else gravity := pg.physGravity;
+	if(pg.component0 & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then gravity := @DOWN else gravity := pg.physGravity;
 	if(joy2 & joy_fire = joy_fire) then ReleaseKeys(id)
 	else begin
 		if(joy2 & joy_left = joy_left) then begin
@@ -118,7 +118,6 @@ var
 	shiftDir: byte;
 begin
 	pg := #objectList[id];
-
 	moveDir := $FF;
 	grounded := false;
 	isShift := false;
@@ -128,8 +127,7 @@ begin
 	newx := $FF;
 	newy := $FF;
 	
-	
-	if(pg.components[0] & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then begin
+	if(pg.component0 & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then begin
 		grounded := true;
 		isShift := false;
 		gravity := @DOWN;
@@ -147,6 +145,7 @@ begin
 			if ((gravity = @RIGHT and shiftDir = @LEFT) or (gravity = @RIGHT and shiftDir = @RIGHT)) then isShift := true;
 		end;
 	end;
+
 	
 	if(pg.controlState = @CTRL_STATE_WALK) then begin
 		if(isShift = false) then begin
@@ -213,9 +212,11 @@ begin
 			end; 
 		end;
 		// TODO: Stand animation
-		if(moveDir <> @UP and pg.components[0] & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then pg.controlJump := false;
+		if(moveDir <> @UP and pg.component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then pg.controlJump := false;
     end
 	else if(pg.controlState = @CTRL_STATE_SWIM) then begin
+		moveto(20,24,screen);
+		printnumber(id);
 		colObj := GetObjArea(id, pg.transZ, 3, @COMP_DESTROY_COLLIDE_0,0);
 		if(colObj <> $FF and pg.controlPressLeft = true) then DamageCollide(colObj);
 		
@@ -242,7 +243,9 @@ begin
 		
 		colObj := GetObjArea(id, pg.transZ, 7, @COMP_COLLIDE_ABLE_0,0);
 		eraseObj := GetObjArea(id, pg.transZ, 7, @COMP_ERASE_ABLE_0,0);
-		if((colObj = $FF or eraseObj <> $FF) and pg.controlPressDown) then moveDir := @DOWN;  //TODO: AnimationSwimR
+		if((colObj = $FF or eraseObj <> $FF) and pg.controlPressDown) then moveDir := @DOWN;
+
+		pg.controlJump := true;  //TODO: AnimationSwimR
 	end;
 	
 	// Do Moves
@@ -303,7 +306,5 @@ begin
 	end;
 
 	if(newx <> $FF) then SetPos(id,oldx, oldy, newx, newy, pg.transZ);
-	
-	ProcessBackObj(id);
 end;
 
