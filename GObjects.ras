@@ -29,6 +29,7 @@ begin
 	objectList[id].transZ := @Z_MAIN;
 	objectList[id].physGravity := @LEFT;
 	objectList[id].b_physRollLeftRight := false;
+	objectList[id].b_physFallDown := true;
 	objectList[id].shiftDir := @RIGHT;
 	AddDynItem(id);
 	AddAnimItem(id);
@@ -71,6 +72,7 @@ begin
 	objectList[id].transZ := @Z_MAIN;
 	objectList[id].physGravity := @RIGHT;
 	objectList[id].b_physRollLeftRight := true;
+	objectList[id].b_physFallDown := true;
 	AddDynItem(id);
 	AddMapItem(id, x, y, @Z_MAIN);
 end;

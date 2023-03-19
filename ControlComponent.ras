@@ -24,14 +24,14 @@ begin
 		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
 		
 		if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_CLIMB_ABLE_1, 1) <> $FF) then begin	
-			objectList[id].b_controlJump := true;
+			objectList[id].b_physFallDown := false;
 			// TODO:Anim Swim
 			objectList[id].controlState := @CTRL_STATE_CLIMB;
 			defWalk := false;
 		end
 		else if(robeAbleId <> $FF) then begin	
 			if (objectList[robeAbleId].robeGravity = objectList[id].physGravity) then begin
-				objectList[id].b_controlJump := true;
+				objectList[id].b_physFallDown := false;
 				objectList[id].controlState := @CTRL_STATE_ROBE;
 				defWalk := false;
 			end;
@@ -55,15 +55,17 @@ begin
 			defWalk := true;
 		end
 		else if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK2, @COMP_WATER_0, 0) <> $FF or objectList[id].b_controlPermanentSwim = true) then begin	
-			objectList[id].b_controlJump := true;
+			objectList[id].b_physFallDown := false;
 			// TODO:Anim Swim
 			objectList[id].controlState := @CTRL_STATE_SWIM;
 			defWalk := false;
 		end;
 		
 		if(defWalk = true) then begin 
-			objectList[id].b_controlJump := false;
-			objectList[id].controlState := @CTRL_STATE_WALK; 
+			if(objectList[id].controlState <> @CTRL_STATE_JUMP) then	begin 
+				objectList[id].controlState := @CTRL_STATE_WALK;
+ 				objectList[id].b_physFallDown := true;
+ 			end;
 		end;
 		
 		if(portalId = $FF) then objectList[id].controlLastPortal := $FF;
@@ -196,7 +198,7 @@ begin
 				eraseObj2 := GetObjArea(id, objectList[id].transZ, 0, @COMP_ERASE_ABLE_0,0, false);
 				if((colObj = $FF or eraseObj <> $FF) and (colObj2 = $FF or eraseObj2 <> $FF)) then begin
 					if(objectList[id].b_controlPressLeft = true or objectList[id].controlFollowKeyLeft = true) then begin
-						if(grounded = true or objectList[id].b_controlJump = true) then begin 
+						if(grounded = true) then begin 
 							moveDir := @UP_LEFT;
 							objectList[id].controlFollowKeyLeft := false;
 						end;
@@ -208,7 +210,7 @@ begin
 				eraseObj2 := GetObjArea(id, objectList[id].transZ, 2, @COMP_ERASE_ABLE_0,0, false);
 				if((colObj = $FF or eraseObj <> $FF) and (colObj2 = $FF or eraseObj2 <> $FF)) then begin
 					if(objectList[id].b_controlPressRight = true or objectList[id].controlFollowKeyRight = true) then begin
-						if(grounded = true or objectList[id].b_controlJump = true) then begin 
+						if(grounded = true) then begin 
 							moveDir := @UP_RIGHT;
 							objectList[id].controlFollowKeyRight := false;
 						end;
@@ -221,11 +223,9 @@ begin
 				eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
 				
 				if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressUp = true and grounded = true)) then begin 
-					moveDir := @UP;
-					objectList[id].b_controlJump := true;
-					c := objectList[id].b_controlPressUp;
-					moveto(15,24,screen);
-					printnumber(1);
+					objectList[id].controlState := @CTRL_STATE_JUMP;
+					objectList[id].controlJumpStep := 0;
+					objectList[id].b_physFallDown := false; 
 				end;
 
 				colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
@@ -236,8 +236,54 @@ begin
 			end; 
 		end;
 		// TODO: Stand animation
-		if(moveDir <> @UP and objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then objectList[id].b_controlJump := false;
     end
+    else if(objectList[id].controlState = @CTRL_STATE_JUMP) then begin
+	    if(objectList[id].controlJumpStep = 0) then moveDir := @UP
+	    else if(objectList[id].controlJumpStep = 1 or objectList[id].controlJumpStep = 2) then begin
+			colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
+			if((colObj <> $FF and objectList[id].b_controlPressLeft = true)) then DamageCollide(colObj);
+			
+			colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_DESTROY_COLLIDE_0,0, false);
+			if((colObj <> $FF and objectList[id].b_controlPressRight = true)) then DamageCollide(colObj);
+
+		    	colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
+			eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
+			if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressLeft = true)) then moveDir := @LEFT;  //TODO: AnimationWalkL
+		
+			colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_COLLIDE_ABLE_0,0, false);
+			eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
+			if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressRight = true)) then moveDir := @RIGHT;  //TODO: AnimationWalkR
+
+
+			if(moveDir = $FF) then begin
+				colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
+				colObj2 := GetObjArea(id, objectList[id].transZ, 0, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj2 := GetObjArea(id, objectList[id].transZ, 0, @COMP_ERASE_ABLE_0,0, false);
+				if((colObj = $FF or eraseObj <> $FF) and (colObj2 = $FF or eraseObj2 <> $FF)) then begin
+					if(objectList[id].b_controlPressLeft = true) then begin
+						moveDir := @UP_LEFT;
+					end;
+				end; 
+				colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
+				colObj2 := GetObjArea(id, objectList[id].transZ, 2, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj2 := GetObjArea(id, objectList[id].transZ, 2, @COMP_ERASE_ABLE_0,0, false);
+				if((colObj = $FF or eraseObj <> $FF) and (colObj2 = $FF or eraseObj2 <> $FF)) then begin
+					if(objectList[id].b_controlPressRight = true) then begin
+						moveDir := @UP_RIGHT;
+					end;
+				end; 
+			end;
+
+
+	    end;
+	    inc(objectList[id].controlJumpStep);
+		if(objectList[id].controlJumpStep >= 3) then begin 
+			objectList[id].controlState := @CTRL_STATE_WALK;
+			objectList[id].b_physFallDown := true;
+		end
+	end 
 	else if((objectList[id].controlState = @CTRL_STATE_SWIM or objectList[id].controlState = @CTRL_STATE_CLIMB) or objectList[id].controlState = @CTRL_STATE_ROBE) then begin
 		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
 		if(colObj <> $FF and objectList[id].b_controlPressLeft = true) then DamageCollide(colObj);
@@ -267,7 +313,6 @@ begin
 		eraseObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_ERASE_ABLE_0,0, false);
 		if((colObj = $FF or eraseObj <> $FF) and objectList[id].b_controlPressDown) then moveDir := @DOWN;
 
-		objectList[id].b_controlJump := true;
 	end
 	else if(objectList[id].controlState = @CTRL_STATE_ROBE) then begin
 		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
@@ -344,7 +389,5 @@ begin
 		newy := CalcPositionY(oldy, Lo(shift));
 	end;
 	if(newx <> $FF) then SetPos(id,oldx, oldy, newx, newy, objectList[id].transZ);
-
-
 end;
 

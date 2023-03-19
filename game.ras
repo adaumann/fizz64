@@ -156,6 +156,7 @@ var
 	@define CTRL_STATE_CLIMB 1
 	@define CTRL_STATE_ROBE 2
 	@define CTRL_STATE_SWIM 3
+	@define CTRL_STATE_JUMP 4
 	
 	
 //	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                  aa");
@@ -208,13 +209,14 @@ var
 		
 		// Physics
 		physGravity: byte;
+		b_physFallDown: byte;
 		b_physRollLeftRight, b_physHighFall: byte;
 
 		// ShiftPlattform
 		shiftDir: byte;
 		
 		// Control
-		b_controlJump: byte;
+		controlJumpStep: byte;
 		controlState: byte;
 		controlLastPortal: byte;
 		controlHasMoved: byte;

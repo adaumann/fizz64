@@ -15,15 +15,8 @@ begin
 	fallRightDown := false;
 	fall := @UNKNOWN;
 	doPhys := true;
-	
-	if(objectList[id].b_controlJump = true) then begin
-		moveto(2,24,screen);
-		c := objectList[id].b_controlJump;
-		printnumber(c);
-	end;
-	
-	
-	if((objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[id].b_controlJump = false) or objectList[id].component0 & @COMP_CONTROL_0 <> @COMP_CONTROL_0) then begin
+		
+	if(objectList[id].b_physFallDown = true) then begin
 		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_DESTROY_COLLIDE_0,0, false);
 		if(colObj <> $FF) then DamageCollide(colObj);
 		
