@@ -1,123 +1,148 @@
 procedure ReleaseKeys(id: byte);
-var
-	pg: pointer of gobject;
 
 begin
-	pg := #objectList[id];
-	pg.controlPressLeft := false;
-	pg.controlPressRight := false;
-	pg.controlPressDown := false;			
-	pg.controlPressUp := false;
-	
+	objectList[id].b_controlPressLeft := false;
+	objectList[id].b_controlPressRight := false;
+	objectList[id].b_controlPressDown := false;			
+	objectList[id].b_controlPressUp := false;
 end;
 
 procedure ProcessBackObj(id: byte);
 var
-	pg: pointer of gobject;
 	defWalk: boolean;
 	gravity: byte;
 	backObj, backObj2: byte;
 	pos,v: byte;
+	robeAbleId, portalId: byte;
+	newx, newy: byte;
 begin
-	// TODO: Check for portal component
-	//	if (backObj == null || backObj.getPortalComponent() == null) {
-	//		lastPortal = null;
-	//	}	
-	pg := #objectList[id];
-
-	if(pg.component0 & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then gravity := @DOWN else gravity := pg.physGravity; 
-
 	defWalk := true;
 	
-	if(GetObjectByPosFilterComp(pg.transX, pg.transY, @Z_BACK2, @COMP_WATER_0, 0) <> $FF or pg.controlPermanentSwim = true) then begin
-		moveto(14,24,screen);
-		printnumber(id);
+	if(objectList[id].controlHasMoved = true) then begin
 	
-		pg := #objectList[id];
-		pg.controlJump := true;
-		// TODO:Anim Swim
-		pg.controlState := @CTRL_STATE_SWIM;
-		defWalk := false;
+		robeAbleId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_ROBE_ABLE_1, 1);
+		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
+		
+		if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_CLIMB_ABLE_1, 1) <> $FF) then begin	
+			objectList[id].b_controlJump := true;
+			// TODO:Anim Swim
+			objectList[id].controlState := @CTRL_STATE_CLIMB;
+			defWalk := false;
+		end
+		else if(robeAbleId <> $FF) then begin	
+			if (objectList[robeAbleId].robeGravity = objectList[id].physGravity) then begin
+				objectList[id].b_controlJump := true;
+				objectList[id].controlState := @CTRL_STATE_ROBE;
+				defWalk := false;
+			end;
+		end
+		else if(portalId <> $FF and objectList[id].controlLastPortal <> portalId) then begin
+			newx := $FF;
+			newy := $FF;
+			if(portals[0] <> $FF and portals[1] <> $FF) then begin
+				if(portals[0] = portalId) then begin
+					newx := objectList[portals[1]].transX;
+					newy := objectList[portals[1]].transY;
+					objectList[id].controlLastPortal := portalId;
+				end
+				else if(portals[1] = portalId) then begin
+					newx := objectList[portals[0]].transX;
+					newy := objectList[portals[0]].transY;
+					objectList[id].controlLastPortal := portalId;
+				end;
+			end;
+			if(newx <> $FF) then SetPos(id, objectList[id].transX, objectList[id].transY, newx, newy, objectList[id].transZ);
+			defWalk := true;
+		end
+		else if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK2, @COMP_WATER_0, 0) <> $FF or objectList[id].b_controlPermanentSwim = true) then begin	
+			objectList[id].b_controlJump := true;
+			// TODO:Anim Swim
+			objectList[id].controlState := @CTRL_STATE_SWIM;
+			defWalk := false;
+		end;
+		
+		if(defWalk = true) then begin 
+			objectList[id].b_controlJump := false;
+			objectList[id].controlState := @CTRL_STATE_WALK; 
+		end;
+		
+		if(portalId = $FF) then objectList[id].controlLastPortal := $FF;
+		// objectList[id].controlHasMoved := false;
 	end;
-	
-	if(defWalk = true) then pg.controlState := @CTRL_STATE_WALK; 
-	
 end;
 
 procedure InputControl(id: byte);
 var
-	gravity: byte;
-	pg: pointer of gobject;
+	c, gravity: byte;
 begin
-	pg := #objectList[id];
-	if(pg.component0 & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then gravity := @DOWN else gravity := pg.physGravity;
+	ReleaseKeys(id);
+	if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then gravity := objectList[id].physGravity else gravity := @DOWN ;
 	if(joy2 & joy_fire = joy_fire) then ReleaseKeys(id)
 	else begin
 		if(joy2 & joy_left = joy_left) then begin
-			if(gravity = @DOWN) then pg.controlPressLeft := true;
-			if(gravity = @UP) then pg.controlPressRight := true;
-			if(gravity = @LEFT) then pg.controlPressDown := true;			
-			if(gravity = @RIGHT) then pg.controlPressUp := true;			
+			if(gravity = @DOWN) then objectList[id].b_controlPressLeft := true;
+			if(gravity = @UP) then objectList[id].b_controlPressRight := true;
+			if(gravity = @LEFT) then objectList[id].b_controlPressDown := true;			
+			if(gravity = @RIGHT) then objectList[id].b_controlPressUp := true;			
 		end;
 		if(joy2 & joy_left <> joy_left) then begin
-			if(gravity = @DOWN) then pg.controlPressLeft := false;
-			if(gravity = @UP) then pg.controlPressRight := false;
-			if(gravity = @LEFT) then pg.controlPressDown := false;			
-			if(gravity = @RIGHT) then pg.controlPressUp := false;			
+			if(gravity = @DOWN) then objectList[id].b_controlPressLeft := false;
+			if(gravity = @UP) then objectList[id].b_controlPressRight := false;
+			if(gravity = @LEFT) then objectList[id].b_controlPressDown := false;			
+			if(gravity = @RIGHT) then objectList[id].b_controlPressUp := false;			
 		end;
-		if(joy2 & joy_right = joy_right) then begin
-			if(gravity = @DOWN) then pg.controlPressRight := true;
-			if(gravity = @UP) then pg.controlPressLeft := true;
-			if(gravity = @LEFT) then pg.controlPressUp := true;			
-			if(gravity = @RIGHT) then pg.controlPressDown := true;
+		if(joy2 & joy_right) then begin
+			if(gravity = @DOWN) then objectList[id].b_controlPressRight := true;
+			if(gravity = @UP) then objectList[id].b_controlPressLeft := true;
+			if(gravity = @LEFT) then objectList[id].b_controlPressUp := true;			
+			if(gravity = @RIGHT) then objectList[id].b_controlPressDown := true;
 		end;
 		if(joy2 & joy_right <> joy_right) then begin
-			if(gravity = @DOWN) then pg.controlPressRight := false;
-			if(gravity = @UP) then pg.controlPressLeft := false;
-			if(gravity = @LEFT) then pg.controlPressUp := false;			
-			if(gravity = @RIGHT) then pg.controlPressDown := false;			
+			if(gravity = @DOWN) then objectList[id].b_controlPressRight := false;
+			if(gravity = @UP) then objectList[id].b_controlPressLeft := false;
+			if(gravity = @LEFT) then objectList[id].b_controlPressUp := false;			
+			if(gravity = @RIGHT) then objectList[id].b_controlPressDown := false;			
 		end;
 		if(joy2 & joy_up = joy_up) then begin
-			if(gravity = @DOWN) then pg.controlPressUp := true;
-			if(gravity = @UP) then pg.controlPressDown := true;
-			if(gravity = @LEFT) then pg.controlPressLeft := true;			
-			if(gravity = @RIGHT) then pg.controlPressRight := true;
+			if(gravity = @DOWN) then objectList[id].b_controlPressUp := true;
+			if(gravity = @UP) then objectList[id].b_controlPressDown := true;
+			if(gravity = @LEFT) then objectList[id].b_controlPressLeft := true;			
+			if(gravity = @RIGHT) then objectList[id].b_controlPressRight := true;
 		end;
 		if(joy2 & joy_up <> joy_up) then begin
-			if(gravity = @DOWN) then pg.controlPressUp := false;
-			if(gravity = @UP) then pg.controlPressDown := false;
-			if(gravity = @LEFT) then pg.controlPressLeft := false;			
-			if(gravity = @RIGHT) then pg.controlPressRight := false;
+			if(gravity = @DOWN) then objectList[id].b_controlPressUp := false;
+			if(gravity = @UP) then objectList[id].b_controlPressDown := false;
+			if(gravity = @LEFT) then objectList[id].b_controlPressLeft := false;			
+			if(gravity = @RIGHT) then objectList[id].b_controlPressRight := false;
 		end;
 		if(joy2 & joy_down = joy_down) then begin
-			if(gravity = @DOWN) then pg.controlPressDown := true;
-			if(gravity = @UP) then pg.controlPressUp := true;
-			if(gravity = @LEFT) then pg.controlPressRight := true;			
-			if(gravity = @RIGHT) then pg.controlPressLeft := true;
+			if(gravity = @DOWN) then objectList[id].b_controlPressDown := true;
+			if(gravity = @UP) then objectList[id].b_controlPressUp := true;
+			if(gravity = @LEFT) then objectList[id].b_controlPressRight := true;			
+			if(gravity = @RIGHT) then objectList[id].b_controlPressLeft := true;
 		end;
 		if(joy2 & joy_down <> joy_down) then begin
-			if(gravity = @DOWN) then pg.controlPressDown := false;
-			if(gravity = @UP) then pg.controlPressUp := false;
-			if(gravity = @LEFT) then pg.controlPressRight := false;			
-			if(gravity = @RIGHT) then pg.controlPressLeft := false;
+			if(gravity = @DOWN) then objectList[id].b_controlPressDown := false;
+			if(gravity = @UP) then objectList[id].b_controlPressUp := false;
+			if(gravity = @LEFT) then objectList[id].b_controlPressRight := false;			
+			if(gravity = @RIGHT) then objectList[id].b_controlPressLeft := false;
 		end;
 	end;
 end;
 
 procedure UpdateControl(id: byte);
 var
-	pg,ps: pointer of gobject;
 	grounded: boolean;
 	isShift: boolean;
 	gravity: byte;
 	oldx, oldy, newx, newy, moveDir: byte; 
 
 	shift: integer;
+	d,c: byte;
 
 	colObj, eraseObj, colObj2, eraseObj2: byte;
 	shiftDir: byte;
 begin
-	pg := #objectList[id];
 	moveDir := $FF;
 	grounded := false;
 	isShift := false;
@@ -127,154 +152,168 @@ begin
 	newx := $FF;
 	newy := $FF;
 	
-	if(pg.component0 & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then begin
+	if(objectList[id].component0 & @COMP_PHYSICS_0 <> @COMP_PHYSICS_0) then begin
 		grounded := true;
 		isShift := false;
 		gravity := @DOWN;
 	end
 	else begin
-		colObj := GetObjArea(id, pg.transZ, 7, @COMP_COLLIDE_ABLE_0,0);
+		gravity := objectList[id].physGravity;
+		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
 		if(colObj <> $FF) then begin 
 			grounded := true;
-			ps := #objectList[colObj];
-			shiftDir := ps.shiftDir;
-			gravity := pg.physGravity;
+			shiftDir := objectList[colObj].shiftDir;
 			if ((gravity = @DOWN and shiftDir = @LEFT) or (gravity = @DOWN and shiftDir = @RIGHT)) then isShift:= true;
-			if ((gravity = @LEFT and shiftDir = @UP) or (gravity = @LEFT and shiftDir = @DOWN)) then isShift:= true; 
+			if ((gravity = @LEFT and shiftDir = @LEFT) or (gravity = @LEFT and shiftDir = @RIGHT)) then isShift:= true; 
 			if ((gravity = @UP and shiftDir = @LEFT) or  (gravity = @UP and shiftDir = @RIGHT)) then isShift:= true;
 			if ((gravity = @RIGHT and shiftDir = @LEFT) or (gravity = @RIGHT and shiftDir = @RIGHT)) then isShift := true;
 		end;
 	end;
 
-	
-	if(pg.controlState = @CTRL_STATE_WALK) then begin
+	if(objectList[id].controlState = @CTRL_STATE_WALK) then begin
 		if(isShift = false) then begin
-			colObj := GetObjArea(id, pg.transZ, 3, @COMP_DESTROY_COLLIDE_0,0);
-			if((colObj <> $FF and pg.controlPressLeft = true) and (pg.controlPressUp = false and grounded = true)) then DamageCollide(colObj);
+			colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
+			if((colObj <> $FF and objectList[id].b_controlPressLeft = true) and (objectList[id].b_controlPressUp = false and grounded = true)) then DamageCollide(colObj);
 			
-			colObj := GetObjArea(id, pg.transZ, 5, @COMP_DESTROY_COLLIDE_0,0);
-			if((colObj <> $FF and pg.controlPressRight = true) and (pg.controlPressUp = false and grounded = true)) then DamageCollide(colObj);
+			colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_DESTROY_COLLIDE_0,0, false);
+			if((colObj <> $FF and objectList[id].b_controlPressRight = true) and (objectList[id].b_controlPressUp = false and grounded = true)) then DamageCollide(colObj);
 			
-			colObj := GetObjArea(id, pg.transZ, 7, @COMP_DESTROY_COLLIDE_0,0);
-			if((colObj <> $FF and pg.controlPressDown = true) and grounded = true) then DamageCollide(colObj);
+			colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_DESTROY_COLLIDE_0,0, false);
+			if((colObj <> $FF and objectList[id].b_controlPressDown = true) and grounded = true) then DamageCollide(colObj);
 			
-			colObj := GetObjArea(id, pg.transZ, 3, @COMP_COLLIDE_ABLE_0,0);
-			eraseObj := GetObjArea(id, pg.transZ, 3, @COMP_ERASE_ABLE_0,0);
-			if((colObj = $FF or eraseObj <> $FF) and ((pg.controlPressUp = false and pg.controlPressLeft = true) and (grounded = true))) then moveDir := @LEFT;  //TODO: AnimationWalkL
-
+			colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
+			eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
+			if((colObj = $FF or eraseObj <> $FF) and ((objectList[id].b_controlPressUp = false and objectList[id].b_controlPressLeft = true) and (grounded = true))) then moveDir := @LEFT;  //TODO: AnimationWalkL
 		
-			colObj := GetObjArea(id, pg.transZ, 5, @COMP_COLLIDE_ABLE_0,0);
-			eraseObj := GetObjArea(id, pg.transZ, 5, @COMP_ERASE_ABLE_0,0);
-			if((colObj = $FF or eraseObj <> $FF) and (pg.controlPressRight = true and grounded = true)) then moveDir := @RIGHT;  //TODO: AnimationWalkR
-			
+			colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_COLLIDE_ABLE_0,0, false);
+			eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
+			if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressRight = true and grounded = true)) then moveDir := @RIGHT;  //TODO: AnimationWalkR
+						
 			if(moveDir = $FF) then begin
-			
-				colObj := GetObjArea(id, pg.transZ, 1, @COMP_COLLIDE_ABLE_0,0);
-				eraseObj := GetObjArea(id, pg.transZ, 1, @COMP_ERASE_ABLE_0,0);
-				colObj2 := GetObjArea(id, pg.transZ, 0, @COMP_COLLIDE_ABLE_0,0);
-				eraseObj2 := GetObjArea(id, pg.transZ, 0, @COMP_ERASE_ABLE_0,0);
+				colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
+				colObj2 := GetObjArea(id, objectList[id].transZ, 0, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj2 := GetObjArea(id, objectList[id].transZ, 0, @COMP_ERASE_ABLE_0,0, false);
 				if((colObj = $FF or eraseObj <> $FF) and (colObj2 = $FF or eraseObj2 <> $FF)) then begin
-					if(pg.controlPressLeft = true or pg.controlFollowKeyLeft = true) then begin
-						if(grounded = true or pg.controlJump = true) then begin 
+					if(objectList[id].b_controlPressLeft = true or objectList[id].controlFollowKeyLeft = true) then begin
+						if(grounded = true or objectList[id].b_controlJump = true) then begin 
 							moveDir := @UP_LEFT;
-							pg.controlFollowKeyLeft := false;
+							objectList[id].controlFollowKeyLeft := false;
 						end;
 					end;
 				end; 
-				colObj := GetObjArea(id, pg.transZ, 1, @COMP_COLLIDE_ABLE_0,0);
-				eraseObj := GetObjArea(id, pg.transZ, 1, @COMP_ERASE_ABLE_0,0);
-				colObj2 := GetObjArea(id, pg.transZ, 2, @COMP_COLLIDE_ABLE_0,0);
-				eraseObj2 := GetObjArea(id, pg.transZ, 2, @COMP_ERASE_ABLE_0,0);
+				colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
+				colObj2 := GetObjArea(id, objectList[id].transZ, 2, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj2 := GetObjArea(id, objectList[id].transZ, 2, @COMP_ERASE_ABLE_0,0, false);
 				if((colObj = $FF or eraseObj <> $FF) and (colObj2 = $FF or eraseObj2 <> $FF)) then begin
-					if(pg.controlPressRight = true or pg.controlFollowKeyRight = true) then begin
-						if(grounded = true or pg.controlJump = true) then begin 
+					if(objectList[id].b_controlPressRight = true or objectList[id].controlFollowKeyRight = true) then begin
+						if(grounded = true or objectList[id].b_controlJump = true) then begin 
 							moveDir := @UP_RIGHT;
-							pg.controlFollowKeyRight := false;
+							objectList[id].controlFollowKeyRight := false;
 						end;
 					end;
 				end; 
 			end;
 			
 			if(moveDir = $FF) then begin
-				colObj := GetObjArea(id, pg.transZ, 1, @COMP_COLLIDE_ABLE_0,0);
-				eraseObj := GetObjArea(id, pg.transZ, 1, @COMP_ERASE_ABLE_0,0);
+				colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
 				
-				if((colObj = $FF or eraseObj <> $FF) and (pg.controlPressUp = true and grounded = true)) then begin 
+				if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressUp = true and grounded = true)) then begin 
 					moveDir := @UP;
-					pg.controlJump := true;
+					objectList[id].b_controlJump := true;
+					c := objectList[id].b_controlPressUp;
+					moveto(15,24,screen);
+					printnumber(1);
 				end;
 
-				colObj := GetObjArea(id, pg.transZ, 7, @COMP_COLLIDE_ABLE_0,0);
-				eraseObj := GetObjArea(id, pg.transZ, 7, @COMP_ERASE_ABLE_0,0);
-				if((colObj = $FF or eraseObj <> $FF) and (pg.controlPressDown = true and grounded = true)) then begin 
+				colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
+				eraseObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_ERASE_ABLE_0,0, false);
+				if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressDown = true and grounded = true)) then begin 
 					moveDir := @DOWN;
 				end;
 			end; 
 		end;
 		// TODO: Stand animation
-		if(moveDir <> @UP and pg.component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then pg.controlJump := false;
+		if(moveDir <> @UP and objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then objectList[id].b_controlJump := false;
     end
-	else if(pg.controlState = @CTRL_STATE_SWIM) then begin
-		moveto(20,24,screen);
-		printnumber(id);
-		colObj := GetObjArea(id, pg.transZ, 3, @COMP_DESTROY_COLLIDE_0,0);
-		if(colObj <> $FF and pg.controlPressLeft = true) then DamageCollide(colObj);
+	else if((objectList[id].controlState = @CTRL_STATE_SWIM or objectList[id].controlState = @CTRL_STATE_CLIMB) or objectList[id].controlState = @CTRL_STATE_ROBE) then begin
+		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
+		if(colObj <> $FF and objectList[id].b_controlPressLeft = true) then DamageCollide(colObj);
 		
-		colObj := GetObjArea(id, pg.transZ, 5, @COMP_DESTROY_COLLIDE_0,0);
-		if(colObj <> $FF and pg.controlPressRight = true) then DamageCollide(colObj);
+		colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_DESTROY_COLLIDE_0,0, false);
+		if(colObj <> $FF and objectList[id].b_controlPressRight = true) then DamageCollide(colObj);
 		
-		colObj := GetObjArea(id, pg.transZ, 1, @COMP_DESTROY_COLLIDE_0,0);
-		if(colObj <> $FF and pg.controlPressUp = true) then DamageCollide(colObj);
+		colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_DESTROY_COLLIDE_0,0, false);
+		if(colObj <> $FF and objectList[id].b_controlPressUp = true) then DamageCollide(colObj);
 
-		colObj := GetObjArea(id, pg.transZ, 7, @COMP_DESTROY_COLLIDE_0,0);
-		if(colObj <> $FF and pg.controlPressDown = true) then DamageCollide(colObj);
+		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_DESTROY_COLLIDE_0,0, false);
+		if(colObj <> $FF and objectList[id].b_controlPressDown = true) then DamageCollide(colObj);
 		
-		colObj := GetObjArea(id, pg.transZ, 3, @COMP_COLLIDE_ABLE_0,0);
-		eraseObj := GetObjArea(id, pg.transZ, 3, @COMP_ERASE_ABLE_0,0);
-		if((colObj = $FF or eraseObj <> $FF) and pg.controlPressLeft) then moveDir := @LEFT;  //TODO: AnimationSwimL
+		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
+		if((colObj = $FF or eraseObj <> $FF) and objectList[id].b_controlPressLeft) then moveDir := @LEFT;  //TODO: AnimationSwimL
 
-		colObj := GetObjArea(id, pg.transZ, 5, @COMP_COLLIDE_ABLE_0,0);
-		eraseObj := GetObjArea(id, pg.transZ, 5, @COMP_ERASE_ABLE_0,0);
-		if((colObj = $FF or eraseObj <> $FF) and pg.controlPressRight) then moveDir := @RIGHT;  //TODO: AnimationSwimR
+		colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_COLLIDE_ABLE_0,0, false);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
+		if((colObj = $FF or eraseObj <> $FF) and objectList[id].b_controlPressRight) then moveDir := @RIGHT;  //TODO: AnimationSwimR
 
-		colObj := GetObjArea(id, pg.transZ, 1, @COMP_COLLIDE_ABLE_0,0);
-		eraseObj := GetObjArea(id, pg.transZ, 1, @COMP_ERASE_ABLE_0,0);
-		if((colObj = $FF or eraseObj <> $FF) and pg.controlPressUp) then moveDir := @UP;  //TODO: AnimationSwimR
+		colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_COLLIDE_ABLE_0,0, false);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
+		if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressUp and objectList[id].controlState <> @CTRL_STATE_ROBE)) then moveDir := @UP;  //TODO: AnimationSwimR
 		
-		colObj := GetObjArea(id, pg.transZ, 7, @COMP_COLLIDE_ABLE_0,0);
-		eraseObj := GetObjArea(id, pg.transZ, 7, @COMP_ERASE_ABLE_0,0);
-		if((colObj = $FF or eraseObj <> $FF) and pg.controlPressDown) then moveDir := @DOWN;
+		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_ERASE_ABLE_0,0, false);
+		if((colObj = $FF or eraseObj <> $FF) and objectList[id].b_controlPressDown) then moveDir := @DOWN;
 
-		pg.controlJump := true;  //TODO: AnimationSwimR
+		objectList[id].b_controlJump := true;
+	end
+	else if(objectList[id].controlState = @CTRL_STATE_ROBE) then begin
+		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
+		if(colObj <> $FF and objectList[id].b_controlPressLeft = true) then DamageCollide(colObj);
+		
+		colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_DESTROY_COLLIDE_0,0, false);
+		if(colObj <> $FF and objectList[id].b_controlPressRight = true) then DamageCollide(colObj);
+		
+		colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_DESTROY_COLLIDE_0,0, false);
+		if(colObj <> $FF and objectList[id].b_controlPressUp = true) then DamageCollide(colObj);
+
+		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_DESTROY_COLLIDE_0,0, false);
+		if(colObj <> $FF and objectList[id].b_controlPressDown = true) then DamageCollide(colObj);
+		
+		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
+		if((colObj = $FF or eraseObj <> $FF) and objectList[id].b_controlPressLeft) then moveDir := @LEFT;  //TODO: AnimationSwimL
+		
 	end;
 	
 	// Do Moves
-	oldx := pg.transX;
-	oldy := pg.transY;
+	oldx := objectList[id].transX;
+	oldy := objectList[id].transY;
 	
-	// Do Moves
 	if(moveDir = @LEFT) then begin
-		eraseObj := GetObjArea(id, pg.transZ, 3, @COMP_ERASE_ABLE_0,0);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
 		if(eraseObj <> $FF) then DeletePos(eraseObj);
 		shift := ConvertShift(gravity, 3);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
-		if(pg.animFinish = true) then begin
-			pg.animId := @ANIM_WALK_L;
-			pg.animPos := 0;
-			pg.animFinish := false;
+		if(objectList[id].animFinish = true) then begin
+			objectList[id].animId := @ANIM_WALK_L;
+			objectList[id].animPos := 0;
+			objectList[id].animFinish := false;
 		end;
 	end
 	else if(moveDir = @RIGHT) then begin
-		eraseObj := GetObjArea(id, pg.transZ, 5, @COMP_ERASE_ABLE_0,0);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
 		if(eraseObj <> $FF) then DeletePos(eraseObj);
 		shift := ConvertShift(gravity, 5);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
 	end
 	else if(moveDir = @UP_LEFT) then begin
-		eraseObj := GetObjArea(id, pg.transZ, 0, @COMP_ERASE_ABLE_0,0);
-		eraseObj2 := GetObjArea(id, pg.transZ, 3, @COMP_ERASE_ABLE_0,0);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 0, @COMP_ERASE_ABLE_0,0, false);
+		eraseObj2 := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
 		if(eraseObj <> $FF) then DeletePos(eraseObj);
 		if(eraseObj2 <> $FF) then DeletePos(eraseObj2);
 		shift := ConvertShift(gravity, 0);
@@ -282,8 +321,8 @@ begin
 		newy := CalcPositionY(oldy, Lo(shift));
 	end
 	else if(moveDir = @UP_RIGHT) then begin
-		eraseObj := GetObjArea(id, pg.transZ, 2, @COMP_ERASE_ABLE_0,0);
-		eraseObj2 := GetObjArea(id, pg.transZ, 5, @COMP_ERASE_ABLE_0,0);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 2, @COMP_ERASE_ABLE_0,0, false);
+		eraseObj2 := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
 		if(eraseObj <> $FF) then DeletePos(eraseObj);
 		if(eraseObj2 <> $FF) then DeletePos(eraseObj2);
 		shift := ConvertShift(gravity, 2);
@@ -291,20 +330,21 @@ begin
 		newy := CalcPositionY(oldy, Lo(shift));
 	end
 	else if(moveDir = @UP) then begin
-		eraseObj := GetObjArea(id, pg.transZ, 1, @COMP_ERASE_ABLE_0,0);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
 		if(eraseObj <> $FF) then DeletePos(eraseObj);
 		shift := ConvertShift(gravity, 1);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
 	end
 	else if(moveDir = @DOWN) then begin
-		eraseObj := GetObjArea(id, pg.transZ, 7, @COMP_ERASE_ABLE_0,0);
+		eraseObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_ERASE_ABLE_0,0, false);
 		if(eraseObj <> $FF) then DeletePos(eraseObj);
 		shift := ConvertShift(gravity, 7);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
 	end;
+	if(newx <> $FF) then SetPos(id,oldx, oldy, newx, newy, objectList[id].transZ);
 
-	if(newx <> $FF) then SetPos(id,oldx, oldy, newx, newy, pg.transZ);
+
 end;
 

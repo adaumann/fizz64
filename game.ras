@@ -6,7 +6,9 @@ var
 	//@define DEBUG 1
 	@define OVERFLOW_CHECK 1
 	@define USE_KERNAL 0
-	
+	@define TRUE 1
+	@define FALSE 0
+
 	// Charsets
 	@define charsetLoc1 $3800
 	@define charsetLoc2 $7800
@@ -42,7 +44,7 @@ var
 	@define DIMZ 4
 	@define MAX_OBJECTS 128
 	@define DIMTILES 240
-	@define DIMANIMS 7
+	@define DIMANIMS 12
 	@define Z_BACK2 3
 	@define Z_BACK1 2
 	@define Z_MAIN 1
@@ -79,6 +81,11 @@ var
 	@define ANIM_SWIM_R 4
 	@define ANIM_CLIMB 5
 	@define ANIM_ROBE 6
+	@define ANIM_WATER_U 7
+	@define ANIM_WATER_D 8
+	@define ANIM_WATER_L 9
+	@define ANIM_WATER_R 10
+	@define ANIM_PORTAL 11
 	
 	collAreaUp: array[9] of byte = (8,7,6,5,4,3,2,1,0);
 	collAreaLeft: array[9] of byte = (2,5,8,1,4,7,0,3,6);
@@ -120,26 +127,39 @@ var
     @define COMP_PUSHPULL_1 		  %00000001
     @define COMP_CLIMB_ABLE_1 	  %00000010
     @define COMP_ROBE_ABLE_1 	  %00000100
+    @define COMP_FLOATER_1 		  %00001000
+	@define COMP_PORTAL_1 		  %00010000
     
  	// https://www.aivosto.com/articles/petscii.pdf
  	@define LEV_CHARACTER $40
 	@define LEV_BRICK $61
-	@define LEV_STONE $6f
+	@define LEV_STONE $62
 	@define LEV_SAND $73
 	@define LEV_WATER $3d
-	@define LEV_SHIFT_UP $5E
+	@define LEV_WATER_UP $27
+	@define LEV_WATER_DOWN $26
+	@define LEV_WATER_LEFT $7b
+	@define LEV_WATER_RIGHT $7d
 	@define LEV_SHIFT_DOWN $59
+	@define LEV_SHIFT_UP $5E
 	@define LEV_SHIFT_LEFT $3C
 	@define LEV_SHIFT_RIGHT $3E
-	@define LEV_LADDER $67 // #TODO
+	@define LEV_LADDER $68
+	@define LEV_ROBE_DOWN $5f
+	@define LEV_ROBE_UP $2d
+	@define LEV_ROBE_LEFT $21
+	@define LEV_ROBE_RIGHT $7C
+	@define LEV_LADDER $68
+	@define LEV_PORTAL $6F
 	
 	@define CTRL_STATE_WALK 0
 	@define CTRL_STATE_CLIMB 1
 	@define CTRL_STATE_ROBE 2
 	@define CTRL_STATE_SWIM 3
 	
+	
 //	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                  aa");
-	lev0: string = ("^>aa<a   a  a  a  aaa   a aa  a  aa    aa     aaa  aa      aaa a           ^ ^Yaa         ^      ^Yaa      ^         ^Yaa     ^          ^Yaa             h    aa             h    aa         o    h   aa   ====ss@ss    h aaaa    aaaaaaaaaaa aa");
+	lev0: string = ("'&{}}}}}}a  a  a  aaa   a aa  a  aa    aa     aaa  aa      aaa a           ^ ^Yaa     o   ^      ^Yaa      ^         ^Yaa     ^          ^Yaa             h    aa   ------====hh   aa       @ b    =   aa   ====ss ss  h o aaaa    aaaaaaaaaaa aa");
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
 	countDeletedObjects: byte;
@@ -151,6 +171,7 @@ var
 	mapback1 : Array[@DIMTILES] of byte;
 	mapmain : Array[@DIMTILES] of byte;
 	mapfront : Array[@DIMTILES] of byte;
+	portals: Array [2] of byte;
 	state, oldState: byte;
 	killDuration, killTimer: byte;
 	newSceneAfterKill: boolean;
@@ -173,35 +194,33 @@ var
 
 @startblock $5000 "Objects"
 	gobject = record
-		id: byte;
-		isActive : boolean;
 		component0, component1, component2, component3: byte;
 		
 		// TransformTile
-		transIsStatic: boolean;
-		transX, transY, transZ, transPriority, transRot: byte;
+		transX, transY, transZ: byte;
 	
 		// Render
-		rendToMove, rendDrawEnergy, rendInAnimCycle : boolean;
 //		rendLastXpos, rendLastYpos, rendLastPathElem, rendMoveoffsetx, rendMoveoffsety, rendCenterX, rendCentery: byte;
-		rendEnergyX, rendEnergyY, rendEnergyPercent, rendTilePos: byte;
-		rendAsSprite: boolean;
+//		rendEnergyX, rendEnergyY, rendEnergyPercent: byte; 
+		rendTilePos: byte;
+		b_rendAsSprite: byte;
 		rendSpriteNum: byte;
 		
 		// Physics
 		physGravity: byte;
-		physRollLeftRight, physHighFall: boolean;
+		b_physRollLeftRight, b_physHighFall: byte;
 
 		// ShiftPlattform
 		shiftDir: byte;
 		
 		// Control
-		controlJump: boolean;
+		b_controlJump: byte;
 		controlState: byte;
 		controlLastPortal: byte;
-		controlPermanentSwim: boolean;
+		controlHasMoved: byte;
+		b_controlPermanentSwim: byte;
 		controlFollowKeyRight, controlFollowKeyLeft: byte;
-		controlPressLeft, controlPressRight, controlPressUp, controlPressDown: boolean;
+		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown: byte;
 		
 		// DestroyCollide
 		destColIgnoreTag: byte;
@@ -210,18 +229,20 @@ var
 		
 		// Water
 		waterFloaterDir: byte;
-		
-		// Activate
-		actPermanentSwim: boolean;
-		actLastPortal: byte;
-		
+				
 		// Animation
 		animId: byte;
 		animPos: byte;
-		animFinish: boolean;
+		animFinish: byte;
 		
 		// PushPull
 		ppMaxEnergy, ppEnergy: byte;
+		
+		// Robe
+		robeGravity : byte;
+		
+		// Portal
+		portalFireExitDir: byte;
 	end;
 	objectList : Array[@MAX_OBJECTS] of gobject;
 @endblock
@@ -336,7 +357,6 @@ var
 	t: byte;
 	animId: byte;
 	hideSprite: boolean;
-	pg: pointer of gobject;
 	pa: pointer of animObject;
 	currentTile: byte;
 	gravity: byte;
@@ -367,44 +387,44 @@ begin
  	end;
 	
  	if(t <> 255) then begin
-	 	pg := #objectList[t];
-		pa := #animList[pg.animId];
-	 	if(considerAnimation = true and (pg.component0 & @COMP_ANIMATION_0) = @COMP_ANIMATION_0) then begin
-			if(pg.animFinish = true) then begin
-				currentTile := pa.animSeq[pg.animPos];
+	 	animId := objectList[t].animId;
+		pa := #animList[animId];
+	 	if(considerAnimation = true and (objectList[t].component0 & @COMP_ANIMATION_0 = @COMP_ANIMATION_0)) then begin
+			if(objectList[t].animFinish = true) then begin
+				currentTile := pa.animSeq[objectList[t].animPos];
 			end
 			else begin
 				shiftAnim := 0;
 				if(pa.considerGravity = true) then begin
 					gravity := @DOWN;
-					if((pg.component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := pg.physGravity;
+					if((objectList[t].component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := objectList[t].physGravity;
 					if(gravity = @UP) then shiftAnim := 1
 					else if(gravity = @LEFT) then shiftAnim := 2
 					else if(gravity = @RIGHT) then shiftAnim := 3;
 				end;
-				currentTile := pa.animSeq[pg.animPos];
+				currentTile := pa.animSeq[objectList[t].animPos];
 				currentTile := currentTile + shiftAnim;
-				if(pa.mode = @ANIM_MODE_FIX) then pg.animPos := 0
+				if(pa.mode = @ANIM_MODE_FIX) then objectList[t].animPos := 0
 				else if(pa.mode = @ANIM_MODE_LR) then begin
-					if(pg.animPos = pa.size - 1) then begin
-						pg.animPos := 0;
-						pg.animFinish := true;
+					if(objectList[t].animPos = pa.size - 1) then begin
+						objectList[t].animPos := 0;
+						objectList[t].animFinish := true;
 					end
-					else inc(pg.animPos);
+					else inc(objectList[t].animPos);
 				end
 				else if(pa.mode = @ANIM_MODE_LR_REPEAT) then begin
-					if(pg.animPos = pa.size - 1) then begin
-						pg.animPos := 0;
-						pg.animFinish := false;
+					if(objectList[t].animPos = pa.size - 1) then begin
+						objectList[t].animPos := 0;
+						objectList[t].animFinish := false;
 					end
-					else inc(pg.animPos);
+					else inc(objectList[t].animPos);
 				end;				
 			end;
 		end
-		else currentTile := pg.rendTilePos;
+		else currentTile := objectList[t].rendTilePos;
 		
-	 	if(pg.rendAsSprite = true and hideSprite = false) then begin
-		 	PrintSprite(x,y,currentTile,pg.rendSpriteNum)
+	 	if(objectList[t].b_rendAsSprite = true and hideSprite = false) then begin
+		 	PrintSprite(x,y,currentTile,objectList[t].rendSpriteNum)
 		 end
 	 	else
 	 		print2x2block(x,y,currentTile);
@@ -414,11 +434,11 @@ end;
 
 function ConvertShift(gravity: byte, pos: byte) : integer;
 var 
-    pg: pointer of gobject;
     ret: integer;
 begin
 	@IFDEF OVERFLOW_CHECK
 		if(pos >= 9) then SCREEN_BG_COL:=RED;
+		if(gravity = $FF) then SCREEN_BG_COL:=RED;
 	@ENDIF
 	if(gravity = @DOWN) then ret := CreateInteger(shiftAreaDownX[pos],shiftAreaDownY[pos])
  	else if(gravity = @UP) then ret := CreateInteger(shiftAreaUpX[pos],shiftAreaUpY[pos])
@@ -453,7 +473,6 @@ end;
 
 function GetObjectByPosFilterComp(x: byte, y: byte, z: byte, comp: byte, compIdx: byte) : byte;
 var
-	pgCol: pointer of gobject;
 	mapPos, colId, ret, val: byte;
 begin
 	GetZLayerPointer(z);
@@ -465,19 +484,11 @@ begin
 
 	colId := tempPointer[mapPos];
 	if(colId <> $FF) then begin
-		pgCol := #objectList[colId];
 		case compIdx of
-	        0: val := pgCol.component0 & comp;
-	        1: val := pgCol.component1 & comp;
-	        2: val := pgCol.component2 & comp;
-	        4: val := pgCol.component3 & comp;
-    		end;
-
-		case compIdx of
-	        0: val := pgCol.component0 & comp;
-	        1: val := pgCol.component1 & comp;
-	        2: val := pgCol.component2 & comp;
-	        4: val := pgCol.component3 & comp;
+	        0: val := objectList[colId].component0 & comp;
+	        1: val := objectList[colId].component1 & comp;
+	        2: val := objectList[colId].component2 & comp;
+	        4: val := objectList[colId].component3 & comp;
     		end;
 		if(val = comp) then ret := colId;
 	end;
@@ -485,42 +496,42 @@ begin
 	GetObjectByPosFilterComp := ret;
 end;
 
-function GetObjArea(id: byte, z: byte, pos:byte, comp: byte, compIdx: byte) : byte;
+function GetObjArea(id: byte, z: byte, pos:byte, comp: byte, compIdx: byte, b_norm: byte) : byte;
 var
-	pg, pgCol: pointer of gobject;
 	gravity: byte;
 	mapPos, colId, ret, val, gpos: byte;
 begin
 	@IFDEF OVERFLOW_CHECK
 		if(id >= @MAX_OBJECTS) then SCREEN_BG_COL:=LIGHT_GREY;
 	@ENDIF
-	pg := #objectList[id];
 	gravity := @DOWN;
-	if((pg.component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := pg.physGravity;
-	if(pg.physGravity = @DOWN) then gpos := pos
-	else if(pg.physGravity = @UP) then gpos := collAreaUp[pos] 
-	else if(pg.physGravity = @LEFT) then gpos := collAreaLeft[pos] 
-	else if(pg.physGravity = @RIGHT) then gpos := collAreaRight[pos];
+	if(b_norm = false) then begin
+		if((objectList[id].component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := objectList[id].physGravity;
+
+		if(objectList[id].physGravity = @DOWN) then gpos := pos
+		else if(objectList[id].physGravity = @UP) then gpos := collAreaUp[pos] 
+		else if(objectList[id].physGravity = @LEFT) then gpos := collAreaLeft[pos] 
+		else if(objectList[id].physGravity = @RIGHT) then gpos := collAreaRight[pos]
+	end
+	else gpos := pos;
 
 	GetZLayerPointer(z);
 
-	mapPos := CalcPositionMapPos(pg.transX, pg.transY, gpos);
+	mapPos := CalcPositionMapPos(objectList[id].transX, objectList[id].transY, gpos);
 	colId := tempPointer[mapPos];
 	ret := $FF;
 	if(colId <> $FF) then begin
-		pgCol := #objectList[colId];
 		case compIdx of
-	        0: val := pgCol.component0 & comp;
-	        1: val := pgCol.component1 & comp;
-	        2: val := pgCol.component2 & comp;
-	        4: val := pgCol.component3 & comp;
+	        0: val := objectList[colId].component0 & comp;
+	        1: val := objectList[colId].component1 & comp;
+	        2: val := objectList[colId].component2 & comp;
+	        4: val := objectList[colId].component3 & comp;
     		end;
 		if(val = comp) then ret := colId;
 	end;
-
 	GetObjArea := ret;
-
 end;
+
 
 function CalcPositionX(startx,offsetx: byte) : byte;
 var
@@ -546,7 +557,6 @@ procedure ChangeMapItem(id: byte, oldx: byte, oldy: byte, x: byte, y: byte, z:by
 var
 	oldpos: byte;
 	pos: byte;
-	pg: pointer of gobject;
 begin
 	oldpos := oldx + oldy * @DIMX;
 	pos := x + y * @DIMX;
@@ -565,7 +575,6 @@ procedure UpdateMapItem(id: byte, x: byte, y: byte);
 var
 	oldpos: byte;
 	pos: byte;
-	pg: pointer of gobject;
 begin
 	pos := x + y * @DIMX;
 	@IFDEF OVERFLOW_CHECK
@@ -576,30 +585,29 @@ end;
 
 procedure SetPos(i: byte,oldx:byte, oldy:byte, x: byte, y: byte, z: byte);
 var
-	pg: pointer of gobject;
 	pos: byte;
 begin
 	@IFDEF OVERFLOW_CHECK
 		if(i >= @MAX_OBJECTS) then SCREEN_BG_COL:=CYAN;
 	@ENDIF
-	pg := #objectList[i];
 	pos := x + y * @DIMX;
 	@IFDEF OVERFLOW_CHECK
 		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
 	@ENDIF
 	GetZLayerPointer(z);
+	
+	if(oldx <> x or oldy <> y) then begin
+		objectList[i].controlHasMoved := true; 
 
-//	if(tempPointer[pos] = $FF) then begin
 		ChangeMapItem(i, oldx, oldy, x, y, z);
-		pg.transX := x;
-		pg.transY := y;
-//	end;
+		objectList[i].transX := x;
+		objectList[i].transY := y;
+	end;
 end;
 
 procedure AddMapItem(Id: byte, x: byte, y: byte, z:byte);
 var
 	pos: byte;
-	pm : pointer of byte;
 begin
 	pos := x + y * @DIMX;
 	GetZLayerPointer(z);
@@ -613,7 +621,6 @@ end;
 procedure ClearMap();
 var 
 	m: byte;
-	pm : pointer of byte;
 begin
     for m := 0 to @DIMTILES do	
 	begin
@@ -622,6 +629,8 @@ begin
  	 	mapmain[m] := 255;
  	 	mapfront[m] := 255;
  	end;
+	portals[0] := $FF;
+	portals[1] := $FF;
 end;
 
 procedure AddDynItem(i: byte);
@@ -635,7 +644,6 @@ begin
 	animObjectList[countAnim] := i;
 	inc(countAnim);
 end;
-
 
 function PopDeletedIndex() : byte;
 var
@@ -698,12 +706,8 @@ end;
 	
 	
 procedure DeletePos(id: byte);
-var
-	pg: pointer of gobject;
 begin
-	pg := #objectList[id];
-
-	DeleteMapItem(id, pg.transX, pg.transY, pg.transZ);
+	DeleteMapItem(id, objectList[id].transX, objectList[id].transY, objectList[id].transZ);
 	AddDeletedIndex(id);
 end;
 
@@ -736,24 +740,25 @@ end;
 
 @include "ControlComponent.ras"
 @include "PhysComponent.ras"
+@include "FloaterComponent.ras"
 
 procedure UpdateObject(id: byte);
-var
-	pg: pointer of gobject;
 begin
-	
-
-	pg := #objectList[id];
-	if(pg.component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then UpdatePhysics(id);
-	ProcessBackObj(id);
-	pg := #objectList[id];
-	if(pg.component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin 
+	if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin 
 		InputControl(id); 
 		UpdateControl(id);
+		ProcessBackObj(id);
 	end;
-	ProcessBackObj(id);
+	if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then begin
+		UpdatePhysics(id);
+		ProcessBackObj(id);
+	end;
+	if(objectList[id].component1 & @COMP_FLOATER_1 = @COMP_FLOATER_1) then begin 
+		UpdateFloater(id);
+		ProcessBackObj(id);
+	end;
+	objectList[id].controlHasMoved := false;
 end;
-
 
 procedure Update();
 var 
@@ -774,13 +779,11 @@ procedure Animate();
 var 
 	i: byte;
 	id: byte;
-	pg: pointer of gobject;
 begin
 	if(countAnim <> 0) then begin
 		for i:=0 to countAnim do	begin
 			id := animObjectList[i];
-			pg := #objectList[id];
-			UpdateMapItem(id, pg.transX, pg.transY); 
+			UpdateMapItem(id, objectList[id].transX, objectList[id].transY); 
 		end;
 	end;
 end;
@@ -937,6 +940,55 @@ begin
 	pa.speed := 1;
 	pa.mode := @ANIM_MODE_LR;
 
+	pa := #animList[@ANIM_WATER_U];
+	pa.animSeq[0] := $14; 
+ 	pa.animSeq[1] := $16;
+	pa.animSeq[2] := $18;
+	pa.animSeq[3] := $1A;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 4;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR_REPEAT;
+
+	pa := #animList[@ANIM_WATER_D];
+	pa.animSeq[0] := $1A; 
+ 	pa.animSeq[1] := $18;
+	pa.animSeq[2] := $16;
+	pa.animSeq[3] := $14;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 4;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR_REPEAT;
+
+	pa := #animList[@ANIM_WATER_L];
+	pa.animSeq[0] := $0C; 
+ 	pa.animSeq[1] := $0E;
+	pa.animSeq[2] := $10;
+	pa.animSeq[3] := $12;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 4;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR_REPEAT;
+
+	pa := #animList[@ANIM_WATER_R];
+	pa.animSeq[0] := $12; 
+ 	pa.animSeq[1] := $10;
+	pa.animSeq[2] := $0E;
+	pa.animSeq[3] := $0C;
+	pa.considerGravity := false;
+	pa.size := 4;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR_REPEAT;
+	
+	pa := #animList[@ANIM_PORTAL];
+	pa.animSeq[0] := $A6; 
+ 	pa.animSeq[1] := $A8;
+	pa.animSeq[2] := $AA;
+	pa.animSeq[3] := $AC;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 4;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_LR_REPEAT;	
 
 end;
 
@@ -978,12 +1030,21 @@ begin
 			@LEV_BRICK: InitBrick(x, y);
 			@LEV_STONE: InitStone(x, y);
 			@LEV_WATER: InitWater(x, y);
+			@LEV_WATER_UP: InitWaterFlow(x, y, 20, @UP, @ANIM_WATER_U);
+			@LEV_WATER_DOWN: InitWaterFlow(x, y, 26, @DOWN, @ANIM_WATER_D);
+			@LEV_WATER_LEFT: InitWaterFlow(x, y, 12, @LEFT, @ANIM_WATER_L);
+			@LEV_WATER_RIGHT: InitWaterFlow(x, y, 18, @RIGHT, @ANIM_WATER_R);
 			@LEV_SAND: InitSand(x, y);
-			@LEV_SHIFT_UP: InitShiftPlattformUp(x, y);
-			@LEV_SHIFT_DOWN: InitShiftPlattformDown(x, y);
-			@LEV_SHIFT_RIGHT: InitShiftPlattformRight(x, y);
-			@LEV_SHIFT_LEFT: InitShiftPlattformLeft(x, y);
+			@LEV_SHIFT_UP: InitShiftPlattform(x, y,4,@UP);
+			@LEV_SHIFT_DOWN: InitShiftPlattform(x, y,6,@DOWN);
+			@LEV_SHIFT_RIGHT: InitShiftPlattform(x, y, 8,@RIGHT);
+			@LEV_SHIFT_LEFT: InitShiftPlattform(x, y, 10,@LEFT);
 			@LEV_LADDER: InitLadder(x,y);
+			@LEV_ROBE_UP: InitRobe(x,y,100,@DOWN);
+			@LEV_ROBE_DOWN: InitRobe(x,y,102,@UP);
+			@LEV_ROBE_LEFT: InitRobe(x,y,104,@RIGHT);
+			@LEV_ROBE_RIGHT: InitRobe(x,y,106,@LEFT);
+			@LEV_PORTAL: InitPortal(x,y);
 		end;
 	end;
 end;

@@ -1,38 +1,35 @@
 procedure InitCharacter(x: byte, y: byte);
 var 
-	pg: pointer of gobject;
 	id: byte;
 begin
 	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 0;
-	pg.rendAsSprite := true;
-	pg.rendSpriteNum := countSprite;
+	objectList[id].rendTilePos := 0;
+	objectList[id].b_rendAsSprite := true;
+	objectList[id].rendSpriteNum := countSprite;
 	inc(countSprite);
-	pg.component0 := $00 | @COMP_COLLIDE_ABLE_0 | @COMP_CONTROL_0 | @COMP_PHYSICS_0 | @COMP_ANIMATION_0;
-	pg.component1 := $00;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.controlState := @CTRL_STATE_WALK;
-	pg.controlPressLeft := false;
-	pg.controlPressRight := false;
-	pg.controlPressUp := false;
-	pg.controlPressDown := false;
-	pg.animId := @ANIM_WALK_L;
-	pg.animPos := 0;
-	pg.animFinish := true;
-	pg.transIsStatic := false;
-	pg.controlFollowKeyLeft := false;
-	pg.controlFollowKeyRight := false;
-	pg.controlLastPortal := $FF;
-	pg.controlPermanentSwim := false;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_MAIN;
-	pg.physGravity := @DOWN;
-	pg.physRollLeftRight := false;
-	pg.shiftDir := @UP;
+	objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 | @COMP_CONTROL_0 | @COMP_PHYSICS_0 | @COMP_ANIMATION_0;
+	objectList[id].component1 := $00 | @COMP_FLOATER_1;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].controlState := @CTRL_STATE_WALK;
+	objectList[id].b_controlPressLeft := false;
+	objectList[id].b_controlPressRight := false;
+	objectList[id].b_controlPressUp := false;
+	objectList[id].b_controlPressDown := false;
+	objectList[id].controlHasMoved := false;
+	objectList[id].animId := @ANIM_WALK_L;
+	objectList[id].animPos := 0;
+	objectList[id].animFinish := true;
+	objectList[id].controlFollowKeyLeft := false;
+	objectList[id].controlFollowKeyRight := false;
+	objectList[id].controlLastPortal := $FF;
+	objectList[id].b_controlPermanentSwim := false;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_MAIN;
+	objectList[id].physGravity := @LEFT;
+	objectList[id].b_physRollLeftRight := false;
+	objectList[id].shiftDir := @RIGHT;
 	AddDynItem(id);
 	AddAnimItem(id);
 	AddMapItem(id, x, y, @Z_MAIN);
@@ -40,25 +37,20 @@ end;
 
 procedure InitBrick(x: byte, y: byte);
 var 
-	pg: pointer of gobject;
 	id: byte;
 begin
 	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 0;
-	pg.rendAsSprite := false;
-	pg.component0 := $00 | @COMP_COLLIDE_ABLE_0;
-	pg.component1 := $00;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.isActive := true;
-	pg.transIsStatic := true;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_MAIN;
-	pg.physGravity := @DOWN;
-	pg.shiftDir := @UP;
+	objectList[id].rendTilePos := 0;
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0;
+	objectList[id].component1 := $00;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_MAIN;
+	objectList[id].physGravity := @DOWN;
+	objectList[id].shiftDir := @UP;
 	AddMapItem(id, x, y, @Z_MAIN);
 end;
 
@@ -68,184 +60,153 @@ var
 	id: byte;
 begin
 	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 2;
-	pg.rendAsSprite := false;
-	pg.component0 := $00 | @COMP_PHYSICS_0 | @COMP_COLLIDE_ABLE_0;
-	pg.component1 := $00 | @COMP_PUSHPULL_1;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.isActive := true;
-	pg.transIsStatic := false;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_MAIN;
-	pg.physGravity := @RIGHT;
-	pg.physRollLeftRight := true;
+	objectList[id].rendTilePos := 2;
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00 | @COMP_PHYSICS_0 | @COMP_COLLIDE_ABLE_0;
+	objectList[id].component1 := $00 | @COMP_PUSHPULL_1;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_MAIN;
+	objectList[id].physGravity := @RIGHT;
+	objectList[id].b_physRollLeftRight := true;
 	AddDynItem(id);
 	AddMapItem(id, x, y, @Z_MAIN);
 end;
 
 procedure InitSand(x: byte, y: byte);
 var 
-	pg: pointer of gobject;
 	id: byte;
 begin
 	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 14;
-	pg.rendAsSprite := false;
-	pg.component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_ERASE_ABLE_0;
-	pg.component1 := $00;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.isActive := true;
-	pg.transIsStatic := true;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_MAIN;
+	objectList[id].rendTilePos := 108;
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_ERASE_ABLE_0;
+	objectList[id].component1 := $00;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_MAIN;
 	AddMapItem(id, x, y, @Z_MAIN);
 end;
 
 procedure InitWater(x: byte, y: byte);
 var 
-	pg: pointer of gobject;
 	id: byte;
 begin
 	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 16;
-	pg.rendAsSprite := false;
-	pg.component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_WATER_0;
-	pg.component1 := $00;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.isActive := true;
-	pg.transIsStatic := true;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_BACK2;
-	pg.waterFloaterDir := $FF;
+	objectList[id].rendTilePos := 12;
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_WATER_0;
+	objectList[id].component1 := $00;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_BACK2;
+	objectList[id].waterFloaterDir := $FF;
+	AddMapItem(id, x, y, @Z_BACK2);
+end;
+
+procedure InitWaterFlow(x: byte, y: byte, tilen: byte, grav: byte, anim: byte);
+var 
+	id: byte;
+begin
+	id := GetIndex();
+	objectList[id].rendTilePos := tilen;
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_WATER_0|@COMP_ANIMATION_0;
+	objectList[id].component1 := $00;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].animId := anim;
+	objectList[id].animPos := 0;
+	objectList[id].animFinish := false;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_BACK2;
+	objectList[id].waterFloaterDir := grav;
+	AddAnimItem(id);
 	AddMapItem(id, x, y, @Z_BACK2);
 end;
 
 
-procedure InitShiftPlattformUp(x: byte, y: byte);
+procedure InitShiftPlattform(x: byte, y: byte, tilen: byte, grav: byte);
 var 
-	pg: pointer of gobject;
 	id: byte;
 begin
 	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 4;
-	pg.rendAsSprite := false;
-	pg.component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_SHIFT_PLATTFORM_0;
-	pg.component1 := $00;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.isActive := true;
-	pg.transIsStatic := true;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_MAIN;
-	pg.shiftDir := @UP;
-	AddMapItem(id, x, y, @Z_MAIN);
-end;
-
-procedure InitShiftPlattformDown(x: byte, y: byte);
-var 
-	pg: pointer of gobject;
-	id: byte;
-begin
-	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 6;
-	pg.rendAsSprite := false;
-	pg.component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_SHIFT_PLATTFORM_0;
-	pg.component1 := $00;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.isActive := true;
-	pg.transIsStatic := true;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_MAIN;
-	pg.shiftDir := @DOWN;
-	AddMapItem(id, x, y, @Z_MAIN);
-end;
-
-procedure InitShiftPlattformLeft(x: byte, y: byte);
-var 
-	pg: pointer of gobject;
-	id: byte;
-begin
-	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 8;
-	pg.rendAsSprite := false;
-	pg.component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_SHIFT_PLATTFORM_0;
-	pg.component1 := $00;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.isActive := true;
-	pg.transIsStatic := true;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_MAIN;
-	pg.shiftDir := @LEFT;
-	AddMapItem(id, x, y, @Z_MAIN);
-end;
-
-
-procedure InitShiftPlattformRight(x: byte, y: byte);
-var 
-	pg: pointer of gobject;
-	id: byte;
-begin
-	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 10;
-	pg.rendAsSprite := false;
-	pg.component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_SHIFT_PLATTFORM_0;
-	pg.component1 := $00;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.isActive := true;
-	pg.transIsStatic := true;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_MAIN;
-	pg.shiftDir := @RIGHT;
+	objectList[id].rendTilePos := tilen;
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_SHIFT_PLATTFORM_0;
+	objectList[id].component1 := $00;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_MAIN;
+	objectList[id].shiftDir := grav;
 	AddMapItem(id, x, y, @Z_MAIN);
 end;
 
 procedure InitLadder(x: byte, y: byte);
 var 
-	pg: pointer of gobject;
 	id: byte;
 begin
 	id := GetIndex();
-	pg := #objectList[id];
-	pg.id := id;
-	pg.rendTilePos := 12;
-	pg.rendAsSprite := false;
-	pg.component0 := $00;
-	pg.component1 := $00  | @COMP_CLIMB_ABLE_1;
-	pg.component2 := $00;
-	pg.component3 := $00;
-	pg.isActive := true;
-	pg.transIsStatic := true;
-	pg.transX := x;
-	pg.transY := y;
-	pg.transZ := @Z_BACK1;
-	pg.physGravity := @DOWN;
-	pg.shiftDir := @UP;
-	AddMapItem(id, x, y, @Z_MAIN);
+	objectList[id].rendTilePos := 86;
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00;
+	objectList[id].component1 := $00 | @COMP_CLIMB_ABLE_1;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_BACK1;
+	objectList[id].physGravity := @DOWN;
+	AddMapItem(id, x, y, @Z_BACK1);
+end;
+
+procedure InitRobe(x: byte, y: byte, tilen: byte, grav: byte);
+var 
+	id: byte;
+begin
+	id := GetIndex();
+	objectList[id].rendTilePos := tilen;
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00;
+	objectList[id].component1 := $00 | @COMP_ROBE_ABLE_1;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_BACK1;
+	objectList[id].robeGravity := grav;
+	AddMapItem(id, x, y, @Z_BACK1);
+end;
+
+procedure InitPortal(x: byte, y: byte);
+var 
+	id: byte;
+begin
+	id := GetIndex();
+	objectList[id].rendTilePos := $A8;	// TODO
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00 |@COMP_ANIMATION_0;
+	objectList[id].component1 := $00 | @COMP_PORTAL_1;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].animId := @ANIM_PORTAL;
+	objectList[id].animPos := 0;
+	objectList[id].animFinish := false;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_BACK1;
+	objectList[id].controlLastPortal := $FF;
+	if(portals[0] = $FF) then portals[0] := id
+	else if(portals[1] = $FF) then portals[1] := id;
+	AddAnimItem(id);
+	AddMapItem(id, x, y, @Z_BACK1);
 end;

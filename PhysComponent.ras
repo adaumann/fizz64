@@ -1,54 +1,52 @@
 procedure UpdatePhysics(id: byte);
 var
 	fall,fallDown, fallLeftDown, fallRightDown: boolean;
-	pg: pointer of gobject;
-	ps: pointer of gobject;
 	colObj, eraseObj, destroyObj: byte;
 	oldx, oldy, newx, newy: byte = $FF;
 	gravity: byte;
 	shift: integer;
 	shiftDir: byte;
 	doPhys:boolean;
+	c:boolean;
 begin
-	pg := #objectList[id];
-
-	gravity := pg.physGravity;
+	gravity := objectList[id].physGravity;
 	fallDown := false;
 	fallLeftDown := false;
 	fallRightDown := false;
 	fall := @UNKNOWN;
 	doPhys := true;
 	
-	//if(pg.components[0] & @COMP_CONTROL_0 = @COMP_CONTROL_0) then 
-		doPhys := not(pg.controlJump);
-
-	if(pg.controlJump = true) then begin
-		moveto(22,24,screen);
-		printnumber(pg.controlJump);
-		colObj := GetObjArea(id, pg.transZ, 7, @COMP_DESTROY_COLLIDE_0,0);;
+	if(objectList[id].b_controlJump = true) then begin
+		moveto(2,24,screen);
+		c := objectList[id].b_controlJump;
+		printnumber(c);
+	end;
+	
+	
+	if((objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[id].b_controlJump = false) or objectList[id].component0 & @COMP_CONTROL_0 <> @COMP_CONTROL_0) then begin
+		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_DESTROY_COLLIDE_0,0, false);
 		if(colObj <> $FF) then DamageCollide(colObj);
 		
-		if(pg.physRollLeftRight = true) then begin
-			destroyObj := GetObjArea(id, pg.transZ, 6, @COMP_DESTROY_COLLIDE_0,0); //  GetObjArea(id, #tempDestroyArea, 6);
+		if(objectList[id].b_physRollLeftRight = true) then begin
+			destroyObj := GetObjArea(id, objectList[id].transZ, 6, @COMP_DESTROY_COLLIDE_0,0, false); //  GetObjArea(id, #tempDestroyArea, 6);
 			if(destroyObj <> $FF) then DamageCollide(destroyObj);
-			destroyObj := GetObjArea(id, pg.transZ, 8, @COMP_DESTROY_COLLIDE_0,0);
+			destroyObj := GetObjArea(id, objectList[id].transZ, 8, @COMP_DESTROY_COLLIDE_0,0, false);
 			if(destroyObj <> $FF) then DamageCollide(destroyObj);
 		end;
 	
-		colObj := GetObjArea(id, pg.transZ, 7, @COMP_COLLIDE_ABLE_0,0);
+		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
 	
 		if(colObj = $FF) then fallDown := true
-		else if((GetObjArea(id, pg.transZ, 3, @COMP_COLLIDE_ABLE_0,0) = $FF and GetObjArea(id, pg.transZ, 6, @COMP_COLLIDE_ABLE_0,0) = $FF) and pg.physRollLeftRight = true) then fallLeftDown := true
-		else if((GetObjArea(id, pg.transZ, 5, @COMP_COLLIDE_ABLE_0,0) = $FF and GetObjArea(id, pg.transZ, 8, @COMP_COLLIDE_ABLE_0,0) = $FF) and pg.physRollLeftRight = true) then fallRightDown := true;
+		else if((GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false) = $FF and GetObjArea(id, objectList[id].transZ, 6, @COMP_COLLIDE_ABLE_0,0, false) = $FF) and objectList[id].b_physRollLeftRight = true) then fallLeftDown := true
+		else if((GetObjArea(id, objectList[id].transZ, 5, @COMP_COLLIDE_ABLE_0,0, false) = $FF and GetObjArea(id, objectList[id].transZ, 8, @COMP_COLLIDE_ABLE_0,0, false) = $FF) and objectList[id].b_physRollLeftRight = true) then fallRightDown := true;
 		if(colObj <> $FF) then begin
-			if(pg.physHighFall = true) then pg.physHighFall := false;
-			ps := #objectList[colObj];
-			shiftDir := ps.shiftDir;
-			if(ps.component0 & @COMP_SHIFT_PLATTFORM_0 = @COMP_SHIFT_PLATTFORM_0) then begin		
-				destroyObj := GetObjArea(id, pg.transZ, ps.shiftDir, @COMP_DESTROY_COLLIDE_0,0);
+			if(objectList[id].b_physHighFall = true) then objectList[id].b_physHighFall := false;
+			shiftDir := objectList[colObj].shiftDir;
+			if(objectList[colObj].component0 & @COMP_SHIFT_PLATTFORM_0 = @COMP_SHIFT_PLATTFORM_0) then begin		
+				destroyObj := GetObjArea(id, objectList[id].transZ, objectList[colObj].shiftDir, @COMP_DESTROY_COLLIDE_0,0, false);
 				if(destroyObj <> $FF) then DamageCollide(destroyObj);
-				if(GetObjArea(id, pg.transZ, shiftDir, @COMP_COLLIDE_ABLE_0,0) = $FF 
-						or GetObjArea(id, pg.transZ, shiftDir, @COMP_ERASE_ABLE_0,0) = $FF ) then begin
+				if(GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_COLLIDE_ABLE_0,0, false) = $FF 
+						or GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_ERASE_ABLE_0,0, false) = $FF ) then begin
 					if(gravity = @DOWN and shiftDir = @LEFT) then fall := @LEFT
 					else if(gravity = @DOWN and shiftDir = @RIGHT) then fall := @RIGHT
 					else if(gravity = @LEFT and shiftDir = @UP) then fall := @LEFT
@@ -63,13 +61,13 @@ begin
 			
 		if(fallDown = true) then begin
 			fall := @DOWN;
-			pg.physHighFall := true;
+			objectList[id].b_physHighFall := true;
 		end
 		else if(fallLeftDown = true) then fall := @DOWN_LEFT
 		else if(fallRightDown = true) then fall := @DOWN_RIGHT;
 	
-		oldx := pg.transX;
-		oldy := pg.transY;
+		oldx := objectList[id].transX;
+		oldy := objectList[id].transY;
 		newx := $FF;
 		if(fall = @DOWN) then begin
 			shift := ConvertShift(gravity, 7);
@@ -90,17 +88,17 @@ begin
 			shift := ConvertShift(gravity, 3);
 			newx := CalcPositionX(oldx, Hi(shift));
 			newy := CalcPositionY(oldy, Lo(shift));
-			eraseObj := GetObjArea(id, pg.transZ, 3, @COMP_ERASE_ABLE_0,0);
+			eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
 			if(eraseObj <> $FF) then DeletePos(eraseObj);
 		end
 		else if(fall = @RIGHT) then begin		
 			shift := ConvertShift(gravity, 5);
 			newx := CalcPositionX(oldx, Hi(shift));
 			newy := CalcPositionY(oldy, Lo(shift));
-			eraseObj := GetObjArea(id, pg.transZ, 5, @COMP_ERASE_ABLE_0,0);
+			eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
 			if(eraseObj <> $FF) then DeletePos(eraseObj);
 		end;
 	
-		if(newx <> $FF) then SetPos(id,oldx, oldy, newx,newy,pg.transZ);
+		if(newx <> $FF) then SetPos(id,oldx, oldy, newx,newy,objectList[id].transZ);
 	end;
 end;
