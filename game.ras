@@ -129,6 +129,7 @@ var
     @define COMP_ROBE_ABLE_1 	  %00000100
     @define COMP_FLOATER_1 		  %00001000
 	@define COMP_PORTAL_1 		  %00010000
+	@define COMP_GRAVPAD_1		  %00100000
     
  	// https://www.aivosto.com/articles/petscii.pdf
  	@define LEV_CHARACTER $40
@@ -151,6 +152,10 @@ var
 	@define LEV_ROBE_RIGHT $7C
 	@define LEV_LADDER $68
 	@define LEV_PORTAL $6F
+	@define LEV_GRAVPAD_DOWN $32
+	@define LEV_GRAVPAD_UP $38
+	@define LEV_GRAVPAD_LEFT $34
+	@define LEV_GRAVPAD_RIGHT $36
 	
 	@define CTRL_STATE_WALK 0
 	@define CTRL_STATE_CLIMB 1
@@ -160,7 +165,7 @@ var
 	
 	
 //	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                  aa");
-	lev0: string = ("'&{}}}}}}a  a  a  aaa   a aa  a  aa    aa     aaa  aa      aaa a           ^ ^Yaa     o   ^      ^Yaa      ^         ^Yaa     ^          ^Yaa             h    aa   ------====hh   aa       @ b    =   aa   ====ss ss  h o aaaa    aaaaaaaaaaa aa");
+	lev0: string = ("}}}}}}}}}a  a  a  aaa   a aa  a  aa    aa6    aaa  aa      aaa a      2    ^ ^Yaa     o   ^      ^Yaa      ^         ^Yaa     ^          ^Yaa             h    aa   ------====hh   aa       @ b    =  4aa   ====ss ss8 h o aaaa    aaaaaaaaaaa aa");
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
 	countDeletedObjects: byte;
@@ -1027,6 +1032,7 @@ begin
 		c := lev0[i];
 		x := mod(i,@DIMX);
 		y := i / @DIMX;
+		//AddBreakpoint();
 		case c of
 			@LEV_CHARACTER: InitCharacter(x,y);
 			@LEV_BRICK: InitBrick(x, y);
@@ -1044,9 +1050,13 @@ begin
 			@LEV_LADDER: InitLadder(x,y);
 			@LEV_ROBE_UP: InitRobe(x,y,100,@DOWN);
 			@LEV_ROBE_DOWN: InitRobe(x,y,102,@UP);
-			@LEV_ROBE_LEFT: InitRobe(x,y,104,@RIGHT);
-			@LEV_ROBE_RIGHT: InitRobe(x,y,106,@LEFT);
+			@LEV_ROBE_LEFT: InitRobe(x,y,104,@LEFT);
+			@LEV_ROBE_RIGHT: InitRobe(x,y,106,@RIGHT);
 			@LEV_PORTAL: InitPortal(x,y);
+			@LEV_GRAVPAD_UP: InitGravPad(x,y,38,@UP);
+			@LEV_GRAVPAD_DOWN: InitGravPad(x,y,80,@DOWN);
+			@LEV_GRAVPAD_LEFT: InitGravPad(x,y,82,@LEFT);
+			@LEV_GRAVPAD_RIGHT: InitGravPad(x,y,84,@RIGHT);
 		end;
 	end;
 end;

@@ -212,3 +212,21 @@ begin
 	AddAnimItem(id);
 	AddMapItem(id, x, y, @Z_BACK1);
 end;
+
+procedure InitGravPad(x: byte, y: byte, tilen: byte, grav: byte);
+var 
+	id: byte;
+begin
+	id := GetIndex();
+	objectList[id].rendTilePos := tilen;
+	objectList[id].b_rendAsSprite := false;
+	objectList[id].component0 := $00;
+	objectList[id].component1 := $00 | @COMP_GRAVPAD_1;
+	objectList[id].component2 := $00;
+	objectList[id].component3 := $00;
+	objectList[id].transX := x;
+	objectList[id].transY := y;
+	objectList[id].transZ := @Z_BACK1;
+	objectList[id].physGravity := grav;
+	AddMapItem(id, x, y, @Z_BACK1);
+end;

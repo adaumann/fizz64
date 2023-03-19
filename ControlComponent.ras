@@ -13,7 +13,7 @@ var
 	gravity: byte;
 	backObj, backObj2: byte;
 	pos,v: byte;
-	robeAbleId, portalId: byte;
+	robeAbleId, portalId, gravPadId: byte;
 	newx, newy: byte;
 begin
 	defWalk := true;
@@ -22,6 +22,7 @@ begin
 	
 		robeAbleId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_ROBE_ABLE_1, 1);
 		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
+		gravPadId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_GRAVPAD_1, 1);
 		
 		if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_CLIMB_ABLE_1, 1) <> $FF) then begin	
 			objectList[id].b_physFallDown := false;
@@ -54,11 +55,16 @@ begin
 			if(newx <> $FF) then SetPos(id, objectList[id].transX, objectList[id].transY, newx, newy, objectList[id].transZ);
 			defWalk := true;
 		end
-		else if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK2, @COMP_WATER_0, 0) <> $FF or objectList[id].b_controlPermanentSwim = true) then begin	
-			objectList[id].b_physFallDown := false;
-			// TODO:Anim Swim
-			objectList[id].controlState := @CTRL_STATE_SWIM;
-			defWalk := false;
+		else if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK2, @COMP_WATER_0, 0) <> $FF) then begin	
+			if(objectList[id].component1 & @COMP_FLOATER_1 = @COMP_FLOATER_1) then begin
+				objectList[id].b_physFallDown := false;
+				// TODO:Anim Swim
+				objectList[id].controlState := @CTRL_STATE_SWIM;
+				defWalk := false;
+			end
+		end
+		else if(gravPadId <> $FF) then begin
+			objectList[id].physGravity := objectList[gravPadId].physGravity;
 		end;
 		
 		if(defWalk = true) then begin 
