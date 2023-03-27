@@ -82,14 +82,14 @@ begin
 			newx := CalcPositionX(oldx, Hi(shift));
 			newy := CalcPositionY(oldy, Lo(shift));
 			eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
-			if(eraseObj <> $FF) then DeletePos(eraseObj);
+			if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
 		end
 		else if(fall = @RIGHT) then begin		
 			shift := ConvertShift(gravity, 5);
 			newx := CalcPositionX(oldx, Hi(shift));
 			newy := CalcPositionY(oldy, Lo(shift));
 			eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
-			if(eraseObj <> $FF) then DeletePos(eraseObj);
+			if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
 		end;
 	
 		if(newx <> $FF) then SetPos(id,oldx, oldy, newx,newy,objectList[id].transZ);

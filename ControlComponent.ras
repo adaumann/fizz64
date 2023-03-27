@@ -31,7 +31,7 @@ begin
 			defWalk := false;
 		end
 		else if(robeAbleId <> $FF) then begin	
-			if (objectList[robeAbleId].robeGravity = objectList[id].physGravity) then begin
+			if (objectList[robeAbleId].physGravity = objectList[id].physGravity) then begin
 				objectList[id].b_physFallDown := false;
 				objectList[id].controlState := @CTRL_STATE_ROBE;
 				defWalk := false;
@@ -81,7 +81,7 @@ end;
 
 procedure InputControl(id: byte);
 var
-	c, gravity: byte;
+	gravity: byte;
 begin
 	ReleaseKeys(id);
 	if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then gravity := objectList[id].physGravity else gravity := @DOWN ;
@@ -146,7 +146,7 @@ var
 	oldx, oldy, newx, newy, moveDir: byte; 
 
 	shift: integer;
-	d,c: byte;
+	d: byte;
 
 	colObj, eraseObj, colObj2, eraseObj2: byte;
 	shiftDir: byte;
@@ -244,7 +244,7 @@ begin
 		// TODO: Stand animation
     end
     else if(objectList[id].controlState = @CTRL_STATE_JUMP) then begin
-	    if(objectList[id].controlJumpStep = 0) then moveDir := @UP
+	    if(objectList[id].controlJumpStep = 0) then moveDir := @UP			// TODO: check for collideable?
 	    else if(objectList[id].controlJumpStep = 1 or objectList[id].controlJumpStep = 2) then begin
 			colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
 			if((colObj <> $FF and objectList[id].b_controlPressLeft = true)) then DamageCollide(colObj);
@@ -281,8 +281,6 @@ begin
 					end;
 				end; 
 			end;
-
-
 	    end;
 	    inc(objectList[id].controlJumpStep);
 		if(objectList[id].controlJumpStep >= 3) then begin 
@@ -345,7 +343,7 @@ begin
 	
 	if(moveDir = @LEFT) then begin
 		eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
-		if(eraseObj <> $FF) then DeletePos(eraseObj);
+		if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
 		shift := ConvertShift(gravity, 3);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
@@ -357,7 +355,7 @@ begin
 	end
 	else if(moveDir = @RIGHT) then begin
 		eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
-		if(eraseObj <> $FF) then DeletePos(eraseObj);
+		if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
 		shift := ConvertShift(gravity, 5);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
@@ -365,8 +363,8 @@ begin
 	else if(moveDir = @UP_LEFT) then begin
 		eraseObj := GetObjArea(id, objectList[id].transZ, 0, @COMP_ERASE_ABLE_0,0, false);
 		eraseObj2 := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
-		if(eraseObj <> $FF) then DeletePos(eraseObj);
-		if(eraseObj2 <> $FF) then DeletePos(eraseObj2);
+		if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
+		if(eraseObj2 <> $FF) then DeletePos(eraseObj2, false, false);
 		shift := ConvertShift(gravity, 0);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
@@ -374,22 +372,22 @@ begin
 	else if(moveDir = @UP_RIGHT) then begin
 		eraseObj := GetObjArea(id, objectList[id].transZ, 2, @COMP_ERASE_ABLE_0,0, false);
 		eraseObj2 := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
-		if(eraseObj <> $FF) then DeletePos(eraseObj);
-		if(eraseObj2 <> $FF) then DeletePos(eraseObj2);
+		if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
+		if(eraseObj2 <> $FF) then DeletePos(eraseObj2, false, false);
 		shift := ConvertShift(gravity, 2);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
 	end
 	else if(moveDir = @UP) then begin
 		eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
-		if(eraseObj <> $FF) then DeletePos(eraseObj);
+		if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
 		shift := ConvertShift(gravity, 1);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
 	end
 	else if(moveDir = @DOWN) then begin
 		eraseObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_ERASE_ABLE_0,0, false);
-		if(eraseObj <> $FF) then DeletePos(eraseObj);
+		if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
 		shift := ConvertShift(gravity, 7);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));

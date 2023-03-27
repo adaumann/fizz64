@@ -6,8 +6,6 @@ var
 	//@define DEBUG 1
 	@define OVERFLOW_CHECK 1
 	@define USE_KERNAL 0
-	@define TRUE 1
-	@define FALSE 0
 
 	// Charsets
 	@define charsetLoc1 $3800
@@ -16,7 +14,7 @@ var
 	@define tilesetLoc2 $7000
 	@define spriteLoc1  $2000
 	@define spriteLoc2  $4000
-	@define tilesetCol $6c00
+	@define tilesetCol $2c00
 	// Automatically export charsets 
 	@export "charsets/charset.flf" "charsets/charset.bin" 60	
  	@export "charsets/tileset.flf" "charsets/tileset.bin" 256	
@@ -42,7 +40,8 @@ var
 	@define DIMX 20
 	@define DIMY 12
 	@define DIMZ 4
-	@define MAX_OBJECTS 128
+	@define MAX_OBJECTS 200
+	@define MAX_LASER 30
 	@define DIMTILES 240
 	@define DIMANIMS 12
 	@define Z_BACK2 3
@@ -69,7 +68,11 @@ var
 	@define AREA_LEFT 2
 	@define AREA_RIGHT 3
 	@define AREA_CENTER 4
-	
+	@define LASER_STEP 4
+	@define TURN_RIGHT 1
+	@define TURN_LEFT 2
+	@define TURN_THROUGH  3
+
 	@define ANIM_MODE_FIX 0
 	@define ANIM_MODE_LR 1
 	@define ANIM_MODE_LR_REPEAT 2
@@ -116,21 +119,24 @@ var
 	@define SCRIPT_INIT 0
 	@define SCRIPT_PLAY 1
 	
-	@define COMP_PHYSICS_0         %00000001
-	@define COMP_COLLIDE_ABLE_0    %00000010
-	@define COMP_SHIFT_PLATTFORM_0 %00000100	
-	@define COMP_DESTROY_COLLIDE_0 %00001000
- 	@define COMP_ERASE_ABLE_0      %00010000
- 	@define COMP_WATER_0           %00100000
-	@define COMP_ANIMATION_0		  %01000000	
-	@define COMP_CONTROL_0		  %10000000
-    @define COMP_PUSHPULL_1 		  %00000001
-    @define COMP_CLIMB_ABLE_1 	  %00000010
-    @define COMP_ROBE_ABLE_1 	  %00000100
-    @define COMP_FLOATER_1 		  %00001000
-	@define COMP_PORTAL_1 		  %00010000
-	@define COMP_GRAVPAD_1		  %00100000
-    
+	@define COMP_PHYSICS_0          %00000001
+	@define COMP_COLLIDE_ABLE_0     %00000010
+	@define COMP_SHIFT_PLATTFORM_0  %00000100	
+	@define COMP_DESTROY_COLLIDE_0  %00001000
+ 	@define COMP_ERASE_ABLE_0       %00010000
+ 	@define COMP_WATER_0            %00100000
+	@define COMP_ANIMATION_0	       %01000000	
+	@define COMP_CONTROL_0		   %10000000
+    @define COMP_PUSHPULL_1 	       %00000001
+    @define COMP_CLIMB_ABLE_1 	   %00000010
+    @define COMP_ROBE_ABLE_1 	   %00000100
+    @define COMP_FLOATER_1 		   %00001000
+	@define COMP_PORTAL_1 		   %00010000
+	@define COMP_GRAVPAD_1		   %00100000
+	@define COMP_LASER_1		   	   %01000000
+	@define COMP_MIRROR_1		   %10000000
+	@define COMP_DESTROY_ABLE_2     %00000001
+	@define COMP_LASERBEAN_2		   %00000010
  	// https://www.aivosto.com/articles/petscii.pdf
  	@define LEV_CHARACTER $40
 	@define LEV_BRICK $61
@@ -156,6 +162,9 @@ var
 	@define LEV_GRAVPAD_UP $38
 	@define LEV_GRAVPAD_LEFT $34
 	@define LEV_GRAVPAD_RIGHT $36
+	@define LEV_MIRROR_LEFT $6e
+	@define LEV_MIRROR_RIGHT $6d
+	@define LEV_GLASS $67
 	
 	@define CTRL_STATE_WALK 0
 	@define CTRL_STATE_CLIMB 1
@@ -165,10 +174,10 @@ var
 	
 	
 //	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                  aa");
-	lev0: string = ("}}}}}}}}}a  a  a  aaa   a aa  a  aa    aa6    aaa  aa      aaa a      2    ^ ^Yaa     o   ^      ^Yaa      ^         ^Yaa     ^          ^Yaa             h    aa   ------====hh   aa       @ b    =  4aa   ====ss ss8 h o aaaa    aaaaaaaaaaa aa");
+//  lev0: string = ("}}}}}}}}}a  a  a  aaa   a aa  a  aa    aa6    aaa  aa      aaa a      2    ^ ^Yaa     o   ^      ^Yaa      ^         ^Yaa     ^          ^Yaa             h    aa   ------====hh   aa mn    @ b    =  4aa   ====ss ss8 h o aaaa    aaaaaaaaaaa aa");
+	lev0: string = ("                                                                @                                                     Yaa     ^  b b b b ^Yaa    b b b b b     aa  b b b b b       aa                  aa   n        m     aaaaaaaaaaaaaaaaaaaaaa");
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
-	countDeletedObjects: byte;
 	dynObjectList : Array[@MAX_OBJECTS] of byte;
 	animObjectList : Array[@MAX_OBJECTS] of byte;
 	countDyn: byte = 0;
@@ -198,7 +207,7 @@ var
 
 @endblock
 
-@startblock $5000 "Objects"
+@startblock $4800 "Objects"
 	gobject = record
 		component0, component1, component2, component3: byte;
 		
@@ -227,7 +236,7 @@ var
 		controlHasMoved: byte;
 		b_controlPermanentSwim: byte;
 		controlFollowKeyRight, controlFollowKeyLeft: byte;
-		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown: byte;
+		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown: byte;  // TODO: bit flag
 		
 		// DestroyCollide
 		destColIgnoreTag: byte;
@@ -244,12 +253,23 @@ var
 		
 		// PushPull
 		ppMaxEnergy, ppEnergy: byte;
-		
-		// Robe
-		robeGravity : byte;
-		
+				
 		// Portal
 		portalFireExitDir: byte;
+		
+		// Laser
+		laserPressDir: byte;
+		laserDir: byte;
+		lastLaserDir: byte;
+		b_laserWaitRelease: byte;
+		b_laserRelease: byte;
+ 		laserLastTransportAble: byte;
+ 		laserType : byte;
+ 		laserTag: byte;
+ 		b_laserIsSwitchReverse: byte;
+		currentLaser: byte; 		
+ 		// Mirror
+ 		mirrorTurn: byte;
 	end;
 	objectList : Array[@MAX_OBJECTS] of gobject;
 @endblock
@@ -264,7 +284,8 @@ begin
 	killTimer := 0;
 	newSceneAfterKill := true;
 	countObjects := 0;
-	countDeletedObjects := 0;
+	countDyn := 0;
+	countAnim := 0;
 end;
 
 procedure print2x2block(x,y,c: byte);
@@ -652,44 +673,18 @@ begin
 	inc(countAnim);
 end;
 
-function PopDeletedIndex() : byte;
-var
-	i: byte;
-	ret: byte;
-	moveFrom: byte;
-begin
-	
-	if(countDeletedObjects > 0) then begin 
-		ret := deletedObjects[0];
-		for i:=1 to countDeletedObjects do begin
-			moveFrom := deletedObjects[i];
-			deletedObjects[i-1] := moveFrom;
-		end;
-		dec(countDeletedObjects);
-	end
-	else ret := $FF;
-	
-	PopDeletedIndex := ret;
-end;
-
-procedure AddDeletedIndex(id: byte);
-begin
-	deletedObjects[countDeletedObjects] := id;
-	inc(countDeletedObjects);
-end;
-
-function GetIndex() : byte;
+function GetId() : byte;
 var
 	ret: byte;
 begin
-	ret := PopDeletedIndex();
-	if(ret = $FF) then begin
+    if (countObjects = @MAX_OBJECTS) then	 ret := $FF
+    	else begin	
 		inc(countObjects);
-		ret := countObjects;
+		ret := deletedObjects[@MAX_OBJECTS - 1 - countObjects];
 	end;
-	GetIndex := ret;
-end;
 
+	GetId := ret;
+end;
 
 procedure PaintFull();
 var
@@ -704,19 +699,75 @@ end;
 procedure DeleteMapItem(id: byte, x: byte, y: byte, z:byte);
 var	
 	pos: byte;
+	pm: pointer of byte;
 begin
-	pos := x + y * @DIMX;
+	
+	pos := x + y * @DIMX;	
 	GetZLayerPointer(z); 
 
 	tempPointer[pos] := 255;
 end;
-	
-	
-procedure DeletePos(id: byte);
+
+procedure DeleteDynObject(id: byte);
+var	
+	i,j: byte;	
+	found: boolean;
 begin
-	DeleteMapItem(id, objectList[id].transX, objectList[id].transY, objectList[id].transZ);
-	AddDeletedIndex(id);
+	i := 0;
+	found := false;
+	while (i < countDyn and found = false)  do
+	begin
+		if(dynObjectList[i] = id) then 
+			found := true
+		else
+			inc(i);
+	end;
+	if(found = true) then begin
+		dec(countDyn); 
+		for j:= i to countDyn - 1 do begin
+			dynObjectList[j] := dynObjectList[j+1];
+		end;
+	end;
 end;
+
+
+
+procedure DeleteAnimObject(id: byte);
+var	
+	i,j: byte;	
+	found: boolean;
+begin
+	i := 0;
+	found := false;
+	while (i < countAnim and found = false) do
+	begin
+		if(animObjectList[i] = id) then 
+			found := true
+		else
+			inc(i);
+	end;
+	if(found = true) then begin
+		dec(countAnim); 
+		for j:= i to countAnim - 1 do begin
+			animObjectList[j] := animObjectList[j+1];
+		end;
+	end;
+end;
+
+	
+procedure DeletePos(id: byte, isDyn, isAnim: byte);
+var
+	x,y: byte;
+begin
+	if(countObjects > 0) then begin
+		deletedObjects[@MAX_OBJECTS - 1 - countObjects] := id;
+		dec(countObjects);
+		DeleteMapItem(id, objectList[id].transX, objectList[id].transY, objectList[id].transZ);
+		if(isDyn = true) then DeleteDynObject(id); 
+		if(isAnim = true) then DeleteAnimObject(id);
+		PaintPos(objectList[id].transX + objectList[id].transY * @DIMX, false);
+	end; 
+end;	
 
 procedure SwitchBank();
 begin
@@ -748,9 +799,13 @@ end;
 @include "ControlComponent.ras"
 @include "PhysComponent.ras"
 @include "FloaterComponent.ras"
+@include "LaserComponent.ras"
 
 procedure UpdateObject(id: byte);
 begin
+	if(objectList[id].component1 & @COMP_LASER_1 = @COMP_LASER_1) then begin 
+		UpdateLaser(id);
+	end;
 	if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin 
 		InputControl(id); 
 		UpdateControl(id);
@@ -1025,14 +1080,17 @@ var
 begin
 	ClearMap();
 	countDyn := 0;
-	countAnim := 0;	
+	countAnim := 0;
+
+	for i:= 0 to @MAX_OBJECTS do begin
+		deletedObjects[@MAX_OBJECTS - 1 - i] := i;
+	end;	
 	
 	for i := 0 to @DIMTILES do
 	begin
 		c := lev0[i];
 		x := mod(i,@DIMX);
 		y := i / @DIMX;
-		//AddBreakpoint();
 		case c of
 			@LEV_CHARACTER: InitCharacter(x,y);
 			@LEV_BRICK: InitBrick(x, y);
@@ -1057,6 +1115,9 @@ begin
 			@LEV_GRAVPAD_DOWN: InitGravPad(x,y,80,@DOWN);
 			@LEV_GRAVPAD_LEFT: InitGravPad(x,y,82,@LEFT);
 			@LEV_GRAVPAD_RIGHT: InitGravPad(x,y,84,@RIGHT);
+			@LEV_MIRROR_LEFT: InitMirror(x,y, 96, @TURN_LEFT);
+			@LEV_MIRROR_RIGHT: InitMirror(x,y, 98, @TURN_RIGHT);
+			@LEV_GLASS: InitMirror(x,y,36, @TURN_THROUGH);
 		end;
 	end;
 end;
