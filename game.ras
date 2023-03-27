@@ -175,7 +175,7 @@ var
 	
 //	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                  aa");
 //  lev0: string = ("}}}}}}}}}a  a  a  aaa   a aa  a  aa    aa6    aaa  aa      aaa a      2    ^ ^Yaa     o   ^      ^Yaa      ^         ^Yaa     ^          ^Yaa             h    aa   ------====hh   aa mn    @ b    =  4aa   ====ss ss8 h o aaaa    aaaaaaaaaaa aa");
-	lev0: string = ("                                                                @                                                     Yaa     ^  b b b b ^Yaa    b b b b b     aa  b b b b b       aa                  aa   n        m     aaaaaaaaaaaaaaaaaaaaaa");
+	lev0: string = ("                                                                @                                                     Yaa     ^  b b b b ^Yaa    b b b b b     aa  b b b b b       aa                  aa   n    gg  m     aaaaaaaaaaaaaaaaaaaaaa");
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
 	dynObjectList : Array[@MAX_OBJECTS] of byte;
