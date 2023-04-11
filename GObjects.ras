@@ -30,9 +30,9 @@ begin
 		objectList[id].transZ := @Z_MAIN;
 		objectList[id].physGravity := @DOWN;
 		objectList[id].b_physRollLeftRight := false;
-		objectList[id].b_physFallDown := true;
+		objectList[id].b_physFallDown := false;
 		objectList[id].shiftDir := @RIGHT;
-		objectList[id].laserType := $FF;
+		objectList[id].laserType := @LASER_TYPE_USER;
 		objectList[id].lastLaserDir := $FF;
 		objectList[id].laserDir := $FF;
 		AddDynItem(id);
@@ -82,6 +82,7 @@ begin
 		objectList[id].physGravity := @RIGHT;
 		objectList[id].b_physRollLeftRight := true;
 		objectList[id].b_physFallDown := true;
+		objectList[id].pushPullDir := 1;		
 		AddDynItem(id);
 		AddMapItem(id, x, y, @Z_MAIN);
 	end;
@@ -211,7 +212,7 @@ begin
 	end;
 end;
 
-procedure InitPortal(x: byte, y: byte);
+procedure InitPortal(x: byte, y: byte, exitDir: byte);
 var 
 	id: byte;
 begin
@@ -230,10 +231,20 @@ begin
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_BACK1;
 		objectList[id].controlLastPortal := $FF;
-		if(portals[0] = $FF) then portals[0] := id
-		else if(portals[1] = $FF) then portals[1] := id;
-		AddAnimItem(id);
-		AddMapItem(id, x, y, @Z_BACK1);
+		objectList[id].portalFireExitDir := exitDir;
+		lastPortal := $FF;
+		if(portals[0] = $FF) then begin 
+			portals[0] := id;
+			lastPortal := 0;
+		end
+		else if(portals[1] = $FF) then begin 
+			portals[1] := id;
+			lastPortal := 1;
+		end;
+		if(lastPortal <> $FF) then begin
+			AddAnimItem(id);
+			AddMapItem(id, x, y, @Z_BACK1);
+		end;
 	end;
 end;
 
@@ -296,3 +307,79 @@ begin
 	end;
 end;
 
+procedure InitLaserTransport(x: byte, y: byte);
+var 
+	id: byte;
+begin
+	id := GetId();
+	if(id <> $FF) then begin
+		objectList[id].rendTilePos := 92;
+		objectList[id].b_rendAsSprite := false;
+		objectList[id].component1 := $00;
+		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0;
+		objectList[id].component2 := $00 | @COMP_LASERTRANS_ABLE_2;
+		objectList[id].component3 := $00;
+		objectList[id].transX := x;
+		objectList[id].transY := y;
+		objectList[id].transZ := @Z_MAIN;
+		AddMapItem(id, x, y, @Z_MAIN);
+	end;
+end;
+
+procedure InitLaserTransportOnce(x: byte, y: byte);
+var 
+	id: byte;
+begin
+	id := GetId();
+	if(id <> $FF) then begin
+		objectList[id].rendTilePos := 94;
+		objectList[id].b_rendAsSprite := false;
+		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0;
+		objectList[id].component1 := $00;
+		objectList[id].component2 := $00 | @COMP_LASERTRANS_ABLE_2 | @COMP_LASERONCE_2;
+		objectList[id].component3 := $00;
+		objectList[id].transX := x;
+		objectList[id].transY := y;
+		objectList[id].transZ := @Z_MAIN;
+		AddMapItem(id, x, y, @Z_MAIN);
+	end;
+end;
+
+procedure InitBox(x: byte, y: byte, tilen, dir: byte);
+var 
+	id: byte;
+begin
+	id := GetId();
+	if(id <> $FF) then begin
+		objectList[id].rendTilePos := tilen;
+		objectList[id].b_rendAsSprite := false;
+		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0;
+		objectList[id].component1 := $00 | @COMP_FLOATER_1 | @COMP_PUSHPULL_1;
+		objectList[id].component2 := $00;
+		objectList[id].component3 := $00;
+		objectList[id].transX := x;
+		objectList[id].transY := y;
+		objectList[id].transZ := @Z_MAIN;
+		objectList[id].pushPullDir := dir;
+		AddMapItem(id, x, y, @Z_MAIN);
+	end;
+end;
+
+procedure InitPortalActivate(x: byte, y:byte); 
+var 
+	id: byte;
+begin
+	id := GetId();
+	if(id <> $FF) then begin
+		objectList[id].rendTilePos := 160;
+		objectList[id].b_rendAsSprite := false;
+		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0;
+		objectList[id].component1 := $00;
+		objectList[id].component2 := $00 | @COMP_PORTAL_ACTIVATE_2;
+		objectList[id].component3 := $00;
+		objectList[id].transX := x;
+		objectList[id].transY := y;
+		objectList[id].transZ := @Z_MAIN;
+		AddMapItem(id, x, y, @Z_MAIN);
+	end;
+end;	

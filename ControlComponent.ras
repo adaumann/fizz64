@@ -37,7 +37,7 @@ begin
 				defWalk := false;
 			end;
 		end
-		else if(portalId <> $FF and objectList[id].controlLastPortal <> portalId) then begin
+		else if(portalId <> $FF and (objectList[id].controlLastPortal = $FF or objectList[id].controlLastPortal = portalId)) then begin
 			newx := $FF;
 			newy := $FF;
 			if(portals[0] <> $FF and portals[1] <> $FF) then begin
@@ -73,9 +73,7 @@ begin
  				objectList[id].b_physFallDown := true;
  			end;
 		end;
-		
-		if(portalId = $FF) then objectList[id].controlLastPortal := $FF;
-		// objectList[id].controlHasMoved := false;
+	
 	end;
 end;
 
@@ -195,7 +193,7 @@ begin
 		
 			colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_COLLIDE_ABLE_0,0, false);
 			eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
-			if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressRight = true and grounded = true)) then moveDir := @RIGHT;  //TODO: AnimationWalkR
+			if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressRight = true and grounded = true)) then moveDir := @RIGHT;
 						
 			if(moveDir = $FF) then begin
 				colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_COLLIDE_ABLE_0,0, false);
@@ -241,7 +239,9 @@ begin
 				end;
 			end; 
 		end;
-		// TODO: Stand animation
+		if(moveDir = @LEFT or moveDir = @UP_LEFT) then SwitchAnimation(id, @ANIM_WALK_L)
+		else if(moveDir = @RIGHT or moveDir = @UP_RIGHT) then SwitchAnimation(id, @ANIM_WALK_R)
+		else if(moveDir = $FF) then SwitchAnimation(id, @ANIM_STAND);
     end
     else if(objectList[id].controlState = @CTRL_STATE_JUMP) then begin
 	    if(objectList[id].controlJumpStep = 0) then moveDir := @UP			// TODO: check for collideable?
@@ -286,7 +286,10 @@ begin
 		if(objectList[id].controlJumpStep >= 3) then begin 
 			objectList[id].controlState := @CTRL_STATE_WALK;
 			objectList[id].b_physFallDown := true;
-		end
+		end;
+		if(moveDir = @LEFT or moveDir = @UP_LEFT) then SwitchAnimation(id, @ANIM_WALK_L)
+		else if(moveDir = @RIGHT or moveDir = @UP_RIGHT) then SwitchAnimation(id, @ANIM_WALK_R)
+		else if(moveDir = $FF) then SwitchAnimation(id, @ANIM_STAND);
 	end 
 	else if((objectList[id].controlState = @CTRL_STATE_SWIM or objectList[id].controlState = @CTRL_STATE_CLIMB) or objectList[id].controlState = @CTRL_STATE_ROBE) then begin
 		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
@@ -315,26 +318,18 @@ begin
 		
 		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
 		eraseObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_ERASE_ABLE_0,0, false);
-		if((colObj = $FF or eraseObj <> $FF) and objectList[id].b_controlPressDown) then moveDir := @DOWN;
-
-	end
-	else if(objectList[id].controlState = @CTRL_STATE_ROBE) then begin
-		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
-		if(colObj <> $FF and objectList[id].b_controlPressLeft = true) then DamageCollide(colObj);
+		if((colObj = $FF or eraseObj <> $FF) and (objectList[id].b_controlPressDown and objectList[id].controlState <> @CTRL_STATE_ROBE)) then moveDir := @DOWN;  //TODO: AnimationSwimR
 		
-		colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_DESTROY_COLLIDE_0,0, false);
-		if(colObj <> $FF and objectList[id].b_controlPressRight = true) then DamageCollide(colObj);
-		
-		colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_DESTROY_COLLIDE_0,0, false);
-		if(colObj <> $FF and objectList[id].b_controlPressUp = true) then DamageCollide(colObj);
-
-		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_DESTROY_COLLIDE_0,0, false);
-		if(colObj <> $FF and objectList[id].b_controlPressDown = true) then DamageCollide(colObj);
-		
-		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
-		eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
-		if((colObj = $FF or eraseObj <> $FF) and objectList[id].b_controlPressLeft) then moveDir := @LEFT;  //TODO: AnimationSwimL
-		
+		if(objectList[id].controlState = @CTRL_STATE_SWIM) then begin
+			if(moveDir = @LEFT or moveDir = @UP) then SwitchAnimation(id, @ANIM_SWIM_L)
+			else if(moveDir = @RIGHT or moveDir = @DOWN) then SwitchAnimation(id, @ANIM_SWIM_R);
+		end
+		else if(objectList[id].controlState = @CTRL_STATE_CLIMB) then begin
+			if(moveDir <> $FF) then SwitchAnimation(id, @ANIM_CLIMB);
+		end
+		else if(objectList[id].controlState = @CTRL_STATE_ROBE) then begin
+			if(moveDir <> $FF) then SwitchAnimation(id, @ANIM_ROBE);
+		end;
 	end;
 	
 	// Do Moves
@@ -347,11 +342,6 @@ begin
 		shift := ConvertShift(gravity, 3);
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
-		if(objectList[id].animFinish = true) then begin
-			objectList[id].animId := @ANIM_WALK_L;
-			objectList[id].animPos := 0;
-			objectList[id].animFinish := false;
-		end;
 	end
 	else if(moveDir = @RIGHT) then begin
 		eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
