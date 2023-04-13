@@ -41,8 +41,7 @@ var
 	@define DIMX 20
 	@define DIMY 12
 	@define DIMZ 4
-	@define MAX_OBJECTS 240
-	@define MAX_CONTROLS 2
+	@define MAX_OBJECTS 190
 	@define MAX_LASER 30
 	@define DIMTILES 240
 	@define DIMANIMS 12
@@ -209,7 +208,7 @@ var
 
 	@define ANIM_CONSIDER_GRAV_IGNORE 0
 	@define ANIM_CONSIDER_GRAV_FULL 1
-	@define ANIM_CONSIDER_GRAV_HALF 2
+	@define ANIM_CONSIDER_GRAV_IGNOREUD 2
 	
 	animObject = class
 		animSeq: array[4] of byte;
@@ -223,15 +222,6 @@ var
 @endblock
 
 @startblock $e000 "Objects"
-	controlObject = record
-		controlJumpStep: byte;
-		controlState: byte;
-		b_controlPermanentSwim: byte;
-		controlFollowKeyRight, controlFollowKeyLeft: byte;
-		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown: byte;
-		controlLastPortal: byte;
-	end;
-
 	gobject = record
 		component0, component1, component2, component3: byte;
 		
@@ -254,9 +244,13 @@ var
 		shiftDir: byte;
 		
 		// Control
-		controlId: byte;
-		b_hasMoved: byte;
-		
+		controlJumpStep: byte;
+		controlState: byte;
+		controlHasMoved: byte;
+		b_controlPermanentSwim: byte;
+		controlFollowKeyRight, controlFollowKeyLeft: byte;
+		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown: byte;  // TODO: bit flag
+		controlLastPortal: byte;
 		// DestroyCollide
 //		destColIgnoreTag: byte;
 //		destColDamageEnergy: byte;
@@ -292,7 +286,6 @@ var
 		pushPullDir: byte;
 	end;
 	objectList : Array[@MAX_OBJECTS] of gobject;
-	controlList : Array[@MAX_CONTROLS] of controlObject;
 @endblock
 
 @startblock $7a00 "Code"
@@ -441,20 +434,13 @@ begin
 	 	animId := objectList[t].animId;
 		pa := #animList[animId];
 	 	if(considerAnimation = true and (objectList[t].component0 & @COMP_ANIMATION_0 = @COMP_ANIMATION_0)) then begin
-			if(pa.considerGravity = @ANIM_CONSIDER_GRAV_IGNORE) then shiftAnim := 0
-			else if(pa.considerGravity = @ANIM_CONSIDER_GRAV_FULL) then begin
+			shiftAnim := 0;
+			if(pa.considerGravity = true) then begin
 				gravity := @DOWN;
 				if((objectList[t].component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := objectList[t].physGravity;
 				if(gravity = @UP) then shiftAnim := 1
 				else if(gravity = @RIGHT) then shiftAnim := 2
 				else if(gravity = @LEFT) then shiftAnim := 3;
-			end
-			else if(pa.considerGravity = @ANIM_CONSIDER_GRAV_HALF) then begin
-				gravity := @DOWN;
-				if((objectList[t].component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := objectList[t].physGravity;
-				if(gravity = @UP) then shiftAnim := 1
-				else if(gravity = @RIGHT) then shiftAnim := 0
-				else if(gravity = @LEFT) then shiftAnim := 1;
 			end;
 			currentTile := pa.animSeq[objectList[t].animPos];
 			currentTile := currentTile + shiftAnim;
@@ -650,7 +636,7 @@ begin
 	GetZLayerPointer(z);
 	
 	if(oldx <> x or oldy <> y) then begin
-		objectList[i].b_hasMoved := true; 
+		objectList[i].controlHasMoved := true; 
 
 		ChangeMapItem(i, oldx, oldy, x, y, z);
 		objectList[i].transX := x;
@@ -855,7 +841,7 @@ begin
 		UpdateFloater(id);
 		ProcessBackObj(id);
 	end;
-	objectList[id].b_hasMoved := false;
+	objectList[id].controlHasMoved := false;
 end;
 
 procedure Update();
@@ -997,27 +983,27 @@ begin
 
 	pa := #animList[@ANIM_SWIM_L];
 	pa.animSeq[0] := $24; 
- 	pa.animSeq[1] := $FF;
+ 	pa.animSeq[1] := $26;
 	pa.animSeq[2] := $FF;
 	pa.animSeq[3] := $FF;
 	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
-	pa.size := 1;
+	pa.size := 2;
 	pa.speed := 2;
 	pa.mode := @ANIM_MODE_LR;
 
 	pa := #animList[@ANIM_SWIM_R];
 	pa.animSeq[0] := $28; 
- 	pa.animSeq[1] := $FF;
+ 	pa.animSeq[1] := $2a;
 	pa.animSeq[2] := $FF;
 	pa.animSeq[3] := $FF;
 	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
-	pa.size := 1;
+	pa.size := 2;
 	pa.speed := 2;
 	pa.mode := @ANIM_MODE_LR;
 
 	pa := #animList[@ANIM_CLIMB];
 	pa.animSeq[0] := $2c; 
- 	pa.animSeq[1] := $30;
+ 	pa.animSeq[1] := $2f;
 	pa.animSeq[2] := $FF;
 	pa.animSeq[3] := $FF;
 	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
@@ -1027,7 +1013,7 @@ begin
 
 	pa := #animList[@ANIM_ROBE];
 	pa.animSeq[0] := $34; 
- 	pa.animSeq[1] := $38;
+ 	pa.animSeq[1] := $36;
 	pa.animSeq[2] := $FF;
 	pa.animSeq[3] := $FF;
 	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
@@ -1040,7 +1026,7 @@ begin
  	pa.animSeq[1] := $16;
 	pa.animSeq[2] := $18;
 	pa.animSeq[3] := $1A;
-	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
 	pa.size := 4;
 	pa.speed := 3;
 	pa.mode := @ANIM_MODE_LR_REPEAT;
@@ -1050,7 +1036,7 @@ begin
  	pa.animSeq[1] := $18;
 	pa.animSeq[2] := $16;
 	pa.animSeq[3] := $14;
-	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
 	pa.size := 4;
 	pa.speed := 3;
 	pa.mode := @ANIM_MODE_LR_REPEAT;
@@ -1125,7 +1111,7 @@ begin
 		x := mod(i,@DIMX);
 		y := i / @DIMX;
 		case c of
-			@LEV_CHARACTER: InitCharacter(x,y,0);
+			@LEV_CHARACTER: InitCharacter(x,y);
 			@LEV_BRICK: InitBrick(x, y);
 			@LEV_STONE: InitStone(x, y);
 			@LEV_WATER: InitWater(x, y);

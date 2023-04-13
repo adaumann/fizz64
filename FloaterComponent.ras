@@ -1,0 +1,83 @@
+procedure UpdateFloater(id: byte);
+var
+	waterId: byte;
+	colObj, eraseObj,z: byte;
+	oldx, oldy, newx, newy, moveDir: byte; 
+	shift: integer;
+	floatDir: byte;	
+begin
+	if(mod(globaltime, 4) = 0) then begin
+		waterId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK2, @COMP_WATER_0, 0);
+		floatDir := $FF;
+		if(waterId <> $FF) then floatDir := objectList[waterId].waterFloaterDir;
+		if(floatDir <> $FF) then begin
+			moveDir := $FF;
+			shift := 0;
+			newx := $FF;
+			newy := $FF;	
+			z := objectList[id].transZ;
+			colObj := GetObjArea(id, z, 3, @COMP_DESTROY_COLLIDE_0,0, true);
+			if(colObj <> $FF and floatDir = @LEFT) then DamageCollide(colObj);
+			
+			colObj := GetObjArea(id, z, 5, @COMP_DESTROY_COLLIDE_0,0, true);
+			if(colObj <> $FF and floatDir = @RIGHT) then DamageCollide(colObj);
+			
+			colObj := GetObjArea(id, z, 1, @COMP_DESTROY_COLLIDE_0,0, true);
+			if(colObj <> $FF and floatDir = @UP) then DamageCollide(colObj);
+
+			colObj := GetObjArea(id, z, 7, @COMP_DESTROY_COLLIDE_0,0, true);
+			if(colObj <> $FF and floatDir = @DOWN) then DamageCollide(colObj);
+			
+			colObj := GetObjArea(id, z, 3, @COMP_COLLIDE_ABLE_0,0, true);
+			eraseObj := GetObjArea(id, z, 3, @COMP_ERASE_ABLE_0,0, true);
+			if((colObj = $FF or eraseObj <> $FF) and floatDir = @LEFT) then moveDir := @LEFT;  //TODO: AnimationSwimL
+
+			colObj := GetObjArea(id, z, 5, @COMP_COLLIDE_ABLE_0,0, true);
+			eraseObj := GetObjArea(id, z, 5, @COMP_ERASE_ABLE_0,0, true);
+			if((colObj = $FF or eraseObj <> $FF) and floatDir = @RIGHT) then moveDir := @RIGHT;  //TODO: AnimationSwimR
+
+			colObj := GetObjArea(id, z, 1, @COMP_COLLIDE_ABLE_0,0, true);
+			eraseObj := GetObjArea(id, z, 1, @COMP_ERASE_ABLE_0,0, true);
+			if((colObj = $FF or eraseObj <> $FF) and floatDir = @UP) then moveDir := @UP;  //TODO: AnimationSwimR
+		
+			colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, true);
+			eraseObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_ERASE_ABLE_0,0, true);
+			if((colObj = $FF or eraseObj <> $FF) and floatDir = @DOWN) then moveDir := @DOWN;  //TODO: AnimationSwimR
+
+			oldx := objectList[id].transX;
+			oldy := objectList[id].transY;
+			
+			if(moveDir = @LEFT) then begin
+				eraseObj := GetObjArea(id, z, 3, @COMP_ERASE_ABLE_0,0, true);
+				if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
+				shift := ConvertShift(@DOWN, 3);
+				newx := CalcPositionX(oldx, Hi(shift));
+				newy := CalcPositionY(oldy, Lo(shift));
+			end
+			else if(moveDir = @RIGHT) then begin
+				eraseObj := GetObjArea(id, z, 5, @COMP_ERASE_ABLE_0,0, true);
+				if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
+				shift := ConvertShift(@DOWN, 5);
+				newx := CalcPositionX(oldx, Hi(shift));
+				newy := CalcPositionY(oldy, Lo(shift));
+			
+			end
+			else if(moveDir = @UP) then begin
+				eraseObj := GetObjArea(id, z, 1, @COMP_ERASE_ABLE_0,0, true);
+				if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
+				shift := ConvertShift(@DOWN, 1);
+				newx := CalcPositionX(oldx, Hi(shift));
+				newy := CalcPositionY(oldy, Lo(shift));
+			end
+			else if(moveDir = @DOWN) then begin
+				eraseObj := GetObjArea(id, z, 7, @COMP_ERASE_ABLE_0,0, true);
+				if(eraseObj <> $FF) then DeletePos(eraseObj, false, false);
+				shift := ConvertShift(@DOWN, 7);
+				newx := CalcPositionX(oldx, Hi(shift));
+				newy := CalcPositionY(oldy, Lo(shift));
+			end;
+
+			if(newx <> $FF) then SetPos(id,oldx, oldy, newx, newy, z);
+		end;
+	end;
+end;

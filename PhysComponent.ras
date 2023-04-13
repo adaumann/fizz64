@@ -53,6 +53,7 @@ begin
 		end;
 			
 		if(fallDown = true) then begin
+			SwitchAnimation(id, @ANIM_STAND);
 			fall := @DOWN;
 			objectList[id].b_physHighFall := true;
 		end

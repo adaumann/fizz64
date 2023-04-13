@@ -1,4 +1,4 @@
-procedure InitCharacter(x: byte, y: byte);
+procedure InitCharacter(x: byte, y: byte, controlId: byte);
 var 
 	id: byte;
 begin
@@ -12,19 +12,20 @@ begin
 		objectList[id].component1 := $00 | @COMP_FLOATER_1 | @COMP_LASER_1;
 		objectList[id].component2 := $00 | @COMP_DESTROY_ABLE_2;
 		objectList[id].component3 := $00;
-		objectList[id].controlState := @CTRL_STATE_WALK;
-		objectList[id].b_controlPressLeft := false;
-		objectList[id].b_controlPressRight := false;
-		objectList[id].b_controlPressUp := false;
-		objectList[id].b_controlPressDown := false;
-		objectList[id].controlHasMoved := false;
+		objectList[id].controlId := controlId;
+		controlList[id].controlState := @CTRL_STATE_WALK;
+		controlList[id].b_controlPressLeft := false;
+		controlList[id].b_controlPressRight := false;
+		controlList[id].b_controlPressUp := false;
+		controlList[id].b_controlPressDown := false;
+		objectList[id].b_hasMoved := false;
 		objectList[id].animId := @ANIM_WALK_L;
 		objectList[id].animPos := 0;
 		objectList[id].animFinish := true;
-		objectList[id].controlFollowKeyLeft := false;
-		objectList[id].controlFollowKeyRight := false;
-		objectList[id].controlLastPortal := $FF;
-		objectList[id].b_controlPermanentSwim := false;
+		controlList[id].controlFollowKeyLeft := false;
+		controlList[id].controlFollowKeyRight := false;
+		controlList[id].controlLastPortal := $FF;
+		controlList[id].b_controlPermanentSwim := false;
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_MAIN;
@@ -230,7 +231,6 @@ begin
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_BACK1;
-		objectList[id].controlLastPortal := $FF;
 		objectList[id].portalFireExitDir := exitDir;
 		lastPortal := $FF;
 		if(portals[0] = $FF) then begin 
