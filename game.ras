@@ -620,8 +620,9 @@ begin
 	@ENDIF
 	tempPointer[oldpos] := $FF;
 	tempPointer[pos] := id;
-	PaintPos(oldpos, false);
-	PaintPos(pos, false);
+	// ##
+	PaintPos(oldpos, true);
+	PaintPos(pos, true);
 end;
 
 procedure UpdateMapItem(id: byte, x: byte, y: byte);
@@ -649,13 +650,13 @@ begin
 	@ENDIF
 	GetZLayerPointer(z);
 	
-	if(oldx <> x or oldy <> y) then begin
+//	if(oldx <> x or oldy <> y) then begin
 		objectList[i].b_hasMoved := true; 
 
 		ChangeMapItem(i, oldx, oldy, x, y, z);
 		objectList[i].transX := x;
 		objectList[i].transY := y;
-	end;
+//	end;
 end;
 
 procedure AddMapItem(Id: byte, x: byte, y: byte, z:byte);

@@ -27,6 +27,7 @@ begin
 		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
 		gravPadId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_GRAVPAD_1, 1);
 		
+		
 		if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_CLIMB_ABLE_1, 1) <> $FF) then begin	
 			objectList[id].b_physFallDown := false;
 			SwitchAnimation(id, @ANIM_CLIMB);
@@ -183,6 +184,10 @@ begin
 			if ((gravity = @RIGHT and shiftDir = @LEFT) or (gravity = @RIGHT and shiftDir = @RIGHT)) then isShift := true;
 		end;
 	end;
+	
+			moveto(12,24,screen);
+		printnumber(controlList[controlId].controlState);
+
 
 	if(controlList[controlId].controlState = @CTRL_STATE_WALK) then begin
 		if(isShift = false) then begin
