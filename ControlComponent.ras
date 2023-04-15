@@ -42,7 +42,7 @@ begin
 				defWalk := false;
 			end;
 		end
-		else if(portalId <> $FF and (controlList[controlId].controlLastPortal = $FF or controlList[controlId].controlLastPortal <> portalId)) then begin
+		else if(portalId <> $FF and (controlList[controlId].controlLastPortal = $FF or controlList[controlId].controlLastPortal = portalId)) then begin
 			newx := $FF;
 			newy := $FF;
 			if(portals[0] <> $FF and portals[1] <> $FF) then begin
@@ -73,12 +73,13 @@ begin
 		end;
 		
 		if(defWalk = true) then begin 
-			if(controlList[controlId].controlState <> @CTRL_STATE_JUMP) then	begin 
+			if(controlList[controlId].controlState <> @CTRL_STATE_JUMP) then	begin
+				if(objectList[id].animId <> @ANIM_WALK_L and objectList[id].animId <> @ANIM_WALK_R) then SwitchAnimation(id, @ANIM_STAND);
 				controlList[controlId].controlState := @CTRL_STATE_WALK;
  				objectList[id].b_physFallDown := true;
  			end;
 		end;
-	
+		if(portalId = $FF) then controlList[controlId].controlLastPortal := $FF;
 	end;
 end;
 
@@ -184,11 +185,6 @@ begin
 			if ((gravity = @RIGHT and shiftDir = @LEFT) or (gravity = @RIGHT and shiftDir = @RIGHT)) then isShift := true;
 		end;
 	end;
-	
-			moveto(12,24,screen);
-		printnumber(controlList[controlId].controlState);
-
-
 	if(controlList[controlId].controlState = @CTRL_STATE_WALK) then begin
 		if(isShift = false) then begin
 			colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
@@ -254,7 +250,7 @@ begin
 		end;
 		if(moveDir = @LEFT or moveDir = @UP_LEFT) then SwitchAnimation(id, @ANIM_WALK_L)
 		else if(moveDir = @RIGHT or moveDir = @UP_RIGHT) then SwitchAnimation(id, @ANIM_WALK_R)
-		else if(moveDir = $FF) then SwitchAnimation(id, @ANIM_STAND);
+//		else if(moveDir = $FF) then SwitchAnimation(id, @ANIM_STAND);
     end
     else if(controlList[controlId].controlState = @CTRL_STATE_JUMP) then begin
 	    if(controlList[controlId].controlJumpStep = 0) then moveDir := @UP			// TODO: check for collideable?
@@ -395,6 +391,9 @@ begin
 		newx := CalcPositionX(oldx, Hi(shift));
 		newy := CalcPositionY(oldy, Lo(shift));
 	end;
-	if(newx <> $FF) then SetPos(id,oldx, oldy, newx, newy, objectList[id].transZ);
+	if(newx <> $FF) then begin 
+		CycleAnimation(id);
+		SetPos(id,oldx, oldy, newx, newy, objectList[id].transZ);
+	end;	
 end;
 
