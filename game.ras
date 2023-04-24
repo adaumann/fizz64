@@ -45,7 +45,7 @@ var
 	@define MAX_CONTROLS 2
 	@define MAX_LASER 30
 	@define DIMTILES 240
-	@define DIMANIMS 12
+	@define DIMANIMS 8
 	@define Z_BACK2 3
 	@define Z_BACK1 2
 	@define Z_MAIN 1
@@ -77,7 +77,11 @@ var
 	@define PUSHDIR 1
 	@define PULLDIR $FF
 	@define LASER_TYPE_USER 10 
-
+	@define LASER_TYPE_ENV 11
+	@define REND_TYPE_TILE 0
+	@define REND_TYPE_SPRITE 1
+	@define REND_TYPE_BYTE 2
+	
 	@define ANIM_MODE_FIX 0
 	@define ANIM_MODE_LR 1
 	@define ANIM_MODE_LR_REPEAT 2
@@ -90,11 +94,7 @@ var
 	@define ANIM_SWIM_R 4
 	@define ANIM_CLIMB 5
 	@define ANIM_ROBE 6
-	@define ANIM_WATER_U 7
-	@define ANIM_WATER_D 8
-	@define ANIM_WATER_L 9
-	@define ANIM_WATER_R 10
-	@define ANIM_PORTAL 11
+	@define ANIM_PORTAL 7
 	
 	collAreaUp: array[9] of byte = (8,7,6,5,4,3,2,1,0);
 	collAreaLeft: array[9] of byte = (2,5,8,1,4,7,0,3,6);
@@ -146,6 +146,7 @@ var
 	@define COMP_LASERTRANS_ABLE_2  %00000100
 	@define COMP_LASERONCE_2        %00001000
 	@define COMP_PORTAL_ACTIVATE_2  %00010000
+	@define COMP_FONTAINE_2         %00100000
  	// https://www.aivosto.com/articles/petscii.pdf
  	@define LEV_CHARACTER $40
 	@define LEV_BRICK $61
@@ -179,7 +180,10 @@ var
 	@define LEV_PUSH_BOX $64
 	@define LEV_PULL_BOX $65
 	@define LEV_PORTAL_ACTIVATE  $63
-	
+	@define LEV_FONTAINE_DOWN $5b
+	@define LEV_FONTAINE_LEFT $28
+	@define LEV_FONTAINE_RIGHT $29
+	@define LEV_FONTAINE_UP $5d
 	@define CTRL_STATE_WALK 0
 	@define CTRL_STATE_CLIMB 1
 	@define CTRL_STATE_ROBE 2
@@ -188,7 +192,7 @@ var
 	
 	
 //	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                  aa");
-    lev0: string = ("}}}}}}}}}a  a  a  aaa   a aa  a  aa    aa6    aaa  aa      aaa a      2    ^ ^Yaa     o   ^      ^Yaa      ^         ^Yaa     ^          ^Yaa             h    aa   ------====hh   aa mn    @ b    =  4aa   ====ss ss8 h o aaaa    aaaaaaaaaaa aa");
+    lev0: string = ("a{{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a     [ 2    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa&  ------====hh   aa&mn    @ b    =  4aa   ====ss ss8 h o aaaa    {{{{{}}}}aa aa");
 //	lev0: string = ("    ccccccccccccc                                               @                                          t u        Yaa     ^  b b b b ^Yaa    b b b b b     aa  b b b b b   o   aa        d e o     aa   n d  gg  m  e  aaaaaaaaaaaaaaaaaaaaaa");
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
@@ -243,7 +247,7 @@ var
 //		rendLastXpos, rendLastYpos, rendLastPathElem, rendMoveoffsetx, rendMoveoffsety, rendCenterX, rendCentery: byte;
 //		rendEnergyX, rendEnergyY, rendEnergyPercent: byte; 
 		rendTilePos: byte;
-		b_rendAsSprite: byte;
+		rendType: byte;
 		rendSpriteNum: byte;
 		
 		// Physics
@@ -332,6 +336,59 @@ begin
 	screenmemory[41]:=tilesetColors[c+41]+8;;
 end;
 
+procedure print1x1block(x,y,c: byte);
+begin
+	@IFDEF OVERFLOW_CHECK
+		if(x = $FF or y = $FF) then SCREEN_BG_COL:=BROWN;
+		if(x = @DIMX or y = @DIMY) then SCREEN_BG_COL:=YELLOW;
+	@ENDIF
+	
+	moveto(x*2,y*2,screen);
+	screenmemory[0]:=c;
+	screenmemory[1]:=c;
+	screenmemory[40]:=c;
+	screenmemory[41]:=c;
+
+	moveto(x*2,y*2,hi(SCREEN_COL_LOC));
+	screenmemory[0]:=tilesetColors[c]+8;
+	screenmemory[1]:=tilesetColors[c]+8;
+	screenmemory[40]:=tilesetColors[c]+8;;
+	screenmemory[41]:=tilesetColors[c]+8;;
+end;
+
+procedure CycleWater();
+var
+	sp: pointer;
+	dp: pointer;
+	waterStep : byte;
+begin	
+	waterStep := mod(globaltime,4);
+		 
+	sp := @tilesetLoc1 + (240 + waterStep) * 8;
+	dp := @tilesetLoc1 + 22*8;
+	MemCpyFast(sp, 0, dp,8);
+	dp := @tilesetLoc2 + 22*8;
+	MemCpyFast(sp, 0, dp,8);
+	
+	sp := @tilesetLoc1 + (243 - waterStep) * 8;
+	dp := @tilesetLoc1 + 23*8;
+	MemCpyFast(sp, 0, dp,8);
+	dp := @tilesetLoc2 + 23*8;
+	MemCpyFast(sp, 0, dp,8);
+	
+	sp := @tilesetLoc1 + (244 + waterStep) * 8;
+	dp := @tilesetLoc1 + 62*8;
+	MemCpyFast(sp, 0, dp,8);
+	dp := @tilesetLoc2 + 62*8;
+	MemCpyFast(sp, 0, dp,8);
+	
+	sp := @tilesetLoc1 + (247 - waterStep) * 8;
+	dp := @tilesetLoc1 + 63*8;
+	MemCpyFast(sp, 0, dp,8);
+	dp := @tilesetLoc2 + 63*8;
+	MemCpyFast(sp, 0, dp,8);
+end;
+
 procedure PrintText(x: byte);
 begin
 	@IFDEF OVERFLOW_CHECK
@@ -403,6 +460,57 @@ begin
 	end;
 end;
 
+function PaintPosAnim(t: byte, considerAnimation: boolean) : byte;
+var
+	x,y: byte;
+	animId: byte;
+	hideSprite: boolean;
+	pa: pointer of animObject;
+	currentTile: byte;
+	gravity: byte;
+	shiftAnim: byte;
+	
+begin
+ 	animId := objectList[t].animId;
+	pa := #animList[animId];
+ 	if(considerAnimation = true and (objectList[t].component0 & @COMP_ANIMATION_0 = @COMP_ANIMATION_0)) then begin
+		if(pa.considerGravity = @ANIM_CONSIDER_GRAV_IGNORE) then shiftAnim := 0
+		else if(pa.considerGravity = @ANIM_CONSIDER_GRAV_FULL) then begin
+			gravity := @DOWN;
+			if((objectList[t].component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := objectList[t].physGravity;
+			if(gravity = @UP) then shiftAnim := 1
+			else if(gravity = @RIGHT) then shiftAnim := 2
+			else if(gravity = @LEFT) then shiftAnim := 3;
+		end;
+/*			else if(pa.considerGravity = @ANIM_CONSIDER_GRAV_HALF) then begin
+			gravity := @DOWN;
+			if((objectList[t].component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := objectList[t].physGravity;
+			if(gravity = @UP) then shiftAnim := 1
+			else if(gravity = @RIGHT) then shiftAnim := 0
+			else if(gravity = @LEFT) then shiftAnim := 1;
+		end;*/
+		currentTile := pa.animSeq[objectList[t].animPos];
+		currentTile := currentTile + shiftAnim;
+		if(pa.mode = @ANIM_MODE_FIX) then objectList[t].animPos := 0
+		else if(pa.mode = @ANIM_MODE_LR and objectList[t].animFinish = false) then begin
+			if(objectList[t].animPos = pa.size - 1) then begin
+				objectList[t].animPos := 0;
+				objectList[t].animFinish := true;
+			end
+			else if(mod(globaltime, pa.speed) = 0) then inc(objectList[t].animPos);
+		end
+		else if(pa.mode = @ANIM_MODE_LR_REPEAT) then begin
+			if(objectList[t].animPos = pa.size - 1) then begin
+				objectList[t].animPos := 0;
+				objectList[t].animFinish := false;
+			end
+			else if(mod(globaltime, pa.speed) = 0) then inc(objectList[t].animPos);
+		end;				
+	end
+	else currentTile := objectList[t].rendTilePos;
+	PaintPosAnim := currentTile;
+end;
+
 procedure PaintPos(pos: byte, considerAnimation: boolean);
 var
 	x,y: byte;
@@ -426,62 +534,29 @@ begin
 
  	if(mapfront[pos] <> 255) then begin
 	 	t := mapfront[pos];
+	 	currentTile := PaintPosAnim(t, considerAnimation);
 	 	hideSprite := true;
  	end
  	else if(mapmain[pos] <> 255) then begin
 	 	t := mapmain[pos];
+	 	currentTile := PaintPosAnim(t, true);
  	end
  	else if(mapback1[pos] <> 255) then begin
 	 	t := mapback1[pos];
+	 	currentTile := PaintPosAnim(t, considerAnimation);
  	end
 	else if(mapback2[pos] <> 255) then begin
 	 	t := mapback2[pos];
+	 	currentTile := PaintPosAnim(t, considerAnimation);
  	end;
 	
- 	if(t <> 255) then begin
-	 	animId := objectList[t].animId;
-		pa := #animList[animId];
-	 	if(considerAnimation = true and (objectList[t].component0 & @COMP_ANIMATION_0 = @COMP_ANIMATION_0)) then begin
-			if(pa.considerGravity = @ANIM_CONSIDER_GRAV_IGNORE) then shiftAnim := 0
-			else if(pa.considerGravity = @ANIM_CONSIDER_GRAV_FULL) then begin
-				gravity := @DOWN;
-				if((objectList[t].component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := objectList[t].physGravity;
-				if(gravity = @UP) then shiftAnim := 1
-				else if(gravity = @RIGHT) then shiftAnim := 2
-				else if(gravity = @LEFT) then shiftAnim := 3;
-			end;
-/*			else if(pa.considerGravity = @ANIM_CONSIDER_GRAV_HALF) then begin
-				gravity := @DOWN;
-				if((objectList[t].component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := objectList[t].physGravity;
-				if(gravity = @UP) then shiftAnim := 1
-				else if(gravity = @RIGHT) then shiftAnim := 0
-				else if(gravity = @LEFT) then shiftAnim := 1;
-			end;*/
-			currentTile := pa.animSeq[objectList[t].animPos];
-			currentTile := currentTile + shiftAnim;
-			if(pa.mode = @ANIM_MODE_FIX) then objectList[t].animPos := 0
-			else if(pa.mode = @ANIM_MODE_LR and objectList[t].animFinish = false) then begin
-				if(objectList[t].animPos = pa.size - 1) then begin
-					objectList[t].animPos := 0;
-					objectList[t].animFinish := true;
-				end
-				else if(mod(globaltime, pa.speed) = 0) then inc(objectList[t].animPos);
-			end
-			else if(pa.mode = @ANIM_MODE_LR_REPEAT) then begin
-				if(objectList[t].animPos = pa.size - 1) then begin
-					objectList[t].animPos := 0;
-					objectList[t].animFinish := false;
-				end
-				else if(mod(globaltime, pa.speed) = 0) then inc(objectList[t].animPos);
-			end;				
-		end
-		else currentTile := objectList[t].rendTilePos;
-		
-	 	if(objectList[t].b_rendAsSprite = true and hideSprite = false) then begin
+	if(t <> $FF) then begin	
+	 	if(objectList[t].rendType = @REND_TYPE_SPRITE and hideSprite = false) then
 		 	PrintSprite(x,y,currentTile,objectList[t].rendSpriteNum)
-		 end
-	 	else
-	 		print2x2block(x,y,currentTile);
+	 	else if(objectList[t].rendType = @REND_TYPE_TILE) then 
+	 		print2x2block(x,y,currentTile)
+	 	else 
+	 		print1x1block(x,y,currentTile);
 	end
 	else print2x2blockEmpty(x,y);
 end;
@@ -742,7 +817,7 @@ var
 begin
 	i := 0;
 	found := false;
-	while (i < countDyn and found = false)  do
+	while (i < countDyn - 1 and found = false)  do
 	begin
 		if(dynObjectList[i] = id) then 
 			found := true
@@ -766,7 +841,7 @@ var
 begin
 	i := 0;
 	found := false;
-	while (i < countAnim and found = false) do
+	while (i < countAnim - 1 and found = false) do
 	begin
 		if(animObjectList[i] = id) then 
 			found := true
@@ -792,7 +867,7 @@ begin
 		DeleteMapItem(id, objectList[id].transX, objectList[id].transY, objectList[id].transZ);
 		if(isDyn = true) then DeleteDynObject(id); 
 		if(isAnim = true) then DeleteAnimObject(id);
-		PaintPos(objectList[id].transX + objectList[id].transY * @DIMX, false);
+		PaintPos(objectList[id].transX + objectList[id].transY * @DIMX, true);
 	end; 
 end;	
 
@@ -852,6 +927,7 @@ end;
 @include "ControlComponent.ras"
 @include "PhysComponent.ras"
 @include "FloaterComponent.ras"
+@include "FontaineComponent.ras"
 @include "LaserComponent.ras"
 
 procedure UpdateObject(id: byte);
@@ -871,6 +947,9 @@ begin
 	if(objectList[id].component1 & @COMP_FLOATER_1 = @COMP_FLOATER_1) then begin 
 		UpdateFloater(id);
 		ProcessBackObj(id);
+	end;
+	if(objectList[id].component2 & @COMP_FONTAINE_2 = @COMP_FONTAINE_2) then begin 
+		UpdateFontaine(id);
 	end;
 	objectList[id].b_hasMoved := false;
 end;
@@ -943,6 +1022,8 @@ begin
 	closeIrq();
 //	setcharsetandscreenlocation(@tilesetLoc1,$4400);
 end;
+
+
 
 procedure InitAnimations();
 var
@@ -1052,46 +1133,6 @@ begin
 	pa.speed := 1;
 	pa.mode := @ANIM_MODE_MANUAL;
 
-	pa := #animList[@ANIM_WATER_U];
-	pa.animSeq[0] := $14; 
- 	pa.animSeq[1] := $16;
-	pa.animSeq[2] := $18;
-	pa.animSeq[3] := $1A;
-	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
-	pa.size := 4;
-	pa.speed := 3;
-	pa.mode := @ANIM_MODE_LR_REPEAT;
-
-	pa := #animList[@ANIM_WATER_D];
-	pa.animSeq[0] := $1A; 
- 	pa.animSeq[1] := $18;
-	pa.animSeq[2] := $16;
-	pa.animSeq[3] := $14;
-	pa.considerGravity := @ANIM_CONSIDER_GRAV_FULL;
-	pa.size := 4;
-	pa.speed := 3;
-	pa.mode := @ANIM_MODE_LR_REPEAT;
-
-	pa := #animList[@ANIM_WATER_L];
-	pa.animSeq[0] := $0C; 
- 	pa.animSeq[1] := $0E;
-	pa.animSeq[2] := $10;
-	pa.animSeq[3] := $12;
-	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
-	pa.size := 4;
-	pa.speed := 3;
-	pa.mode := @ANIM_MODE_LR_REPEAT;
-
-	pa := #animList[@ANIM_WATER_R];
-	pa.animSeq[0] := $12; 
- 	pa.animSeq[1] := $10;
-	pa.animSeq[2] := $0E;
-	pa.animSeq[3] := $0C;
-	pa.considerGravity := false;
-	pa.size := 4;
-	pa.speed := 3;
-	pa.mode := @ANIM_MODE_LR_REPEAT;
-	
 	pa := #animList[@ANIM_PORTAL];
 	pa.animSeq[0] := $A6; 
  	pa.animSeq[1] := $A8;
@@ -1146,10 +1187,10 @@ begin
 			@LEV_BRICK: InitBrick(x, y);
 			@LEV_STONE: InitStone(x, y);
 			@LEV_WATER: InitWater(x, y);
-			@LEV_WATER_UP: InitWaterFlow(x, y, 20, @UP, @ANIM_WATER_U);
-			@LEV_WATER_DOWN: InitWaterFlow(x, y, 26, @DOWN, @ANIM_WATER_D);
-			@LEV_WATER_LEFT: InitWaterFlow(x, y, 12, @LEFT, @ANIM_WATER_L);
-			@LEV_WATER_RIGHT: InitWaterFlow(x, y, 18, @RIGHT, @ANIM_WATER_R);
+			@LEV_WATER_UP: InitWaterFlow(x, y, 23, @UP);
+			@LEV_WATER_DOWN: InitWaterFlow(x, y, 22, @DOWN);
+			@LEV_WATER_LEFT: InitWaterFlow(x, y, 62, @LEFT);
+			@LEV_WATER_RIGHT: InitWaterFlow(x, y, 63, @RIGHT);
 			@LEV_SAND: InitSand(x, y);
 			@LEV_SHIFT_UP: InitShiftPlattform(x, y,4,@UP);
 			@LEV_SHIFT_DOWN: InitShiftPlattform(x, y,6,@DOWN);
@@ -1172,7 +1213,10 @@ begin
 			@LEV_LASER_TRANSPORT_ONCE: InitLaserTransportOnce(x,y);
 			@LEV_PUSH_BOX: InitBox(x,y, 162 , 1);
 			@LEV_PULL_BOX: InitBox(x,y, 164 , -1);
-			@LEV_PORTAL_ACTIVATE: InitPortalActivate(x,y);
+			@LEV_FONTAINE_DOWN: InitFontaine(x,y, 176, @DOWN);
+			@LEV_FONTAINE_UP: InitFontaine(x,y,178,@UP);
+			@LEV_FONTAINE_LEFT: InitFontaine(x,y, 180, @LEFT);
+			@LEV_FONTAINE_RIGHT: InitFontaine(x,y,182,@RIGHT);
 		end;
 	end;
 end;
@@ -1208,6 +1252,7 @@ begin
 			inc(globaltime);	
 			Update();
 			Animate();
+			CycleWater();
 	//		PaintFull();
 			frameStatus := 1;
 		end;

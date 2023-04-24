@@ -3,7 +3,7 @@ var
 	i,c: byte;
 	d: byte;
 begin
-	for i:= c to @DIMTILES do begin
+	for i:= 0 to @DIMTILES do begin
 		c := mapfront[i];
 		if(c <> $FF and (objectList[c].component2 & @COMP_LASERBEAN_2 = @COMP_LASERBEAN_2 and objectList[c].laserTag = laserTag)) then begin 
 			DeletePos(c, false, false);
@@ -63,109 +63,110 @@ begin
 		destroyAbleId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_DESTROY_ABLE_2, 2);
 		if ((collideId <> $FF and mirrorId = $FF) and destroyAbleId = $FF) then collide := true
 		else begin
-			laserId := GetId();
-			if(laserId <> $FF and mapfront[laserx + lasery * @DIMX] = $FF) then begin				
-				if (xdir = -1 and ydir = 0) then objectList[laserId].rendTilePos := 184
-				else if (xdir = 1 and ydir = 0) then objectList[laserId].rendTilePos := 184
-				else if (xdir = 0 and ydir = -1) then objectList[laserId].rendTilePos := 186
-				else if (xdir = 0 and ydir = 1) then objectList[laserId].rendTilePos := 186;
-				objectList[laserId].b_rendAsSprite := false;
-				objectList[laserId].component0 := $00 | @COMP_DESTROY_COLLIDE_0;
-				objectList[laserId].component1 := $00;
-				objectList[laserId].component2 := $00 | @COMP_LASERBEAN_2;
-				objectList[laserId].component3 := $00;
-				objectList[laserId].transX := laserx;
-				objectList[laserId].transY := lasery;
-				objectList[laserId].transZ := @Z_FRONT;
-				objectList[laserId].laserTag := id;
-
-				turn := $FF;
-				if(mirrorId <> $FF) then begin
-					turn := objectList[mirrorId].mirrorTurn;
-					// laser left
-					if (xdir < 0 and ydir = 0) then begin
-						if (turn = @TURN_RIGHT) then begin
-							xdir := 0;
-							ydir := -1;
-							objectList[laserId].rendTilePos := 194;
-						end 
-						else if (turn = @TURN_LEFT) then begin
-							xdir := 0;
-							ydir := 1;
-							objectList[laserId].rendTilePos := 196;
-						end
-						else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 188;
-					end
-					// laser right
-					else if (xdir > 0 and ydir = 0) then begin
-						if (turn = @TURN_RIGHT) then begin
-							xdir := 0;
-							ydir := 1;
-							objectList[laserId].rendTilePos := 194;
-						end 
-						else if (turn = @TURN_LEFT) then begin
-							xdir := 0;
-							ydir := -1;
-							objectList[laserId].rendTilePos := 198;
-						end
-						else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 188;
-					end
-						// laser up
-					else if (xdir = 0 and ydir < 0) then begin
-						if (turn = @TURN_RIGHT) then begin
-								xdir := 1;
-								ydir := 0;
+			if (mapfront[laserx + lasery * @DIMX] = $FF) then begin
+				laserId := GetId();
+				if(laserId <> $FF) then begin				
+					if (xdir = -1 and ydir = 0) then objectList[laserId].rendTilePos := 184
+					else if (xdir = 1 and ydir = 0) then objectList[laserId].rendTilePos := 184
+					else if (xdir = 0 and ydir = -1) then objectList[laserId].rendTilePos := 186
+					else if (xdir = 0 and ydir = 1) then objectList[laserId].rendTilePos := 186;
+					objectList[laserId].rendType := @REND_TYPE_TILE;
+					objectList[laserId].component0 := $00 | @COMP_DESTROY_COLLIDE_0;
+					objectList[laserId].component1 := $00;
+					objectList[laserId].component2 := $00 | @COMP_LASERBEAN_2;
+					objectList[laserId].component3 := $00;
+					objectList[laserId].transX := laserx;
+					objectList[laserId].transY := lasery;
+					objectList[laserId].transZ := @Z_FRONT;
+					objectList[laserId].laserTag := id;
+	
+					turn := $FF;
+					if(mirrorId <> $FF) then begin
+						turn := objectList[mirrorId].mirrorTurn;
+						// laser left
+						if (xdir < 0 and ydir = 0) then begin
+							if (turn = @TURN_RIGHT) then begin
+								xdir := 0;
+								ydir := -1;
 								objectList[laserId].rendTilePos := 194;
-						end 
-						else if (turn = @TURN_LEFT) then begin
-								xdir := -1;
-								ydir := 0;
+							end 
+							else if (turn = @TURN_LEFT) then begin
+								xdir := 0;
+								ydir := 1;
 								objectList[laserId].rendTilePos := 196;
+							end
+							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 188;
 						end
-						else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 190;
-					end
-						// laser down
-					else if (xdir = 0 and ydir > 0) then begin
-						if (turn = @TURN_RIGHT) then begin
-								xdir := -1;
-								ydir := 0;
+						// laser right
+						else if (xdir > 0 and ydir = 0) then begin
+							if (turn = @TURN_RIGHT) then begin
+								xdir := 0;
+								ydir := 1;
+								objectList[laserId].rendTilePos := 194;
+							end 
+							else if (turn = @TURN_LEFT) then begin
+								xdir := 0;
+								ydir := -1;
 								objectList[laserId].rendTilePos := 198;
-						end else if (turn = @TURN_LEFT) then begin
-								xdir := 1;
-								ydir := 0;
-								objectList[laserId].rendTilePos := 196;
+							end
+							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 188;
 						end
-						else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 190;
+							// laser up
+						else if (xdir = 0 and ydir < 0) then begin
+							if (turn = @TURN_RIGHT) then begin
+									xdir := 1;
+									ydir := 0;
+									objectList[laserId].rendTilePos := 194;
+							end 
+							else if (turn = @TURN_LEFT) then begin
+									xdir := -1;
+									ydir := 0;
+									objectList[laserId].rendTilePos := 196;
+							end
+							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 190;
+						end
+							// laser down
+						else if (xdir = 0 and ydir > 0) then begin
+							if (turn = @TURN_RIGHT) then begin
+									xdir := -1;
+									ydir := 0;
+									objectList[laserId].rendTilePos := 198;
+							end else if (turn = @TURN_LEFT) then begin
+									xdir := 1;
+									ydir := 0;
+									objectList[laserId].rendTilePos := 196;
+							end
+							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 190;
+						end;
 					end;
+					AddMapItem(laserId, laserx, lasery, @Z_FRONT);
+					PaintPos(laserx + lasery *@DIMX, false);
 				end;
-				AddMapItem(laserId, laserx, lasery, @Z_FRONT);
-				PaintPos(laserx + lasery *@DIMX, false);
+				
+				portalId := GetObjectByPosFilterComp(laserx, lasery, @Z_BACK1, @COMP_PORTAL_1, 1);
+				if(portalId <> $FF and (portals[0] <> $FF and portals[1] <> $FF)) then begin
+					if(portals[0] = portalId) then targetPortal := portals[1]
+					else targetPortal := portals[0];
+					laserx := objectList[targetPortal].transX;
+					lasery := objectList[targetPortal].transY;
+					if(objectList[targetPortal].portalFireExitDir = @UP) then begin
+						xdir := 0;
+						ydir := -1;				
+					end
+					else if (objectList[targetPortal].portalFireExitDir = @DOWN) then begin
+						xdir := 0;
+						ydir := 1;				
+					end
+					else if (objectList[targetPortal].portalFireExitDir = @LEFT) then begin
+						xdir := -1;
+						ydir := 0;				
+					end
+					else if (objectList[targetPortal].portalFireExitDir = @RIGHT) then begin
+						xdir := 1;
+						ydir := 0;				
+					end
+				end;
 			end;
-			
-			portalId := GetObjectByPosFilterComp(laserx, lasery, @Z_BACK1, @COMP_PORTAL_1, 1);
-			if(portalId <> $FF and (portals[0] <> $FF and portals[1] <> $FF)) then begin
-				if(portals[0] = portalId) then targetPortal := portals[1]
-				else targetPortal := portals[0];
-				laserx := objectList[targetPortal].transX;
-				lasery := objectList[targetPortal].transY;
-				if(objectList[targetPortal].portalFireExitDir = @UP) then begin
-					xdir := 0;
-					ydir := -1;				
-				end
-				else if (objectList[targetPortal].portalFireExitDir = @DOWN) then begin
-					xdir := 0;
-					ydir := 1;				
-				end
-				else if (objectList[targetPortal].portalFireExitDir = @LEFT) then begin
-					xdir := -1;
-					ydir := 0;				
-				end
-				else if (objectList[targetPortal].portalFireExitDir = @RIGHT) then begin
-					xdir := 1;
-					ydir := 0;				
-				end
-			end;
-
 			
 			lastx := laserx;
 			lasty := lasery;

@@ -1,0 +1,124 @@
+procedure ClearAllWater(laserTag: byte);
+var
+	i,c: byte;
+	d: byte;
+begin
+	for i:= 0 to @DIMTILES do begin
+		c := mapback2[i];
+		
+		if(c <> $FF and (objectList[c].component0 & @COMP_WATER_0 = @COMP_WATER_0 and objectList[c].laserTag = laserTag)) then begin 
+			DeletePos(c, false, false);
+		end;
+	end;
+end;
+
+procedure IncCurrentWater(id: byte);
+begin
+	if(objectList[id].currentLaser < @MAX_LASER) then objectList[id].currentLaser := objectList[id].currentLaser + @LASER_STEP; 
+end;
+
+procedure FireWater(id: byte, xpos, ypos: byte, xdir, ydir: byte);
+var
+	laserId: byte;
+	collideId, floaterId: byte;
+	collide: boolean;
+	laserx, lasery, lastx, lasty: byte;
+	countLaser: byte;
+	dir: byte;
+begin	
+	collide := false;
+	lastx := xpos;
+	lasty := ypos;
+	laserx := CalcPositionX(xpos, xdir);
+	lasery := CalcPositionY(ypos, ydir);
+	countLaser := 0;
+	collideId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
+	floaterId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_FLOATER_1, 1);
+	if (collideId <> $FF and floaterId = $FF) then collide := true;
+	while (collide = false and countLaser < objectList[id].currentLaser) do begin
+		collideId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
+		floaterId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_FLOATER_1, 1);
+		if (collideId <> $FF and floaterId = $FF) then begin
+			collide := true;
+		end
+		else begin
+			if (mapback2[laserx + lasery * @DIMX] = $FF) then begin
+				laserId := GetId();
+				if(laserId <> $FF) then begin				
+					if (xdir = -1 and ydir = 0) then begin 
+						objectList[laserId].rendTilePos := 62;
+						objectList[laserId].waterFloaterDir := @LEFT;
+					end
+					else if (xdir = 1 and ydir = 0) then begin
+						objectList[laserId].rendTilePos := 63;
+						objectList[laserId].waterFloaterDir := @RIGHT;
+					end
+					else if (xdir = 0 and ydir = -1) then begin
+					    objectList[laserId].rendTilePos := 23;
+						objectList[laserId].waterFloaterDir := @UP;
+					end
+					else if (xdir = 0 and ydir = 1) then begin
+						objectList[laserId].rendTilePos := 22;
+						objectList[laserId].waterFloaterDir := @DOWN;
+					end;
+					objectList[laserId].rendType := @REND_TYPE_BYTE;
+					objectList[laserId].component0 := $00 | @COMP_COLLIDE_ABLE_0|@COMP_WATER_0;
+					objectList[laserId].component1 := $00;
+					objectList[laserId].component2 := $00; 
+					objectList[laserId].component3 := $00;
+					objectList[laserId].transX := laserx;
+					objectList[laserId].transY := lasery;
+					objectList[laserId].transZ := @Z_BACK2;
+					objectList[laserId].laserTag := id;
+					AddMapItem(laserId, laserx, lasery, @Z_BACK2);
+					PaintPos(laserx + lasery *@DIMX, false);
+				end;
+			end;
+			lastx := laserx;
+			lasty := lasery;
+			laserx := CalcPositionX(laserx, xdir);
+			lasery := CalcPositionY(lasery, ydir);
+			inc(countLaser);
+		end;
+	end;
+	
+end;
+
+
+procedure UpdateFontaine(id: byte);
+var
+	id1,i,x,y: byte;
+	pos,id2: byte;
+begin
+	ClearAllWater(id);
+	objectList[id].laserDir := $FF;
+	if(objectList[id].laserType = @LEFT) then begin
+		if (objectList[id].lastLaserDir <> @LEFT) then objectList[id].currentLaser := 0;
+		IncCurrentWater(id);
+		FireWater(id, objectList[id].transX,objectList[id].transY, -1, 0);
+		objectList[id].laserDir := @LEFT;
+		objectList[id].lastLaserDir := objectList[id].laserDir;
+	end
+	else if	(objectList[id].laserType = @RIGHT) then begin
+		if (objectList[id].lastLaserDir <> @RIGHT) then objectList[id].currentLaser := 0;
+		IncCurrentWater(id);
+		FireWater(id, objectList[id].transX,objectList[id].transY, 1, 0);
+		objectList[id].laserDir := @RIGHT;
+		objectList[id].lastLaserDir := objectList[id].laserDir;
+	end
+	else if	(objectList[id].laserType = @UP) then begin
+		if (objectList[id].lastLaserDir <> @UP) then objectList[id].currentLaser := 0;
+		IncCurrentWater(id);
+		FireWater(id, objectList[id].transX,objectList[id].transY, 0, -1);
+		objectList[id].laserDir := @UP;
+		objectList[id].lastLaserDir := objectList[id].laserDir;
+	end
+	else if	(objectList[id].laserType = @DOWN) then begin
+		if (objectList[id].lastLaserDir <> @DOWN) then objectList[id].currentLaser := 0;
+		IncCurrentWater(id);
+		FireWater(id, objectList[id].transX,objectList[id].transY, 0, 1);
+		objectList[id].laserDir := @DOWN;
+		objectList[id].lastLaserDir := objectList[id].laserDir;
+	end;
+	if(objectList[id].laserDir = $FF) then objectList[id].currentLaser := 0;
+end;

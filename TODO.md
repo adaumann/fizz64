@@ -1,5 +1,5 @@
 * Spalte 0 Problem
-* Portal Wechsel funktiniert nicht
+* Portal Wechsel funktiniert nicht, ok
 * Portal Swap nur auf letzten, kein Wechsel
 * Laden von Levels
 * Events/Obersables
