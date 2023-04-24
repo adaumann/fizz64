@@ -19,7 +19,7 @@ begin
 		controlList[controlId].b_controlPressUp := false;
 		controlList[controlId].b_controlPressDown := false;
 		controlList[controlId].controlLastPortal := $FF;
-		objectList[id].b_hasMoved := false;
+		objectList[id].b_hasMoved := true;
 		objectList[id].animId := @ANIM_WALK_L;
 		objectList[id].animPos := 0;
 		objectList[id].animFinish := true;
@@ -125,6 +125,7 @@ begin
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_BACK2;
 		objectList[id].waterFloaterDir := $FF;
+		objectList[id].laserTag := $FF;
 		AddMapItem(id, x, y, @Z_BACK2);
 	end;
 end;
@@ -145,6 +146,7 @@ begin
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_BACK2;
 		objectList[id].waterFloaterDir := grav;
+		objectList[id].laserTag := $FF;
 		AddMapItem(id, x, y, @Z_BACK2);
 	end;
 end;
@@ -405,3 +407,26 @@ begin
 	end;
 end;
 	
+procedure InitCannon(x: byte, y: byte, tilen: byte, grav: byte);
+var 
+	id: byte;
+begin
+	id := GetId();
+	if(id <> $FF) then begin
+		objectList[id].rendTilePos := tilen;
+		objectList[id].rendType := @REND_TYPE_TILE;		
+		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 | @COMP_DESTROY_COLLIDE_0;
+		objectList[id].component1 := $00 | @COMP_LASER_1;
+		objectList[id].component2 := $00 | @COMP_FONTAINE_2;
+		objectList[id].component3 := $00;
+		objectList[id].transX := x;
+		objectList[id].transY := y;
+		objectList[id].transZ := @Z_MAIN;
+		objectList[id].physGravity := @DOWN;
+		objectList[id].laserType := grav;
+		objectList[id].lastLaserDir := $FF;
+		objectList[id].laserDir := $FF;
+		AddDynItem(id);
+		AddMapItem(id, x, y, @Z_MAIN);
+	end;
+end;

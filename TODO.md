@@ -1,4 +1,4 @@
-* Spalte 0 Problem
+* Spalte 0 Problem, ok
 * Portal Wechsel funktiniert nicht, ok
 * Portal Swap nur auf letzten, kein Wechsel
 * Laden von Levels
@@ -11,15 +11,16 @@
 * Texte einblenden
 * Retry Button
 * Destroyable
-* Stand Animation korrigieren, delay
+* Stand Animation korrigieren, delay, ok
+* Animation UP Gravity fixen
 * Logic Scene Wechsel
-* Door/Exit/Switch/Fontaine/LaserCannon Components
+* Door/Exit/Switch/Fontaine, ok /LaserCannon, ok Components
 * Korrektes Tile Wechselrichtung Laser
-* Wasser Animation korrigieren -> Wind
+* Wasser Animation korrigieren -> Wind, ok
 * Laser Overlay Wasser
 * Laser Overlay Leiter/Robe?
 * Portal Exit Laser Overlay
-* Laser Component auslagern
+* Laser Component auslagern, erstmal nicht
 * Intro
 * Musil
 * Sound

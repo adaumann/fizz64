@@ -1,6 +1,6 @@
 program game;
 
-@startblock $0f00 "Variables"
+@startblock $1200 "Variables"
 
 var	
 	//@define DEBUG 1
@@ -77,7 +77,6 @@ var
 	@define PUSHDIR 1
 	@define PULLDIR $FF
 	@define LASER_TYPE_USER 10 
-	@define LASER_TYPE_ENV 11
 	@define REND_TYPE_TILE 0
 	@define REND_TYPE_SPRITE 1
 	@define REND_TYPE_BYTE 2
@@ -184,6 +183,11 @@ var
 	@define LEV_FONTAINE_LEFT $28
 	@define LEV_FONTAINE_RIGHT $29
 	@define LEV_FONTAINE_UP $5d
+	@define LEV_CANNON_DOWN $31
+	@define LEV_CANNON_UP $39
+	@define LEV_CANNON_LEFT $37
+	@define LEV_CANNON_RIGHT $33
+
 	@define CTRL_STATE_WALK 0
 	@define CTRL_STATE_CLIMB 1
 	@define CTRL_STATE_ROBE 2
@@ -192,7 +196,7 @@ var
 	
 	
 //	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                  aa");
-    lev0: string = ("a{{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a     [ 2    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa&  ------====hh   aa&mn    @ b    =  4aa   ====ss ss8 h o aaaa    {{{{{}}}}aa aa");
+    lev0: string = ("a{{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a    1[ 2    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa&  ------====hh   aa&mn    @ b    =  4aa   ====ss ss8 h o aaaa    {{{{{}}}}aa aa");
 //	lev0: string = ("    ccccccccccccc                                               @                                          t u        Yaa     ^  b b b b ^Yaa    b b b b b     aa  b b b b b   o   aa        d e o     aa   n d  gg  m  e  aaaaaaaaaaaaaaaaaaaaaa");
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
@@ -921,6 +925,24 @@ begin
 	end;
 end;
 
+procedure ClearAllLaser();
+var
+	i,c: byte;
+	d: byte;
+begin
+	for i:= 0 to @DIMTILES do begin
+		
+		c := mapfront[i];
+		if(c <> $FF and (objectList[c].component2 & @COMP_LASERBEAN_2 = @COMP_LASERBEAN_2 and objectList[c].laserTag <> $FF)) then begin 
+			DeletePos(c, false, false);
+		end;
+		c := mapback2[i];
+		if(c <> $FF and (objectList[c].component0 & @COMP_WATER_0 = @COMP_WATER_0 and objectList[c].laserTag <> $FF)) then begin 
+			DeletePos(c, false, false);
+		end;
+	end;
+end;
+
 
 @include "GObjects.ras"
 
@@ -960,6 +982,7 @@ var
 	id: byte;
 begin
 	ReadJoy2();
+	ClearAllLaser();
 
 	if(countDyn <> 0) then begin
 		for i:=0 to countDyn do	begin
@@ -1217,6 +1240,10 @@ begin
 			@LEV_FONTAINE_UP: InitFontaine(x,y,178,@UP);
 			@LEV_FONTAINE_LEFT: InitFontaine(x,y, 180, @LEFT);
 			@LEV_FONTAINE_RIGHT: InitFontaine(x,y,182,@RIGHT);
+			@LEV_CANNON_DOWN: InitCannon(x,y, 14, @DOWN);
+			@LEV_CANNON_UP: InitCannon(x,y,12,@UP);
+			@LEV_CANNON_LEFT: InitCannon(x,y, 16, @LEFT);
+			@LEV_CANNON_RIGHT: InitCannon(x,y,18,@RIGHT);
 		end;
 	end;
 end;

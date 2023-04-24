@@ -1,17 +1,3 @@
-procedure ClearAllWater(laserTag: byte);
-var
-	i,c: byte;
-	d: byte;
-begin
-	for i:= 0 to @DIMTILES do begin
-		c := mapback2[i];
-		
-		if(c <> $FF and (objectList[c].component0 & @COMP_WATER_0 = @COMP_WATER_0 and objectList[c].laserTag = laserTag)) then begin 
-			DeletePos(c, false, false);
-		end;
-	end;
-end;
-
 procedure IncCurrentWater(id: byte);
 begin
 	if(objectList[id].currentLaser < @MAX_LASER) then objectList[id].currentLaser := objectList[id].currentLaser + @LASER_STEP; 
@@ -90,7 +76,7 @@ var
 	id1,i,x,y: byte;
 	pos,id2: byte;
 begin
-	ClearAllWater(id);
+//	ClearAllWater(id);
 	objectList[id].laserDir := $FF;
 	if(objectList[id].laserType = @LEFT) then begin
 		if (objectList[id].lastLaserDir <> @LEFT) then objectList[id].currentLaser := 0;

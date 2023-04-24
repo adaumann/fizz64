@@ -1,16 +1,3 @@
-procedure ClearAllLaser(laserTag: byte);
-var
-	i,c: byte;
-	d: byte;
-begin
-	for i:= 0 to @DIMTILES do begin
-		c := mapfront[i];
-		if(c <> $FF and (objectList[c].component2 & @COMP_LASERBEAN_2 = @COMP_LASERBEAN_2 and objectList[c].laserTag = laserTag)) then begin 
-			DeletePos(c, false, false);
-		end;
-	end;
-end;
-
 procedure IncCurrentLaser(id: byte);
 begin
 	if(objectList[id].currentLaser < @MAX_LASER) then objectList[id].currentLaser := objectList[id].currentLaser + @LASER_STEP; 
@@ -36,7 +23,7 @@ end;
 procedure FireLaser(id: byte, xpos, ypos: byte, xdir, ydir: byte);
 var
 	laserId: byte;
-	collideId, collideId2, mirrorId, destroyAbleId, portalId: byte;
+	collideId, collideId2, mirrorId, destroyAbleId, portalId, waterId: byte;
 	collide: boolean;
 	laserx, lasery, lastx, lasty: byte;
 	countLaser: byte;
@@ -102,12 +89,12 @@ begin
 							if (turn = @TURN_RIGHT) then begin
 								xdir := 0;
 								ydir := 1;
-								objectList[laserId].rendTilePos := 194;
+								objectList[laserId].rendTilePos := 198;
 							end 
 							else if (turn = @TURN_LEFT) then begin
 								xdir := 0;
 								ydir := -1;
-								objectList[laserId].rendTilePos := 198;
+								objectList[laserId].rendTilePos := 196;
 							end
 							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 188;
 						end
@@ -116,12 +103,12 @@ begin
 							if (turn = @TURN_RIGHT) then begin
 									xdir := 1;
 									ydir := 0;
-									objectList[laserId].rendTilePos := 194;
+									objectList[laserId].rendTilePos := 196;
 							end 
 							else if (turn = @TURN_LEFT) then begin
 									xdir := -1;
 									ydir := 0;
-									objectList[laserId].rendTilePos := 196;
+									objectList[laserId].rendTilePos := 198;
 							end
 							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 190;
 						end
@@ -130,14 +117,19 @@ begin
 							if (turn = @TURN_RIGHT) then begin
 									xdir := -1;
 									ydir := 0;
-									objectList[laserId].rendTilePos := 198;
+									objectList[laserId].rendTilePos := 194;
 							end else if (turn = @TURN_LEFT) then begin
 									xdir := 1;
 									ydir := 0;
-									objectList[laserId].rendTilePos := 196;
+									objectList[laserId].rendTilePos := 192;
 							end
 							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 190;
 						end;
+					end;
+					waterId := GetObjectByPosFilterComp(laserx, lasery, @Z_BACK2, @COMP_WATER_0, 0);
+					if(waterId <> $FF) then begin
+						if (xdir = 0 and ydir <> 0) then objectList[laserId].rendTilePos := 26
+						else if (xdir <> 0 and ydir = 0) then objectList[laserId].rendTilePos := 24;
 					end;
 					AddMapItem(laserId, laserx, lasery, @Z_FRONT);
 					PaintPos(laserx + lasery *@DIMX, false);
@@ -166,8 +158,8 @@ begin
 						ydir := 0;				
 					end
 				end;
+				
 			end;
-			
 			lastx := laserx;
 			lasty := lasery;
 			laserx := CalcPositionX(laserx, xdir);
@@ -178,9 +170,7 @@ begin
 	
 	// Collide Actions
 	
-	
 	if(collide = true and collideId <> $FF) then begin
-	
 		// PushPull
 		if(objectList[collideId].component1 & @COMP_PUSHPULL_1 = @COMP_PUSHPULL_1) then begin
 			if(mod(globaltime, 4) = 0) then begin
@@ -222,7 +212,6 @@ begin
 		end;
 		
 		// PortalActivate
-
 		if(objectList[collideId].component2 & @COMP_PORTAL_ACTIVATE_2 = @COMP_PORTAL_ACTIVATE_2 and objectList[id].laserType = @LASER_TYPE_USER) then begin
 			pos := lastx + lasty * @DIMX;
 			if(mapback1[pos] = $FF and mapmain[pos] = $FF) then begin
@@ -235,8 +224,6 @@ begin
 					lastPortal := portalIdMove; 					
 				end
 				else begin
-					moveto(2,24,screen);
-					printnumber(pos);
 					InitPortal(lastx, lasty, CalcFireExitDir(xdir, ydir));
 					PaintPos(lastx + lasty *@DIMX, false);
 				end; 
@@ -253,9 +240,9 @@ var
 	id1,i,x,y: byte;
 	pos,id2: byte;
 	exit: boolean;
+	joy : byte;
 begin
 	exit := false;
-	ClearAllLaser(id);
 	
 	if (waitRelease = true) then begin
 		if (release = true) then waitRelease := false
@@ -264,31 +251,32 @@ begin
 			exit := true;
 		end;
 	end;	
+	joy := joy2;
 	
 	if(exit = false) then begin
 		objectList[id].laserDir := $FF;
-		if((joy2 & joy_fire = joy_fire and  joy2 & joy_left = joy_left) or objectList[id].laserType = @LEFT) then begin
+		if(((objectList[id].laserType = @LASER_TYPE_USER and (joy2 & joy_fire = joy_fire and  joy2 & joy_left = joy_left))) or objectList[id].laserType = @LEFT) then begin
 			if (objectList[id].lastLaserDir <> @LEFT) then objectList[id].currentLaser := 0;
 			IncCurrentLaser(id);
 			FireLaser(id, objectList[id].transX,objectList[id].transY, -1, 0);
 			objectList[id].laserDir := @LEFT;
 			objectList[id].lastLaserDir := objectList[id].laserDir;
 		end
-		else if	((joy2 & joy_fire = joy_fire and  joy2 & joy_right = joy_right) or objectList[id].laserType = @RIGHT) then begin
+		else if(((objectList[id].laserType = @LASER_TYPE_USER and (joy2 & joy_fire = joy_fire and  joy2 & joy_right = joy_right))) or objectList[id].laserType = @RIGHT) then begin
 			if (objectList[id].lastLaserDir <> @RIGHT) then objectList[id].currentLaser := 0;
 			IncCurrentLaser(id);
 			FireLaser(id, objectList[id].transX,objectList[id].transY, 1, 0);
 			objectList[id].laserDir := @RIGHT;
 			objectList[id].lastLaserDir := objectList[id].laserDir;
 		end
-		else if	((joy2 & joy_fire = joy_fire and  joy2 & joy_up = joy_up) or objectList[id].laserType = @UP) then begin
+		else if(((objectList[id].laserType = @LASER_TYPE_USER and (joy2 & joy_fire = joy_fire and  joy2 & joy_up = joy_up))) or objectList[id].laserType = @UP) then begin
 			if (objectList[id].lastLaserDir <> @UP) then objectList[id].currentLaser := 0;
 			IncCurrentLaser(id);
 			FireLaser(id, objectList[id].transX,objectList[id].transY, 0, -1);
 			objectList[id].laserDir := @UP;
 			objectList[id].lastLaserDir := objectList[id].laserDir;
 		end
-		else if	((joy2 & joy_fire = joy_fire and  joy2 & joy_down = joy_down) or objectList[id].laserType = @DOWN) then begin
+		else if(((objectList[id].laserType = @LASER_TYPE_USER and (joy2 & joy_fire = joy_fire and  joy2 & joy_down = joy_down))) or objectList[id].laserType = @DOWN) then begin
 			if (objectList[id].lastLaserDir <> @DOWN) then objectList[id].currentLaser := 0;
 			IncCurrentLaser(id);
 			FireLaser(id, objectList[id].transX,objectList[id].transY, 0, 1);
