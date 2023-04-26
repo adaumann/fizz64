@@ -19,7 +19,7 @@ begin
 		controlList[controlId].b_controlPressUp := false;
 		controlList[controlId].b_controlPressDown := false;
 		controlList[controlId].controlLastPortal := $FF;
-		objectList[id].b_hasMoved := true;
+		objectList[id].b_hasMoved := false;
 		objectList[id].animId := @ANIM_WALK_L;
 		objectList[id].animPos := 0;
 		objectList[id].animFinish := true;
@@ -27,6 +27,8 @@ begin
 		controlList[controlId].controlFollowKeyRight := false;
 		controlList[controlId].controlLastPortal := $FF;
 		controlList[controlId].b_controlPermanentSwim := false;
+		controlList[controlId].b_waitRelease := false;
+		controlList[controlId].b_release := false;
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_MAIN;
@@ -428,5 +430,83 @@ begin
 		objectList[id].laserDir := $FF;
 		AddDynItem(id);
 		AddMapItem(id, x, y, @Z_MAIN);
+	end;
+end;
+
+procedure InitSwitchManual(x: byte, y: byte);
+var 
+	id: byte;
+begin
+	id := GetId();
+	if(id <> $FF) then begin
+		id := GetId();
+		objectList[id].rendTilePos := 112;
+		objectList[id].rendType := @REND_TYPE_TILE;		
+		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 |@COMP_ANIMATION_0 ;
+		objectList[id].component1 := $00;
+		objectList[id].component2 := $00 | @COMP_SWITCH_2;
+		objectList[id].component3 := $00;
+		objectList[id].transX := x;
+		objectList[id].transY := y;
+		objectList[id].transZ := @Z_BACK1;
+		objectList[id].physGravity := @DOWN;
+		objectList[id].pushPullDir := @PUSHDIR;		// Push=off
+		objectList[id].animId := @ANIM_SWITCH_OFF;
+		objectList[id].animPos := 0;
+		objectList[id].animFinish := false;
+		AddAnimItem(id);
+		AddMapItem(id, x, y, @Z_BACK1);
+	end;
+end;
+
+procedure InitDoor(x: byte, y: byte);
+var 
+	id: byte;
+begin
+	id := GetId();
+	if(id <> $FF) then begin
+		id := GetId();
+		objectList[id].rendTilePos := $76;
+		objectList[id].rendType := @REND_TYPE_TILE;		
+		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 |@COMP_ANIMATION_0 ;
+		objectList[id].component1 := $00;
+		objectList[id].component2 := $00 | @COMP_DOOR_2;
+		objectList[id].component3 := $00;
+		objectList[id].transX := x;
+		objectList[id].transY := y;
+		objectList[id].transZ := @Z_MAIN;
+		objectList[id].physGravity := @DOWN;
+		objectList[id].pushPullDir := @PUSHDIR;	// Push= Off
+		objectList[id].animId := @ANIM_DOOR_OFF;
+		objectList[id].animPos := 0;
+		objectList[id].animFinish := false;
+		AddAnimItem(id);
+		AddMapItem(id, x, y, @Z_MAIN);
+	end;
+end;
+
+procedure InitExit(x: byte, y: byte);
+var 
+	id: byte;
+begin
+	id := GetId();
+	if(id <> $FF) then begin
+		id := GetId();
+		objectList[id].rendTilePos := $1e;
+		objectList[id].rendType := @REND_TYPE_TILE;		
+		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 |@COMP_ANIMATION_0 ;
+		objectList[id].component1 := $00;
+		objectList[id].component2 := $00;
+		objectList[id].component3 := $00 | @COMP_EXIT_3;
+		objectList[id].transX := x;
+		objectList[id].transY := y;
+		objectList[id].transZ := @Z_BACK1;
+		objectList[id].physGravity := @DOWN;
+		objectList[id].pushPullDir := @PUSHDIR;	// Push= Off
+		objectList[id].animId := @ANIM_EXIT_OFF;
+		objectList[id].animPos := 0;
+		objectList[id].animFinish := false;
+		AddAnimItem(id);
+		AddMapItem(id, x, y, @Z_BACK1);
 	end;
 end;

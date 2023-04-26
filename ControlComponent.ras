@@ -7,6 +7,7 @@ begin
 	controlList[controlId].b_controlPressRight := false;
 	controlList[controlId].b_controlPressDown := false;			
 	controlList[controlId].b_controlPressUp := false;
+//	controlList[controlId].b_controlPressAction := false;
 end;
 
 procedure ProcessBackObj(id: byte);
@@ -16,17 +17,16 @@ var
 	gravity: byte;
 	backObj, backObj2: byte;
 	pos,v: byte;
-	robeAbleId, portalId, gravPadId: byte;
+	robeAbleId, portalId, gravPadId, switchId: byte;
 	newx, newy: byte;
 begin
 	defWalk := true;
 	controlId := objectList[id].controlId;
 	if(objectList[id].b_hasMoved = true) then begin
-	
+		ClearText();
 		robeAbleId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_ROBE_ABLE_1, 1);
 		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
 		gravPadId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_GRAVPAD_1, 1);
-		
 		
 		if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_CLIMB_ABLE_1, 1) <> $FF) then begin	
 			objectList[id].b_physFallDown := false;
@@ -81,6 +81,31 @@ begin
 		end;
 		if(portalId = $FF) then controlList[controlId].controlLastPortal := $FF;
 	end;
+
+	switchId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_SWITCH_2, 2);
+	if(switchId <> $FF) then begin
+		if(objectList[id].b_hasMoved = true) then
+			moveto(4,24,screen);
+			v:=objectList[id].b_hasMoved;
+			printnumber(v);
+			PrintText(@DO_ACTIVATE_SWITCH_START,#txtDoActiveSwitch);
+		if(controlList[controlId].b_controlPressAction = true) then begin
+			
+			if(objectList[switchId].pushPullDir = @PULLDIR) then begin
+				PrintText(@DEACTIVATE_SWITCH_START,#txtDeactiveSwitch);
+				SwitchAnimation(switchId,@ANIM_SWITCH_OFF);
+				objectList[switchId].pushPullDir := @PUSHDIR;
+				controlList[controlId].b_controlPressAction := false;
+				
+			end
+			else begin
+				PrintText(@ACTIVATE_SWITCH_START,#txtActiveSwitch);
+				SwitchAnimation(switchId,@ANIM_SWITCH_ON);
+				objectList[switchId].pushPullDir := @PULLDIR;
+				controlList[controlId].b_controlPressAction := false;
+			end;
+		end;
+	end;
 end;
 
 procedure InputControl(id: byte);
@@ -91,7 +116,17 @@ begin
 	controlId := objectList[id].controlId;
 	ReleaseKeys(id);
 	if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then gravity := objectList[id].physGravity else gravity := @DOWN ;
-	if(joy2 & joy_fire = joy_fire) then ReleaseKeys(id)
+	if(joy2 = $80) then begin 
+		controlList[controlId].b_controlPressAction := false;
+//		controlList[controlId].b_release := true;
+	end;
+		
+	if(joy2 = $90 and controlList[controlId].b_controlPressAction = false) then begin
+		controlList[controlId].b_controlPressAction := true;
+//		controlList[controlId].b_release := false;
+	end;
+	if(joy2 & joy_fire = joy_fire) then
+		// ignore		
 	else begin
 		if(joy2 & joy_left = joy_left) then begin
 			if(gravity = @DOWN) then controlList[controlId].b_controlPressLeft := true;

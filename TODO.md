@@ -24,3 +24,5 @@
 * Intro
 * Musil
 * Sound
+
+	if(joy2 & joy_fire = joy_fire and (((joy2 & joy_left <> joy_left and joy2 & joy_right <> joy_right) and joy2 & joy_up <> joy_up) and  joy2 & joy_down <> joy_down) then 

@@ -3,7 +3,7 @@ program game;
 @startblock $1200 "Variables"
 
 var	
-	//@define DEBUG 1
+	@define DEBUG 1
 	@define OVERFLOW_CHECK 1
 	@define USE_KERNAL 0
 
@@ -45,7 +45,7 @@ var
 	@define MAX_CONTROLS 2
 	@define MAX_LASER 30
 	@define DIMTILES 240
-	@define DIMANIMS 8
+	@define DIMANIMS 14
 	@define Z_BACK2 3
 	@define Z_BACK1 2
 	@define Z_MAIN 1
@@ -94,6 +94,12 @@ var
 	@define ANIM_CLIMB 5
 	@define ANIM_ROBE 6
 	@define ANIM_PORTAL 7
+	@define ANIM_SWITCH_ON 8
+	@define ANIM_SWITCH_OFF 9
+	@define ANIM_DOOR_ON 10
+	@define ANIM_DOOR_OFF 11
+	@define ANIM_EXIT_ON 12
+	@define ANIM_EXIT_OFF 13
 	
 	collAreaUp: array[9] of byte = (8,7,6,5,4,3,2,1,0);
 	collAreaLeft: array[9] of byte = (2,5,8,1,4,7,0,3,6);
@@ -146,6 +152,9 @@ var
 	@define COMP_LASERONCE_2        %00001000
 	@define COMP_PORTAL_ACTIVATE_2  %00010000
 	@define COMP_FONTAINE_2         %00100000
+	@define COMP_SWITCH_2           %01000000
+	@define COMP_DOOR_2             %10000000
+	@define COMP_EXIT_3             %00000001
  	// https://www.aivosto.com/articles/petscii.pdf
  	@define LEV_CHARACTER $40
 	@define LEV_BRICK $61
@@ -187,6 +196,9 @@ var
 	@define LEV_CANNON_UP $39
 	@define LEV_CANNON_LEFT $37
 	@define LEV_CANNON_RIGHT $33
+	@define LEV_SWITCH_MANUAL $72
+	@define LEV_DOOR $78
+	@define LEV_EXIT $58
 
 	@define CTRL_STATE_WALK 0
 	@define CTRL_STATE_CLIMB 1
@@ -195,9 +207,16 @@ var
 	@define CTRL_STATE_JUMP 4
 	
 	
-//	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                  aa");
-    lev0: string = ("a{{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a    1[ 2    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa&  ------====hh   aa&mn    @ b    =  4aa   ====ss ss8 h o aaaa    {{{{{}}}}aa aa");
+//	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                 4aa");
+    lev0: string = ("aX{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a    1[ 2    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa&  ------====hh   aa&m   n  @b    =  4aa   x===ss rs8 h o aaaa    aaaaaaaaaaaaaa");
 //	lev0: string = ("    ccccccccccccc                                               @                                          t u        Yaa     ^  b b b b ^Yaa    b b b b b     aa  b b b b b   o   aa        d e o     aa   n d  gg  m  e  aaaaaaaaaaaaaaaaaaaaaa");
+	@define DO_ACTIVATE_SWITCH_START 17
+	txtDoActiveSwitch: string=("SWITCH");
+	@define ACTIVATE_SWITCH_START 12
+	txtActiveSwitch:   string=("SWITCH ACTIVATED");
+	@define DEACTIVATE_SWITCH_START 11
+	txtDeactiveSwitch: string=("SWITCH DEACTIVATED");
+	
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
 	dynObjectList : Array[@MAX_OBJECTS] of byte;
@@ -214,7 +233,6 @@ var
 	killDuration, killTimer: byte;
 	newSceneAfterKill: boolean;
 	pa: pointer of byte;
-	waitRelease, release: boolean;
 
 	@define ANIM_CONSIDER_GRAV_IGNORE 0
 	@define ANIM_CONSIDER_GRAV_FULL 1
@@ -237,8 +255,9 @@ var
 		controlState: byte;
 		b_controlPermanentSwim: byte;
 		controlFollowKeyRight, controlFollowKeyLeft: byte;
-		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown: byte;
+		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown, b_controlPressAction: byte;
 		controlLastPortal: byte;
+		b_waitRelease, b_release: byte;
 	end;
 
 	gobject = record
@@ -286,8 +305,6 @@ var
 		// Laser
 		laserDir: byte;
 		lastLaserDir: byte;
-		b_laserWaitRelease: byte;
-		b_laserRelease: byte;
  		laserLastTransportAble: byte;
  		laserType : byte;
  		laserTag: byte;
@@ -316,8 +333,6 @@ begin
 	countObjects := 0;
 	countDyn := 0;
 	countAnim := 0;
-	waitRelease := false;
-	release := false;
 end;
 
 procedure print2x2block(x,y,c: byte);
@@ -393,18 +408,29 @@ begin
 	MemCpyFast(sp, 0, dp,8);
 end;
 
-procedure PrintText(x: byte);
+procedure PrintText(x: byte, txt: pointer);
 begin
 	@IFDEF OVERFLOW_CHECK
 		if(x >= 40) then SCREEN_BG_COL:=BLUE;
 	@ENDIF
-	
-	moveto(0,24,screen);
-	fillfast(screenmemory,$20,40);
-	screenmemory[0]:=$1c;
-	screenmemory[39]:=$1d;
-	moveto(x,24,screen);
-	printstring("HELLO",0,40);		
+	@IFNDEF DEBUG
+		moveto(0,24,screen);
+		fillfast(screenmemory,$20,40);
+		screenmemory[0]:=$1c;
+		screenmemory[39]:=$1d;
+		moveto(x,24,screen);
+		printstring(txt,0,40);
+	@ENDIF		
+end;
+
+procedure ClearText();
+begin
+	@IFNDEF DEBUG
+		moveto(0,24,screen);
+		fillfast(screenmemory,$20,40);
+		screenmemory[0]:=$1c;
+		screenmemory[39]:=$1d;
+	@ENDIF
 end;
 
 procedure PrintSprite(x: byte, y: byte, spriteLoc: byte, num: byte);
@@ -720,6 +746,7 @@ end;
 procedure SetPos(i: byte,oldx:byte, oldy:byte, x: byte, y: byte, z: byte);
 var
 	pos: byte;
+	b: boolean;
 begin
 	@IFDEF OVERFLOW_CHECK
 		if(i >= @MAX_OBJECTS) then SCREEN_BG_COL:=CYAN;
@@ -728,15 +755,14 @@ begin
 	@IFDEF OVERFLOW_CHECK
 		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
 	@ENDIF
-	GetZLayerPointer(z);
-	
-//	if(oldx <> x or oldy <> y) then begin
-		objectList[i].b_hasMoved := true; 
+	objectList[i].b_hasMoved := true; 
+	b := objectList[i].b_hasMoved;
+	moveto(2,24,screen);
+	printnumber(b);
 
-		ChangeMapItem(i, oldx, oldy, x, y, z);
-		objectList[i].transX := x;
-		objectList[i].transY := y;
-//	end;
+	ChangeMapItem(i, oldx, oldy, x, y, z);
+	objectList[i].transX := x;
+	objectList[i].transY := y;
 end;
 
 procedure AddMapItem(Id: byte, x: byte, y: byte, z:byte);
@@ -807,10 +833,8 @@ var
 	pos: byte;
 	pm: pointer of byte;
 begin
-	
 	pos := x + y * @DIMX;	
 	GetZLayerPointer(z); 
-
 	tempPointer[pos] := 255;
 end;
 
@@ -836,8 +860,6 @@ begin
 	end;
 end;
 
-
-
 procedure DeleteAnimObject(id: byte);
 var	
 	i,j: byte;	
@@ -859,7 +881,6 @@ begin
 		end;
 	end;
 end;
-
 	
 procedure DeletePos(id: byte, isDyn, isAnim: byte);
 var
@@ -945,7 +966,6 @@ end;
 
 
 @include "GObjects.ras"
-
 @include "ControlComponent.ras"
 @include "PhysComponent.ras"
 @include "FloaterComponent.ras"
@@ -1010,7 +1030,6 @@ interrupt RasterBottomText();
 interrupt RasterTopLevel();
 begin
 	startirq(@USE_KERNAL);
-	//poke(^$d418,0,31);
 	setmulticolormode();
 	setcharsetlocation(@tilesetLoc1);
 	SCREEN_FG_COL:=BLACK;
@@ -1037,9 +1056,12 @@ begin
 	setcharsetlocation(@charsetLoc1);
 	SCREEN_FG_COL:=WHITE;
 
+	@IFDEF DEBUG
 	if(time = 2) then begin
-		PrintText(4);
+		moveto(0,24,screen);
+		fillfast(screenmemory,$20,40);
 	end;
+	@ENDIF
 		
 	RasterIRQ(RasterTopLevel(),20,@USE_KERNAL);
 	closeIrq();
@@ -1164,7 +1186,67 @@ begin
 	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
 	pa.size := 4;
 	pa.speed := 1;
-	pa.mode := @ANIM_MODE_LR_REPEAT;	
+	pa.mode := @ANIM_MODE_LR_REPEAT;
+
+	pa := #animList[@ANIM_SWITCH_ON];
+	pa.animSeq[0] := $6E; 
+ 	pa.animSeq[1] := $FF;
+	pa.animSeq[2] := $FF;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 1;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_FIX;	
+	
+	pa := #animList[@ANIM_SWITCH_OFF];
+	pa.animSeq[0] := $70; 
+ 	pa.animSeq[1] := $FF;
+	pa.animSeq[2] := $FF;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 1;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_FIX;	
+
+	pa := #animList[@ANIM_DOOR_ON];
+	pa.animSeq[0] := $76; 
+ 	pa.animSeq[1] := $FF;
+	pa.animSeq[2] := $FF;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 1;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_FIX;	
+	
+	pa := #animList[@ANIM_DOOR_OFF];
+	pa.animSeq[0] := $74; 
+ 	pa.animSeq[1] := $FF;
+	pa.animSeq[2] := $FF;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 1;
+	pa.speed := 1;
+	pa.mode := @ANIM_MODE_FIX;	
+
+	pa := #animList[@ANIM_EXIT_ON];
+	pa.animSeq[0] := $1e; 
+ 	pa.animSeq[1] := $20;
+	pa.animSeq[2] := $22;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 3;
+	pa.speed := 4;
+	pa.mode := @ANIM_MODE_LR;	
+	
+	pa := #animList[@ANIM_EXIT_OFF];
+	pa.animSeq[0] := $22; 
+ 	pa.animSeq[1] := $20;
+	pa.animSeq[2] := $1e;
+	pa.animSeq[3] := $FF;
+	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
+	pa.size := 3;
+	pa.speed := 4;
+	pa.mode := @ANIM_MODE_LR;	
 
 end;
 
@@ -1244,6 +1326,9 @@ begin
 			@LEV_CANNON_UP: InitCannon(x,y,12,@UP);
 			@LEV_CANNON_LEFT: InitCannon(x,y, 16, @LEFT);
 			@LEV_CANNON_RIGHT: InitCannon(x,y,18,@RIGHT);
+			@LEV_SWITCH_MANUAL: InitSwitchManual(x,y);
+			@LEV_DOOR: InitDoor(x,y);
+			@LEV_EXIT: InitExit(x,y);
 		end;
 	end;
 end;

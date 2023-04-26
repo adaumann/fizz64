@@ -25,6 +25,7 @@ var
 	laserId: byte;
 	collideId, collideId2, mirrorId, destroyAbleId, portalId, waterId: byte;
 	collide: boolean;
+	controlId: byte;
 	laserx, lasery, lastx, lasty: byte;
 	countLaser: byte;
 	turn: byte;
@@ -33,6 +34,7 @@ var
 	portalIdMove : byte;
 	tempx, tempy, tempx2, tempy2, pos: byte;
 begin	
+	controlId := objectList[id].controlId;
 	collide := false;
 	lastx := xpos;
 	lasty := ypos;
@@ -53,10 +55,8 @@ begin
 			if (mapfront[laserx + lasery * @DIMX] = $FF) then begin
 				laserId := GetId();
 				if(laserId <> $FF) then begin				
-					if (xdir = -1 and ydir = 0) then objectList[laserId].rendTilePos := 184
-					else if (xdir = 1 and ydir = 0) then objectList[laserId].rendTilePos := 184
-					else if (xdir = 0 and ydir = -1) then objectList[laserId].rendTilePos := 186
-					else if (xdir = 0 and ydir = 1) then objectList[laserId].rendTilePos := 186;
+					if (xdir <> 0 and ydir = 0) then objectList[laserId].rendTilePos := 184
+					else if (xdir = 0 and ydir <> 0) then objectList[laserId].rendTilePos := 186;
 					objectList[laserId].rendType := @REND_TYPE_TILE;
 					objectList[laserId].component0 := $00 | @COMP_DESTROY_COLLIDE_0;
 					objectList[laserId].component1 := $00;
@@ -71,7 +71,7 @@ begin
 					if(mirrorId <> $FF) then begin
 						turn := objectList[mirrorId].mirrorTurn;
 						// laser left
-						if (xdir < 0 and ydir = 0) then begin
+						if (xdir = -1 and ydir = 0) then begin
 							if (turn = @TURN_RIGHT) then begin
 								xdir := 0;
 								ydir := -1;
@@ -85,7 +85,7 @@ begin
 							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 188;
 						end
 						// laser right
-						else if (xdir > 0 and ydir = 0) then begin
+						else if (xdir = 1 and ydir = 0) then begin
 							if (turn = @TURN_RIGHT) then begin
 								xdir := 0;
 								ydir := 1;
@@ -94,34 +94,35 @@ begin
 							else if (turn = @TURN_LEFT) then begin
 								xdir := 0;
 								ydir := -1;
-								objectList[laserId].rendTilePos := 196;
+								objectList[laserId].rendTilePos := 192;
 							end
 							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 188;
 						end
 							// laser up
-						else if (xdir = 0 and ydir < 0) then begin
+						else if (xdir = 0 and ydir = -1) then begin
 							if (turn = @TURN_RIGHT) then begin
-									xdir := 1;
-									ydir := 0;
-									objectList[laserId].rendTilePos := 196;
+								xdir := 1;
+								ydir := 0;
+								objectList[laserId].rendTilePos := 196;
 							end 
 							else if (turn = @TURN_LEFT) then begin
-									xdir := -1;
-									ydir := 0;
-									objectList[laserId].rendTilePos := 198;
+								xdir := -1;
+								ydir := 0;
+								objectList[laserId].rendTilePos := 198;
 							end
 							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 190;
 						end
 							// laser down
-						else if (xdir = 0 and ydir > 0) then begin
+						else if (xdir = 0 and ydir = 1) then begin
 							if (turn = @TURN_RIGHT) then begin
-									xdir := -1;
-									ydir := 0;
-									objectList[laserId].rendTilePos := 194;
-							end else if (turn = @TURN_LEFT) then begin
-									xdir := 1;
-									ydir := 0;
-									objectList[laserId].rendTilePos := 192;
+								xdir := -1;
+								ydir := 0;
+								objectList[laserId].rendTilePos := 192;
+							end 
+							else if (turn = @TURN_LEFT) then begin
+								xdir := 1;
+								ydir := 0;
+								objectList[laserId].rendTilePos := 194;
 							end
 							else if (turn = @TURN_THROUGH) then objectList[laserId].rendTilePos := 190;
 						end;
@@ -205,9 +206,8 @@ begin
 
 				SetPos(collideId, tempx2, tempy2, tempx, tempy, objectList[id].transZ);
 
-				waitRelease := true;
-				release := false;
-				
+				controlList[controlId].b_waitRelease := true;
+				controlList[controlId].b_release := false;
 			end;
 		end;
 		
@@ -227,8 +227,8 @@ begin
 					InitPortal(lastx, lasty, CalcFireExitDir(xdir, ydir));
 					PaintPos(lastx + lasty *@DIMX, false);
 				end; 
-				waitRelease := true;
-				release := false;	
+				controlList[controlId].b_waitRelease := true;
+				controlList[controlId].b_release := false;	
 			end;
 		end;
 	end;
@@ -240,14 +240,15 @@ var
 	id1,i,x,y: byte;
 	pos,id2: byte;
 	exit: boolean;
+	controlId : byte;
 	joy : byte;
 begin
 	exit := false;
-	
-	if (waitRelease = true) then begin
-		if (release = true) then waitRelease := false
+	controlId := objectList[id].controlId;
+	if (controlList[controlId].b_waitRelease = true) then begin
+		if (controlList[controlId].b_release = true) then controlList[controlId].b_waitRelease := false
 		else begin 
-			if (joy2 & joy_fire <> joy_fire) then release := true;
+			if (joy2 & joy_fire <> joy_fire) then controlList[controlId].b_release := true;
 			exit := true;
 		end;
 	end;	
