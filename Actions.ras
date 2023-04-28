@@ -1,0 +1,47 @@
+procedure ActionOpenDoor(actorId: byte, p1,p2: byte);
+var 
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component2 & @COMP_DOOR_2 = @COMP_DOOR_2) then begin
+		if(objectList[receiverId].pushPullDir = @PUSHDIR) then begin
+			SetZLayer(receiverId, @Z_MAIN, @Z_BACK1);
+			SwitchAnimation(receiverId,@ANIM_DOOR_ON);
+			objectList[receiverId].pushPullDir := @PULLDIR;
+//			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
+		end;	
+	end;
+end;
+
+procedure ActionCloseDoor(actorId: byte, p1,p2: byte);
+var
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component2 & @COMP_DOOR_2 = @COMP_DOOR_2) then begin
+		if(objectList[receiverId].pushPullDir = @PULLDIR) then begin
+			SetZLayer(receiverId, @Z_BACK1, @Z_MAIN);
+			SwitchAnimation(receiverId,@ANIM_DOOR_OFF);
+			objectList[receiverId].pushPullDir := @PUSHDIR;
+//			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
+		end;	
+	end;
+end;
+	
+
+procedure DispatchEvent(event: byte, senderId: byte, p1,p2: byte);
+var
+	i, action: byte;
+begin
+	for i :=  0 to @MAX_ACTORS do begin
+		if(actorList[i].event = $FF) then break;
+		if(actorList[i].event = event and actorList[i].senderId = senderId) then begin
+			action := actorList[i].action;
+			case action of
+		        @ACTION_DOOR_OPEN: ActionOpenDoor(i, p1, p2);
+		        @ACTION_DOOR_CLOSE: ActionCloseDoor(i, p1, p2);
+   			end;
+
+		end;
+	end;
+end;

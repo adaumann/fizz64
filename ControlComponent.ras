@@ -85,9 +85,6 @@ begin
 	switchId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_SWITCH_2, 2);
 	if(switchId <> $FF) then begin
 		if(objectList[id].b_hasMoved = true) then
-			moveto(4,24,screen);
-			v:=objectList[id].b_hasMoved;
-			printnumber(v);
 			PrintText(@DO_ACTIVATE_SWITCH_START,#txtDoActiveSwitch);
 		if(controlList[controlId].b_controlPressAction = true) then begin
 			
@@ -96,6 +93,7 @@ begin
 				SwitchAnimation(switchId,@ANIM_SWITCH_OFF);
 				objectList[switchId].pushPullDir := @PUSHDIR;
 				controlList[controlId].b_controlPressAction := false;
+				DispatchEvent(@EVENT_SWITCH_OFF, switchId, $FF, $FF);
 				
 			end
 			else begin
@@ -103,6 +101,7 @@ begin
 				SwitchAnimation(switchId,@ANIM_SWITCH_ON);
 				objectList[switchId].pushPullDir := @PULLDIR;
 				controlList[controlId].b_controlPressAction := false;
+				DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
 			end;
 		end;
 	end;

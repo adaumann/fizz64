@@ -3,7 +3,7 @@ program game;
 @startblock $1200 "Variables"
 
 var	
-	@define DEBUG 1
+	//@define DEBUG 1
 	@define OVERFLOW_CHECK 1
 	@define USE_KERNAL 0
 
@@ -44,6 +44,9 @@ var
 	@define MAX_OBJECTS 240
 	@define MAX_CONTROLS 2
 	@define MAX_LASER 30
+	@define MAX_ACTORS 16
+	@define ACTOR_LENGTH 8
+
 	@define DIMTILES 240
 	@define DIMANIMS 14
 	@define Z_BACK2 3
@@ -205,10 +208,33 @@ var
 	@define CTRL_STATE_ROBE 2
 	@define CTRL_STATE_SWIM 3
 	@define CTRL_STATE_JUMP 4
+
+	@define EVENT_SWITCH_ON 1
+	@define EVENT_SWITCH_OFF 2
+	@define ACTION_DOOR_OPEN 1
+	@define ACTION_DOOR_CLOSE 2
+
 	
 	
 //	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                 4aa");
-    lev0: string = ("aX{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a    1[ 2    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa&  ------====hh   aa&m   n  @b    =  4aa   x===ss rs8 h o aaaa    aaaaaaaaaaaaaa");
+    lev0: string = ("xX{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a    1[ 2    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa&  ------====hh   aa&m   n  @b    =  4aa   x===ss rs8 h o aaaa    aaaaaaaaaaaaaa");
+											  //event, action, senderpos, receiverpos, p1, p2, p3, p4
+	lev0actor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
+												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
+												 		    1, 1, 211,  0,   $FF, $FF, $FF, $FF,
+												 			2, 2, 211,  0, $FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF); 	
 //	lev0: string = ("    ccccccccccccc                                               @                                          t u        Yaa     ^  b b b b ^Yaa    b b b b b     aa  b b b b b   o   aa        d e o     aa   n d  gg  m  e  aaaaaaaaaaaaaaaaaaaaaa");
 	@define DO_ACTIVATE_SWITCH_START 17
 	txtDoActiveSwitch: string=("SWITCH");
@@ -250,6 +276,14 @@ var
 @endblock
 
 @startblock $e000 "Objects"
+	actorObject = record
+		event: byte;
+		senderId: byte;
+		action: byte;
+		receiverId: byte;
+		param0, param1, param2, param3: byte;
+	end;
+
 	controlObject = record
 		controlJumpStep: byte;
 		controlState: byte;
@@ -319,6 +353,7 @@ var
 	end;
 	objectList : Array[@MAX_OBJECTS] of gobject;
 	controlList : Array[@MAX_CONTROLS] of controlObject;
+	actorList : Array[@MAX_ACTORS] of actorObject;
 @endblock
 
 @startblock $7a00 "Code"
@@ -757,12 +792,26 @@ begin
 	@ENDIF
 	objectList[i].b_hasMoved := true; 
 	b := objectList[i].b_hasMoved;
-	moveto(2,24,screen);
-	printnumber(b);
-
 	ChangeMapItem(i, oldx, oldy, x, y, z);
 	objectList[i].transX := x;
 	objectList[i].transY := y;
+end;
+
+procedure SetZLayer(id: byte, oldz: byte, newz: byte);
+var
+	pos: byte;
+begin
+	pos := objectList[id].transX + objectList[id].transY * @DIMX;
+	@IFDEF OVERFLOW_CHECK
+		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
+	@ENDIF
+	objectList[id].b_hasMoved := true; 
+	GetZLayerPointer(oldz);
+	tempPointer[pos] := $FF;
+	GetZLayerPointer(newz);
+	tempPointer[pos] := id;
+	objectList[id].transZ := newz;
+	PaintPos(pos, true);
 end;
 
 procedure AddMapItem(Id: byte, x: byte, y: byte, z:byte);
@@ -966,6 +1015,7 @@ end;
 
 
 @include "GObjects.ras"
+@include "Actions.ras"
 @include "ControlComponent.ras"
 @include "PhysComponent.ras"
 @include "FloaterComponent.ras"
@@ -1270,6 +1320,38 @@ begin
 end;
 @endblock
 
+function Pos2ObjectId(pos: byte) : byte;
+var
+	c: byte;
+begin
+	c := $FF;
+	if(mapback2[pos] <> $FF) then c := mapback2[pos]
+	else if(mapback1[pos] <> $FF ) then c := mapback1[pos]
+	else if(mapmain[pos] <> $FF) then c := mapmain[pos]
+	else if(mapfront[pos] <> $FF) then c := mapfront[pos];
+	
+	Pos2ObjectId := c;
+end; 
+
+procedure InitActors();
+var
+	i,j,x,y,c : byte;
+begin
+	j := 0;
+	for i := 0 to @MAX_ACTORS * @ACTOR_LENGTH step @ACTOR_LENGTH do
+	begin
+		actorList[j].event := lev0actor[i];
+		actorList[j].action := lev0actor[i+1];
+		actorList[j].senderId := Pos2ObjectId(lev0actor[i+2]);   
+		actorList[j].receiverId := Pos2ObjectId(lev0actor[i+3]);
+		actorList[j].param0 := lev0actor[i+4];
+		actorList[j].param1 := lev0actor[i+5];
+		actorList[j].param2 := lev0actor[i+6];
+		actorList[j].param3 := lev0actor[i+7];
+		inc(j);
+	end;
+end;
+
 procedure InitMap();
 var 
 	i,x,y,c : byte;
@@ -1348,13 +1430,14 @@ begin
 	
 	Init();
 	InitMap();
+	InitActors();	
 	SwitchBank();
 	PaintFull();
 	SwitchBank();
 	PaintFull();
 	InitSprites();
 	InitAnimations();
-	setmemoryconfig(1,@USE_KERNAL,0); // Enable all ram, turn off BASIC
+	//setmemoryconfig(1,@USE_KERNAL,0); // Enable all ram, turn off BASIC
 	StartRasterChain(RasterTopLevel(), 0,@USE_KERNAL); // Don't use kernal
 	frameStatus := 1;
 	enableirq();
