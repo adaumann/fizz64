@@ -19,8 +19,9 @@ begin
 		controlList[controlId].b_controlPressUp := false;
 		controlList[controlId].b_controlPressDown := false;
 		controlList[controlId].controlLastPortal := $FF;
+		controlList[controlId].lastWaypointId := $FF;
 		objectList[id].b_hasMoved := false;
-		objectList[id].animId := @ANIM_WALK_L;
+		objectList[id].animId := @ANIM_STAND;
 		objectList[id].animPos := 0;
 		objectList[id].animFinish := true;
 		controlList[controlId].controlFollowKeyLeft := false;
@@ -39,6 +40,7 @@ begin
 		objectList[id].laserType := @LASER_TYPE_USER;
 		objectList[id].lastLaserDir := $FF;
 		objectList[id].laserDir := $FF;
+		objectList[id].onOff := @ON;
 		AddDynItem(id);
 		AddAnimItem(id);
 		AddMapItem(id, x, y, @Z_MAIN);
@@ -86,7 +88,7 @@ begin
 		objectList[id].physGravity := @RIGHT;
 		objectList[id].b_physRollLeftRight := true;
 		objectList[id].b_physFallDown := true;
-		objectList[id].pushPullDir := 1;		
+		objectList[id].onOff := 1;		
 		AddDynItem(id);
 		AddMapItem(id, x, y, @Z_MAIN);
 	end;
@@ -361,7 +363,7 @@ begin
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_MAIN;
-		objectList[id].pushPullDir := dir;
+		objectList[id].onOff := dir;
 		AddMapItem(id, x, y, @Z_MAIN);
 	end;
 end;
@@ -404,6 +406,7 @@ begin
 		objectList[id].laserType := grav;
 		objectList[id].lastLaserDir := $FF;
 		objectList[id].laserDir := $FF;
+		objectList[id].onOff := @ON;
 		AddDynItem(id);
 		AddMapItem(id, x, y, @Z_MAIN);
 	end;
@@ -428,6 +431,7 @@ begin
 		objectList[id].laserType := grav;
 		objectList[id].lastLaserDir := $FF;
 		objectList[id].laserDir := $FF;
+		objectList[id].onOff := @ON;
 		AddDynItem(id);
 		AddMapItem(id, x, y, @Z_MAIN);
 	end;
@@ -445,12 +449,12 @@ begin
 		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 |@COMP_ANIMATION_0 ;
 		objectList[id].component1 := $00;
 		objectList[id].component2 := $00 | @COMP_SWITCH_2;
-		objectList[id].component3 := $00;
+		objectList[id].component3 := $00 | @COMP_WAYPOINT_3 ;
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_BACK1;
 		objectList[id].physGravity := @DOWN;
-		objectList[id].pushPullDir := @PUSHDIR;		// Push=off
+		objectList[id].onOff := @OFF;		// Push=off
 		objectList[id].animId := @ANIM_SWITCH_OFF;
 		objectList[id].animPos := 0;
 		objectList[id].animFinish := false;
@@ -476,7 +480,7 @@ begin
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_MAIN;
 		objectList[id].physGravity := @DOWN;
-		objectList[id].pushPullDir := @PUSHDIR;	// Push= Off
+		objectList[id].onOff := @OFF;	// Push= Off
 		objectList[id].animId := @ANIM_DOOR_OFF;
 		objectList[id].animPos := 0;
 		objectList[id].animFinish := false;
@@ -497,12 +501,12 @@ begin
 		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 |@COMP_ANIMATION_0 ;
 		objectList[id].component1 := $00;
 		objectList[id].component2 := $00;
-		objectList[id].component3 := $00 | @COMP_EXIT_3;
+		objectList[id].component3 := $00 | @COMP_EXIT_3 | @COMP_WAYPOINT_3;
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_BACK1;
 		objectList[id].physGravity := @DOWN;
-		objectList[id].pushPullDir := @PUSHDIR;	// Push= Off
+		objectList[id].onOff := @OFF;	// Push= Off
 		objectList[id].animId := @ANIM_EXIT_OFF;
 		objectList[id].animPos := 0;
 		objectList[id].animFinish := false;

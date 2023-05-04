@@ -1,33 +1,118 @@
-procedure ActionOpenDoor(actorId: byte, p1,p2: byte);
+procedure ActionOpenDoor(actorId: byte);
 var 
 	receiverId: byte;
 begin 
 	receiverId := actorList[actorId].receiverId;
 	if(objectList[receiverId].component2 & @COMP_DOOR_2 = @COMP_DOOR_2) then begin
-		if(objectList[receiverId].pushPullDir = @PUSHDIR) then begin
+		if(objectList[receiverId].onOff = @OFF) then begin
 			SetZLayer(receiverId, @Z_MAIN, @Z_BACK1);
 			SwitchAnimation(receiverId,@ANIM_DOOR_ON);
-			objectList[receiverId].pushPullDir := @PULLDIR;
+			objectList[receiverId].onOff := @ON;
 //			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
 		end;	
 	end;
 end;
 
-procedure ActionCloseDoor(actorId: byte, p1,p2: byte);
+procedure ActionCloseDoor(actorId: byte);
 var
 	receiverId: byte;
 begin 
 	receiverId := actorList[actorId].receiverId;
 	if(objectList[receiverId].component2 & @COMP_DOOR_2 = @COMP_DOOR_2) then begin
-		if(objectList[receiverId].pushPullDir = @PULLDIR) then begin
+		if(objectList[receiverId].onOff = @ON) then begin
 			SetZLayer(receiverId, @Z_BACK1, @Z_MAIN);
 			SwitchAnimation(receiverId,@ANIM_DOOR_OFF);
-			objectList[receiverId].pushPullDir := @PUSHDIR;
+			objectList[receiverId].onOff := @OFF;
 //			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
 		end;	
 	end;
 end;
-	
+
+procedure ActionOpenExit(actorId: byte);
+var 
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component3 & @COMP_EXIT_3 = @COMP_EXIT_3) then begin
+		if(objectList[receiverId].onOff = @OFF) then begin
+			SwitchAnimation(receiverId,@ANIM_EXIT_ON);
+			objectList[receiverId].onOff := @ON;
+//			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
+		end;	
+	end;
+end;
+
+procedure ActionCloseExit(actorId: byte);
+var
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component3 & @COMP_EXIT_3 = @COMP_EXIT_3) then begin
+		if(objectList[receiverId].onOff = @ON) then begin
+			SwitchAnimation(receiverId,@ANIM_EXIT_OFF);
+			objectList[receiverId].onOff := @OFF;
+//			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
+		end;	
+	end;
+end;
+
+procedure ActionLaserCannonOn(actorId: byte);
+var
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component1 & @COMP_LASER_1 = @COMP_LASER_1) then begin
+		if(objectList[receiverId].onOff = @OFF) then begin
+			objectList[receiverId].onOff := @ON;
+		end;	
+	end;
+end;
+
+procedure ActionLaserCannonOff(actorId: byte);
+var
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component1 & @COMP_LASER_1 = @COMP_LASER_1) then begin
+		if(objectList[receiverId].onOff = @ON) then begin
+			objectList[receiverId].onOff := @OFF;
+		end;	
+	end;
+end;
+
+procedure ActionFontaineOn(actorId: byte);
+var
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component2 & @COMP_FONTAINE_2 = @COMP_FONTAINE_2) then begin
+		if(objectList[receiverId].onOff = @OFF) then begin
+			objectList[receiverId].onOff := @ON;
+		end;	
+	end;
+end;
+
+procedure ActionFontaineOff(actorId: byte);
+var
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component2 & @COMP_FONTAINE_2 = @COMP_FONTAINE_2) then begin
+		if(objectList[receiverId].onOff = @ON) then begin
+			objectList[receiverId].onOff := @OFF;
+		end;	
+	end;
+end;
+
+procedure ActionPrintText(actorId: byte);
+var
+	textId,x: byte;
+begin
+	textId := actorList[actorId].param0;
+	x := actorList[actorId].param1;
+	textTimer := actorList[actorId].param2;
+	PrintText(x, lev0strings[textId]);
+end;	
 
 procedure DispatchEvent(event: byte, senderId: byte, p1,p2: byte);
 var
@@ -38,10 +123,19 @@ begin
 		if(actorList[i].event = event and actorList[i].senderId = senderId) then begin
 			action := actorList[i].action;
 			case action of
-		        @ACTION_DOOR_OPEN: ActionOpenDoor(i, p1, p2);
-		        @ACTION_DOOR_CLOSE: ActionCloseDoor(i, p1, p2);
+		        @ACTION_DOOR_OPEN: ActionOpenDoor(i);
+		        @ACTION_DOOR_CLOSE: ActionCloseDoor(i);
+		        @ACTION_EXIT_OPEN: ActionOpenExit(i);
+		        @ACTION_EXIT_CLOSE: ActionCloseExit(i);
+		        @ACTION_EXIT_CLOSE: ActionCloseExit(i);
+		        @ACTION_PRINT_TEXT: ActionPrintText(i);
+				@ACTION_LASERCANNON_ON: ActionLaserCannonOn(i);
+				@ACTION_LASERCANNON_OFF: ActionLaserCannonOff(i);
+				@ACTION_FONTAINE_ON: ActionFontaineOn(i);
+				@ACTION_FONTAINE_OFF: ActionFontaineOff(i);
+		        
+		        @ACTION_CLEAR_TEXT: ClearText();
    			end;
-
 		end;
 	end;
 end;
