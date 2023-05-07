@@ -2,22 +2,22 @@
 * Portal Wechsel funktiniert nicht, ok
 * Portal Swap nur auf letzten, kein Wechsel
 * Laden von Levels
-* Events/Obersables
+* Events/Obersables, ok
 * 2 Spieler Modus, Versus <-> Coop, Single Player two Chars
     * Joy1 und Joy2 berücksichtigen
     * Space Wechsel
     * Was passiert wenn Spieler stirbt
     * Was passiert wenn Exit
-* Texte einblenden
+* Texte einblenden, ok
 * Retry Button
-* Destroyable
+* Destroyable, ok
 * Stand Animation korrigieren, delay, ok
 * Animation UP Gravity fixen
 * Logic Scene Wechsel
 * Door/Exit/Switch/Fontaine, ok /LaserCannon, ok Components
-* Korrektes Tile Wechselrichtung Laser
+* Korrektes Tile Wechselrichtung Laser, ok
 * Wasser Animation korrigieren -> Wind, ok
-* Laser Overlay Wasser
+* Laser Overlay Wasser, ok
 * Laser Overlay Leiter/Robe?
 * Portal Exit Laser Overlay
 * Laser Component auslagern, erstmal nicht

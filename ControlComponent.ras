@@ -17,16 +17,29 @@ var
 	gravity: byte;
 	backObj, backObj2: byte;
 	pos,v: byte;
-	robeAbleId, portalId, gravPadId, switchId:  byte;
+	robeAbleId, portalId, gravPadId, switchId, laserBeanId:  byte;
 	newx, newy: byte;
 begin
 	defWalk := true;
 	controlId := objectList[id].controlId;
+	
+	laserBeanId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_FRONT, @COMP_LASERBEAN_2, 2);
+
+	if(laserBeanId <> $FF and (controlList[controlId].controlState <> @CTRL_STATE_DESTROY and (objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[laserBeanId].component0 & @COMP_DESTROY_COLLIDE_0 = @COMP_DESTROY_COLLIDE_0))) then begin
+		
+		objectList[id].b_physFallDown := false;
+		SwitchAnimation(id, @ANIM_CLIMB);
+		controlList[controlId].controlState := @CTRL_STATE_DESTROY;
+		controlList[controlId].controlJumpStep := 0;
+		controlList[controlId].controlCollideLaserTag := objectList[laserBeanId].laserTag; 
+		defWalk := false;
+	end;
+	
 	if(objectList[id].b_hasMoved = true) then begin
 		robeAbleId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_ROBE_ABLE_1, 1);
 		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
 		gravPadId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_GRAVPAD_1, 1);
-		
+
 		if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_CLIMB_ABLE_1, 1) <> $FF) then begin	
 			objectList[id].b_physFallDown := false;
 			SwitchAnimation(id, @ANIM_CLIMB);
@@ -79,7 +92,7 @@ begin
  			end;
 		end;
 		if(portalId = $FF) then controlList[controlId].controlLastPortal := $FF;
-
+		
 		if(controlList[controlId].lastWaypointId = $FF and controlList[controlId].waypointId <> $FF) then begin
 			DispatchEvent(@EVENT_WAYPOINT_ENTER, controlList[controlId].waypointId, $FF, $FF);
 		end
@@ -92,7 +105,6 @@ begin
 		end;
 	end;
 	
- 
 	switchId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_SWITCH_2, 2);
 	if(switchId <> $FF) then begin
 		if(controlList[controlId].b_controlPressAction = true) then begin
@@ -195,7 +207,7 @@ var
 	shift: integer;
 	d: byte;
 
-	colObj, eraseObj, colObj2, eraseObj2: byte;
+	colObj, eraseObj, colObj2, eraseObj2, laserId: byte;
 	shiftDir: byte;
 begin
 	controlId := objectList[id].controlId;
@@ -227,15 +239,6 @@ begin
 	end;
 	if(controlList[controlId].controlState = @CTRL_STATE_WALK) then begin
 		if(isShift = false) then begin
-			colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
-			if((colObj <> $FF and controlList[controlId].b_controlPressLeft = true) and (controlList[controlId].b_controlPressUp = false and grounded = true)) then DamageCollide(colObj);
-			
-			colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_DESTROY_COLLIDE_0,0, false);
-			if((colObj <> $FF and controlList[controlId].b_controlPressRight = true) and (controlList[controlId].b_controlPressUp = false and grounded = true)) then DamageCollide(colObj);
-			
-			colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_DESTROY_COLLIDE_0,0, false);
-			if((colObj <> $FF and controlList[controlId].b_controlPressDown = true) and grounded = true) then DamageCollide(colObj);
-			
 			colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
 			eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
 			if((colObj = $FF or eraseObj <> $FF) and ((controlList[controlId].b_controlPressUp = false and controlList[controlId].b_controlPressLeft = true) and (grounded = true))) then moveDir := @LEFT;  //TODO: AnimationWalkL
@@ -286,7 +289,7 @@ begin
 				if((colObj = $FF or eraseObj <> $FF) and (controlList[controlId].b_controlPressDown = true and grounded = true)) then begin 
 					moveDir := @DOWN;
 				end;
-			end; 
+			end;
 		end;
 		if(moveDir = @LEFT or moveDir = @UP_LEFT) then SwitchAnimation(id, @ANIM_WALK_L)
 		else if(moveDir = @RIGHT or moveDir = @UP_RIGHT) then SwitchAnimation(id, @ANIM_WALK_R)
@@ -295,12 +298,6 @@ begin
     else if(controlList[controlId].controlState = @CTRL_STATE_JUMP) then begin
 	    if(controlList[controlId].controlJumpStep = 0) then moveDir := @UP			// TODO: check for collideable?
 	    else if(controlList[controlId].controlJumpStep = 1 or controlList[controlId].controlJumpStep = 2) then begin
-			colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
-			if((colObj <> $FF and controlList[controlId].b_controlPressLeft = true)) then DamageCollide(colObj);
-			
-			colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_DESTROY_COLLIDE_0,0, false);
-			if((colObj <> $FF and controlList[controlId].b_controlPressRight = true)) then DamageCollide(colObj);
-
 		    	colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
 			eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
 			if((colObj = $FF or eraseObj <> $FF) and (controlList[controlId].b_controlPressLeft = true)) then moveDir := @LEFT;  //TODO: AnimationWalkL
@@ -341,18 +338,6 @@ begin
 		else if(moveDir = $FF) then SwitchAnimation(id, @ANIM_STAND);
 	end 
 	else if((controlList[controlId].controlState = @CTRL_STATE_SWIM or controlList[controlId].controlState = @CTRL_STATE_CLIMB) or controlList[controlId].controlState = @CTRL_STATE_ROBE) then begin
-		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_DESTROY_COLLIDE_0,0, false);
-		if(colObj <> $FF and controlList[controlId].b_controlPressLeft = true) then DamageCollide(colObj);
-		
-		colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_DESTROY_COLLIDE_0,0, false);
-		if(colObj <> $FF and controlList[controlId].b_controlPressRight = true) then DamageCollide(colObj);
-		
-		colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_DESTROY_COLLIDE_0,0, false);
-		if(colObj <> $FF and controlList[controlId].b_controlPressUp = true) then DamageCollide(colObj);
-
-		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_DESTROY_COLLIDE_0,0, false);
-		if(colObj <> $FF and controlList[controlId].b_controlPressDown = true) then DamageCollide(colObj);
-		
 		colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
 		eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
 		if((colObj = $FF or eraseObj <> $FF) and controlList[controlId].b_controlPressLeft) then moveDir := @LEFT;  //TODO: AnimationSwimL
@@ -378,8 +363,43 @@ begin
 		end
 		else if(controlList[controlId].controlState = @CTRL_STATE_ROBE) then begin
 			if(moveDir <> $FF) then SwitchAnimation(id, @ANIM_ROBE);
+		end
+	end
+	else if(controlList[controlId].controlState = @CTRL_STATE_DESTROY) then begin
+		ClearLaserWithTag(id);
+		if(controlList[controlId].controlJumpStep = 0) then begin 
+			objectList[id].currentLaser := 4;
+			ClearLaserWithTag(controlList[controlId].controlCollideLaserTag);
+			laserId := GetId();
+			if(laserId <> $FF) then begin				
+				objectList[laserId].rendTilePos := 92;
+				objectList[laserId].component0 := $00 | @COMP_DESTROY_COLLIDE_0;
+				objectList[laserId].component1 := $00;
+				objectList[laserId].component2 := $00;
+				objectList[laserId].component3 := $00;
+				objectList[laserId].transX := objectList[id].transX;
+				objectList[laserId].transY := objectList[id].transY;
+				objectList[laserId].transZ := @Z_FRONT;
+				objectList[laserId].laserTag := id;
+	
+				AddMapItem(laserId, objectList[id].transX, objectList[id].transY, @Z_FRONT);
+				PaintPos(objectList[id].transX + ystart[objectList[id].transY], false);
+			end;
+		end
+		else if(controlList[controlId].controlJumpStep = 1) then objectList[id].currentLaser := 5
+		else if(controlList[controlId].controlJumpStep = 2) then objectList[id].currentLaser := 5
+		else if(controlList[controlId].controlJumpStep = 3) then objectList[id].currentLaser := 2
+		else if(controlList[controlId].controlJumpStep = 4) then objectList[id].currentLaser := 1;
+		DirectFire(id, objectList[id].transX,objectList[id].transY, -1, 0, true);
+		DirectFire(id, objectList[id].transX,objectList[id].transY, 1, 0, true);
+		DirectFire(id, objectList[id].transX,objectList[id].transY, 0, -1, true);
+		DirectFire(id, objectList[id].transX,objectList[id].transY, 0, 1, true);
+	    inc(controlList[controlId].controlJumpStep);
+		if(controlList[controlId].controlJumpStep >= 5) then begin
+			controlList[controlId].controlJumpStep := 0;
+		 	controlList[controlId].controlState := @CTRL_STATE_RETRY;
 		end;
-	end;
+	end;	
 	
 	// Do Moves
 	oldx := objectList[id].transX;
@@ -436,4 +456,3 @@ begin
 		SetPos(id,oldx, oldy, newx, newy, objectList[id].transZ);
 	end;	
 end;
-

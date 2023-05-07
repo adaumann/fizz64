@@ -16,18 +16,6 @@ begin
 			newx := $FF;
 			newy := $FF;	
 			z := objectList[id].transZ;
-			colObj := GetObjArea(id, z, 3, @COMP_DESTROY_COLLIDE_0,0, true);
-			if(colObj <> $FF and floatDir = @LEFT) then DamageCollide(colObj);
-			
-			colObj := GetObjArea(id, z, 5, @COMP_DESTROY_COLLIDE_0,0, true);
-			if(colObj <> $FF and floatDir = @RIGHT) then DamageCollide(colObj);
-			
-			colObj := GetObjArea(id, z, 1, @COMP_DESTROY_COLLIDE_0,0, true);
-			if(colObj <> $FF and floatDir = @UP) then DamageCollide(colObj);
-
-			colObj := GetObjArea(id, z, 7, @COMP_DESTROY_COLLIDE_0,0, true);
-			if(colObj <> $FF and floatDir = @DOWN) then DamageCollide(colObj);
-			
 			colObj := GetObjArea(id, z, 3, @COMP_COLLIDE_ABLE_0,0, true);
 			eraseObj := GetObjArea(id, z, 3, @COMP_ERASE_ABLE_0,0, true);
 			if((colObj = $FF or eraseObj <> $FF) and floatDir = @LEFT) then moveDir := @LEFT;  //TODO: AnimationSwimL

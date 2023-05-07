@@ -33,8 +33,11 @@ var
 	dir: byte;
 	portalIdMove : byte;
 	tempx, tempy, tempx2, tempy2, pos: byte;
-begin	
+	laserType: byte;
+begin
+	
 	if(objectList[id].onOff = @ON) then begin
+		laserType := objectList[id].laserType;
 		controlId := objectList[id].controlId;
 		collide := false;
 		lastx := xpos;
@@ -52,13 +55,17 @@ begin
 			destroyAbleId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_DESTROY_ABLE_2, 2);
 			if ((collideId <> $FF and mirrorId = $FF) and destroyAbleId = $FF) then collide := true
 			else begin
-				if (mapfront[laserx + lasery * @DIMX] = $FF) then begin
+				if (mapfront[laserx + ystart[lasery]] = $FF) then begin
 					laserId := GetId();
 					if(laserId <> $FF) then begin				
 						if (xdir <> 0 and ydir = 0) then objectList[laserId].rendTilePos := 184
 						else if (xdir = 0 and ydir <> 0) then objectList[laserId].rendTilePos := 186;
 						objectList[laserId].rendType := @REND_TYPE_TILE;
-						objectList[laserId].component0 := $00 | @COMP_DESTROY_COLLIDE_0;
+						if(laserType <> @LASER_TYPE_USER) then begin
+							objectList[laserId].component0 := $00 | @COMP_DESTROY_COLLIDE_0;
+						end
+						else
+							objectList[laserId].component0 := $00;
 						objectList[laserId].component1 := $00;
 						objectList[laserId].component2 := $00 | @COMP_LASERBEAN_2;
 						objectList[laserId].component3 := $00;
@@ -66,6 +73,8 @@ begin
 						objectList[laserId].transY := lasery;
 						objectList[laserId].transZ := @Z_FRONT;
 						objectList[laserId].laserTag := id;
+						
+						
 		
 						turn := $FF;
 						if(mirrorId <> $FF) then begin
@@ -133,7 +142,7 @@ begin
 							else if (xdir <> 0 and ydir = 0) then objectList[laserId].rendTilePos := 24;
 						end;
 						AddMapItem(laserId, laserx, lasery, @Z_FRONT);
-						PaintPos(laserx + lasery *@DIMX, false);
+						PaintPos(laserx + ystart[lasery], false);
 					end;
 					
 					portalId := GetObjectByPosFilterComp(laserx, lasery, @Z_BACK1, @COMP_PORTAL_1, 1);
@@ -213,7 +222,7 @@ begin
 			
 			// PortalActivate
 			if(objectList[collideId].component2 & @COMP_PORTAL_ACTIVATE_2 = @COMP_PORTAL_ACTIVATE_2 and objectList[id].laserType = @LASER_TYPE_USER) then begin
-				pos := lastx + lasty * @DIMX;
+				pos := lastx + ystart[lasty];
 				if(mapback1[pos] = $FF and mapmain[pos] = $FF) then begin
 					if(portals[0] <> $FF and portals[1] <> $FF) then begin
 						if(lastPortal = 0) then portalIdMove := portals[1] else portalIdMove := portals[0];
@@ -225,7 +234,7 @@ begin
 					end
 					else begin
 						InitPortal(lastx, lasty, CalcFireExitDir(xdir, ydir));
-						PaintPos(lastx + lasty *@DIMX, false);
+						PaintPos(lastx + ystart[lasty], false);
 					end; 
 					controlList[controlId].b_waitRelease := true;
 					controlList[controlId].b_release := false;	

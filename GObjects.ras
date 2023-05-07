@@ -20,6 +20,7 @@ begin
 		controlList[controlId].b_controlPressDown := false;
 		controlList[controlId].controlLastPortal := $FF;
 		controlList[controlId].lastWaypointId := $FF;
+		controlList[controlId].controlCollideLaserTag := $FF;		
 		objectList[id].b_hasMoved := false;
 		objectList[id].animId := @ANIM_STAND;
 		objectList[id].animPos := 0;
@@ -35,7 +36,7 @@ begin
 		objectList[id].transZ := @Z_MAIN;
 		objectList[id].physGravity := @DOWN;
 		objectList[id].b_physRollLeftRight := false;
-		objectList[id].b_physFallDown := false;
+		objectList[id].b_physFallDown := true;
 		objectList[id].shiftDir := @RIGHT;
 		objectList[id].laserType := @LASER_TYPE_USER;
 		objectList[id].lastLaserDir := $FF;
@@ -85,7 +86,7 @@ begin
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_MAIN;
-		objectList[id].physGravity := @RIGHT;
+		objectList[id].physGravity := @DOWN;
 		objectList[id].b_physRollLeftRight := true;
 		objectList[id].b_physFallDown := true;
 		objectList[id].onOff := 1;		
@@ -271,25 +272,6 @@ begin
 	end;
 end;
 
-procedure InitLaser(x: byte, y: byte, tilen: byte);
-var 
-	id: byte;
-begin
-	id := GetId();
-	if(id <> $FF) then begin
-		objectList[id].rendTilePos := tilen;
-		objectList[id].rendType := @REND_TYPE_TILE;		
-		objectList[id].component0 := $00 | @COMP_DESTROY_COLLIDE_0;
-		objectList[id].component1 := $00;
-		objectList[id].component2 := $00;
-		objectList[id].component3 := $00;
-		objectList[id].transX := x;
-		objectList[id].transY := y;
-		objectList[id].transZ := @Z_FRONT;
-		AddMapItem(id, x, y, @Z_FRONT);
-	end;
-end;
-
 procedure InitMirror(x: byte, y: byte, tilen: byte, turn: byte);
 var 
 	id: byte;
@@ -316,7 +298,7 @@ var
 begin
 	id := GetId();
 	if(id <> $FF) then begin
-		objectList[id].rendTilePos := 92;
+		objectList[id].rendTilePos := 94;
 		objectList[id].rendType := @REND_TYPE_TILE;		
 		objectList[id].component1 := $00;
 		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0;
@@ -329,6 +311,7 @@ begin
 	end;
 end;
 
+/*
 procedure InitLaserTransportOnce(x: byte, y: byte);
 var 
 	id: byte;
@@ -347,6 +330,7 @@ begin
 		AddMapItem(id, x, y, @Z_MAIN);
 	end;
 end;
+*/
 
 procedure InitBox(x: byte, y: byte, tilen, dir: byte);
 var 
@@ -420,9 +404,9 @@ begin
 	if(id <> $FF) then begin
 		objectList[id].rendTilePos := tilen;
 		objectList[id].rendType := @REND_TYPE_TILE;		
-		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 | @COMP_DESTROY_COLLIDE_0;
+		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0;
 		objectList[id].component1 := $00 | @COMP_LASER_1;
-		objectList[id].component2 := $00 | @COMP_FONTAINE_2;
+		objectList[id].component2 := $00;
 		objectList[id].component3 := $00;
 		objectList[id].transX := x;
 		objectList[id].transY := y;

@@ -4,7 +4,7 @@ program game;
 
 var	
 	//@define DEBUG 1
-	@define OVERFLOW_CHECK 1
+	//@define OVERFLOW_CHECK 1
 	@define USE_KERNAL 0
 
 	// Charsets
@@ -118,6 +118,8 @@ var
 	shiftAreaUpY: array[9] of byte = ( 1, 1, 1 , 0, 0, 0, -1, -1, -1);
 	shiftAreaLeftY: array[9] of byte = ( -1, 0, 1, -1, 0, 1, -1, 0, 1);
 	shiftAreaRightY: array[9] of byte = ( 1, 0, -1,  1, 0, -1, 1, 0, -1);
+
+	ystart: array[12] of byte = ( 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220 );
 	
 	tempPointer: pointer of byte;
 	
@@ -210,6 +212,10 @@ var
 	@define CTRL_STATE_ROBE 2
 	@define CTRL_STATE_SWIM 3
 	@define CTRL_STATE_JUMP 4
+	@define CTRL_STATE_DESTROY 5
+	@define CTRL_STATE_RETRY 6
+	@define CTRL_STATE_FINISH 7
+	@define CTRL_STATE_NEXT 8
 
 	@define EVENT_INIT_LEVEL 0
 	@define EVENT_SWITCH_ON 1
@@ -230,7 +236,7 @@ var
 	
 	
 //	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                 4aa");
-    lev0: string = ("xX{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a6   1[ 2    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa& 4------====hh   aa&m   n  @b    =  4aa   x===ss rs8 h o aaaa    aaaaaaaaaaaaaa");
+    lev0: string = ("xX{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a6   1[12    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa& 4------====hh   aa&m   n   b@   =  4aa   x===ss rs8 h o aaaa    aaaaaaaaaaaaaa");
 	lev0strings: Array[@MAX_LEV_STRINGS] of string = ("WELCOME","aa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p4
 	lev0actor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
@@ -309,6 +315,7 @@ var
 		b_waitRelease, b_release: byte;
 		waypointId: byte;
 		lastWaypointId: byte;
+		controlCollideLaserTag: byte;
 	end;
 
 	gobject = record
@@ -505,22 +512,6 @@ begin
 	SpritePos(xs,ys,num);
 end;
 
-procedure PrintSpriteEmpty(i: byte, num: byte);
-var
-	ns: byte;
-begin
-	if(currentBank = 0) then begin
-		ns := num + $80;
-		SetSpriteLoc(i, ns, 0);
-	end
-	else begin
-		ns := num;
-		SetSpriteLoc(i, ns, 1);
-	end;
-	SpritePos(0,0,i);
-end;
-
-
 procedure print2x2blockEmpty(x,y:byte);
 begin
 	@IFDEF OVERFLOW_CHECK
@@ -597,7 +588,7 @@ end;
 procedure PaintPos(pos: byte, considerAnimation: boolean);
 var
 	x,y: byte;
-	t: byte;
+	t, tHide: byte;
 	animId: byte;
 	hideSprite: boolean;
 	pa: pointer of animObject;
@@ -633,7 +624,12 @@ begin
 	 	currentTile := PaintPosAnim(t, considerAnimation);
  	end;
 	
-	if(t <> $FF) then begin	
+	if(t <> $FF) then begin
+		if(hideSprite = true) then begin
+			tHide := mapmain[pos];
+			if(tHide <> $FF and objectList[tHide].rendType = @REND_TYPE_SPRITE) then
+			 	PrintSprite(0,@DIMY+1,0,objectList[tHide].rendSpriteNum)
+		end;
 	 	if(objectList[t].rendType = @REND_TYPE_SPRITE and hideSprite = false) then
 		 	PrintSprite(x,y,currentTile,objectList[t].rendSpriteNum)
 	 	else if(objectList[t].rendType = @REND_TYPE_TILE) then 
@@ -679,7 +675,7 @@ var
 	npos: integer;
 begin
 	npos := CalcPosition(startx,starty, pos);
-	CalcPositionMapPos := hi(npos) + lo(npos) * @DIMX;
+	CalcPositionMapPos := hi(npos) + ystart[lo(npos)];
 end;
 
 function GetObjectByPosFilterComp(x: byte, y: byte, z: byte, comp: byte, compIdx: byte) : byte;
@@ -688,7 +684,7 @@ var
 begin
 	GetZLayerPointer(z);
 	ret := $FF;
-	mapPos := x + y * @DIMX;
+	mapPos := x + ystart[y];
 	@IFDEF OVERFLOW_CHECK
 		if(mapPos >= @DIMTILES) then SCREEN_BG_COL:=LIGHT_RED;
 	@ENDIF
@@ -770,8 +766,8 @@ var
 	oldpos: byte;
 	pos: byte;
 begin
-	oldpos := oldx + oldy * @DIMX;
-	pos := x + y * @DIMX;
+	oldpos := oldx + ystart[oldy];
+	pos := x + ystart[y];
 	GetZLayerPointer(z);
 	@IFDEF OVERFLOW_CHECK
 		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
@@ -789,7 +785,7 @@ var
 	oldpos: byte;
 	pos: byte;
 begin
-	pos := x + y * @DIMX;
+	pos := x + ystart[y];
 	@IFDEF OVERFLOW_CHECK
 		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
 	@ENDIF
@@ -804,7 +800,7 @@ begin
 	@IFDEF OVERFLOW_CHECK
 		if(i >= @MAX_OBJECTS) then SCREEN_BG_COL:=CYAN;
 	@ENDIF
-	pos := x + y * @DIMX;
+	pos := x + ystart[y];
 	@IFDEF OVERFLOW_CHECK
 		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
 	@ENDIF
@@ -832,7 +828,7 @@ procedure SetZLayer(id: byte, oldz: byte, newz: byte);
 var
 	pos: byte;
 begin
-	pos := objectList[id].transX + objectList[id].transY * @DIMX;
+	pos := objectList[id].transX + ystart[objectList[id].transY];
 	@IFDEF OVERFLOW_CHECK
 		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
 	@ENDIF
@@ -849,7 +845,7 @@ procedure AddMapItem(Id: byte, x: byte, y: byte, z:byte);
 var
 	pos: byte;
 begin
-	pos := x + y * @DIMX;
+	pos := x + ystart[y];
 	GetZLayerPointer(z);
 	@IFDEF OVERFLOW_CHECK
 		if(x = @DIMX or y = @DIMY) then SCREEN_BG_COL:=YELLOW;
@@ -913,7 +909,7 @@ var
 	pos: byte;
 	pm: pointer of byte;
 begin
-	pos := x + y * @DIMX;	
+	pos := x + ystart[y];	
 	GetZLayerPointer(z); 
 	tempPointer[pos] := 255;
 end;
@@ -972,7 +968,7 @@ begin
 		DeleteMapItem(id, objectList[id].transX, objectList[id].transY, objectList[id].transZ);
 		if(isDyn = true) then DeleteDynObject(id); 
 		if(isAnim = true) then DeleteAnimObject(id);
-		PaintPos(objectList[id].transX + objectList[id].transY * @DIMX, true);
+		PaintPos(objectList[id].transX + ystart[objectList[id].transY], true);
 	end; 
 end;	
 
@@ -993,13 +989,6 @@ begin
 		currentBank := 0;
 	end;
 
-end;
-
-
-
-procedure DamageCollide(id: byte);
-begin
-	// TODO
 end;
 
 procedure CycleAnimation(id: byte);
@@ -1026,6 +1015,28 @@ begin
 	end;
 end;
 
+procedure ClearLaserWithTag(tag: byte);
+var
+	i,c: byte;
+	d: byte;
+begin
+	for i:= 0 to @DIMTILES do begin
+		
+		c := mapfront[i];
+		if(c <> $FF and objectList[c].laserTag = tag) then begin
+			if(objectList[c].component2 & @COMP_LASERBEAN_2 = @COMP_LASERBEAN_2) then begin 
+				DeletePos(c, false, false);
+			end;
+		end;
+/*		c := mapback2[i];
+		if(c <> $FF and (objectList[c].component0 & @COMP_WATER_0 = @COMP_WATER_0 and objectList[c].laserTag <> $FF)) then begin 
+			DeletePos(c, false, false);
+		end;
+		*/
+	end;
+end;
+
+
 procedure ClearAllLaser();
 var
 	i,c: byte;
@@ -1034,12 +1045,105 @@ begin
 	for i:= 0 to @DIMTILES do begin
 		
 		c := mapfront[i];
-		if(c <> $FF and (objectList[c].component2 & @COMP_LASERBEAN_2 = @COMP_LASERBEAN_2 and objectList[c].laserTag <> $FF)) then begin 
-			DeletePos(c, false, false);
+		if(c <> $FF and objectList[c].laserTag <> $FF) then begin
+			if(objectList[c].component2 & @COMP_LASERBEAN_2 = @COMP_LASERBEAN_2 or objectList[c].component0 & @COMP_WATER_0) then begin 
+				DeletePos(c, false, false);
+			end;
 		end;
 		c := mapback2[i];
 		if(c <> $FF and (objectList[c].component0 & @COMP_WATER_0 = @COMP_WATER_0 and objectList[c].laserTag <> $FF)) then begin 
 			DeletePos(c, false, false);
+		end;
+	end;
+end;
+
+procedure DirectFire(id: byte, xpos, ypos: byte, xdir, ydir: byte, bomb: boolean);
+var
+	laserId: byte;
+	collideId, floaterId: byte;
+	collide: boolean;
+	laserx, lasery, lastx, lasty: byte;
+	countLaser: byte;
+	dir: byte;
+	tileUp, tileDown, tileLeft, tileRight, z, rendType, comp0, comp2: byte;
+begin	
+	if(objectList[id].onOff = @ON) then begin
+		if(bomb = true) then begin
+			tileLeft := 90;
+			tileRight := 90;
+			tileUp := 88;
+			tileDown := 88;
+			z := @Z_FRONT;
+			rendType := @REND_TYPE_TILE;
+			comp0 := $00 | @COMP_COLLIDE_ABLE_0;
+			comp2 := $00 | @COMP_LASERBEAN_2;
+		end
+		else begin
+			tileLeft := 62;
+			tileRight := 63;
+			tileUp := 23;
+			tileDown := 22;
+			z:= @Z_BACK2;
+			rendType := @REND_TYPE_BYTE;
+			comp0 := $00 | @COMP_COLLIDE_ABLE_0 | @COMP_WATER_0;
+			comp2 := $00;
+		end;
+			
+		collide := false;
+		lastx := xpos;
+		lasty := ypos;
+		laserx := CalcPositionX(xpos, xdir);
+		lasery := CalcPositionY(ypos, ydir);
+		countLaser := 0;
+		collideId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
+		floaterId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_FLOATER_1, 1);
+		if (collideId <> $FF and floaterId = $FF) then collide := true;
+		while (collide = false and countLaser < objectList[id].currentLaser) do begin
+			collideId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
+			floaterId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_FLOATER_1, 1);
+			if (collideId <> $FF and floaterId = $FF) then begin
+				collide := true;
+			end
+			else begin
+				
+				if ((mapback2[laserx + ystart[lasery]] = $FF and bomb = false) or (mapfront[laserx + ystart[lasery]] = $FF and bomb = true)) then begin
+					laserId := GetId();
+					if(laserId <> $FF) then begin				
+						if (xdir = -1 and ydir = 0) then begin 
+							objectList[laserId].rendTilePos := tileLeft;
+							objectList[laserId].waterFloaterDir := @LEFT;
+						end
+						else if (xdir = 1 and ydir = 0) then begin
+							objectList[laserId].rendTilePos := tileRight;
+							objectList[laserId].waterFloaterDir := @RIGHT;
+						end
+						else if (xdir = 0 and ydir = -1) then begin
+						    objectList[laserId].rendTilePos := tileUp;
+							objectList[laserId].waterFloaterDir := @UP;
+						end
+						else if (xdir = 0 and ydir = 1) then begin
+							objectList[laserId].rendTilePos := tileDown;
+							objectList[laserId].waterFloaterDir := @DOWN;
+						end;
+						objectList[laserId].rendType := rendType;
+						objectList[laserId].component0 := comp0;
+						objectList[laserId].component1 := $00;
+						objectList[laserId].component2 := comp2;
+						objectList[laserId].component3 := $00;
+						objectList[laserId].transX := laserx;
+						objectList[laserId].transY := lasery;
+						objectList[laserId].transZ := z;
+						objectList[laserId].laserTag := id;
+						AddMapItem(laserId, laserx, lasery, z);
+						PaintPos(laserx + ystart[lasery], false);
+					end;
+				end;
+				lastx := laserx;
+				lasty := lasery;
+				laserx := CalcPositionX(laserx, xdir);
+				lasery := CalcPositionY(lasery, ydir);
+				inc(countLaser);
+			end;
 		end;
 	end;
 end;
@@ -1429,7 +1533,7 @@ begin
 			@LEV_MIRROR_RIGHT: InitMirror(x,y, 98, @TURN_RIGHT);
 			@LEV_GLASS: InitMirror(x,y,36, @TURN_THROUGH);
 			@LEV_LASER_TRANSPORT: InitLaserTransport(x,y);
-			@LEV_LASER_TRANSPORT_ONCE: InitLaserTransportOnce(x,y);
+//			@LEV_LASER_TRANSPORT_ONCE: InitLaserTransportOnce(x,y);
 			@LEV_PUSH_BOX: InitBox(x,y, 162 , 1);
 			@LEV_PULL_BOX: InitBox(x,y, 164 , -1);
 			@LEV_FONTAINE_DOWN: InitFontaine(x,y, 176, @DOWN);
@@ -1477,11 +1581,11 @@ begin
 	PaintFull();
 	InitSprites();
 	InitAnimations();
-	//setmemoryconfig(1,@USE_KERNAL,0); // Enable all ram, turn off BASIC
 	StartRasterChain(RasterTopLevel(), 0,@USE_KERNAL); // Don't use kernal
 	frameStatus := 1;
 	enableirq();
 	enablerasterirq();
+	ClearText();
 	DispatchEvent(@EVENT_INIT_LEVEL, $FF, $FF, $FF);
 	While(true) do begin
 		if(frameStatus = 0)	then begin

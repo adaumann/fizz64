@@ -17,16 +17,6 @@ begin
 	doPhys := true;
 		
 	if(objectList[id].b_physFallDown = true) then begin
-		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_DESTROY_COLLIDE_0,0, false);
-		if(colObj <> $FF) then DamageCollide(colObj);
-		
-		if(objectList[id].b_physRollLeftRight = true) then begin
-			destroyObj := GetObjArea(id, objectList[id].transZ, 6, @COMP_DESTROY_COLLIDE_0,0, false); //  GetObjArea(id, #tempDestroyArea, 6);
-			if(destroyObj <> $FF) then DamageCollide(destroyObj);
-			destroyObj := GetObjArea(id, objectList[id].transZ, 8, @COMP_DESTROY_COLLIDE_0,0, false);
-			if(destroyObj <> $FF) then DamageCollide(destroyObj);
-		end;
-	
 		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
 	
 		if(colObj = $FF) then fallDown := true
@@ -36,8 +26,9 @@ begin
 			if(objectList[id].b_physHighFall = true) then objectList[id].b_physHighFall := false;
 			shiftDir := objectList[colObj].shiftDir;
 			if(objectList[colObj].component0 & @COMP_SHIFT_PLATTFORM_0 = @COMP_SHIFT_PLATTFORM_0) then begin		
-				destroyObj := GetObjArea(id, objectList[id].transZ, objectList[colObj].shiftDir, @COMP_DESTROY_COLLIDE_0,0, false);
-				if(destroyObj <> $FF) then DamageCollide(destroyObj);
+				/*
+			destroyObj := GetObjArea(id, objectList[id].transZ, objectList[colObj].shiftDir, @COMP_DESTROY_COLLIDE_0,0, false);
+				if(destroyObj <> $FF) then DamageCollide(destroyObj);*/
 				if(GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_COLLIDE_ABLE_0,0, false) = $FF 
 						or GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_ERASE_ABLE_0,0, false) = $FF ) then begin
 					if(gravity = @DOWN and shiftDir = @LEFT) then fall := @LEFT
