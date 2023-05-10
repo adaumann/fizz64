@@ -4,7 +4,7 @@ program game;
 
 var	
 	//@define DEBUG 1
-	@define OVERFLOW_CHECK 1
+	//@define OVERFLOW_CHECK 1
 	@define USE_KERNAL 0
 
 	// Charsets
@@ -33,6 +33,7 @@ var
 	globaltime: byte=0;
 	frameStatus: byte;
 	screen: byte;
+	debugx: byte;
 	countSprite: byte=0;
 	
 	// Game	
@@ -122,11 +123,10 @@ var
 	
 	tempPointer: pointer of byte;
 	
-	@define STATE_INIT 0
-	@define STATE_OPEN_SCENE 1
-	@define STATE_PLAY 2
-	@define STATE_PAUSE 3
-	@define STATE_CLOSE_SCENE 4
+	@define STATE_OPEN_SCENE 0
+	@define STATE_PLAY 1
+	@define STATE_PAUSE 2
+	@define STATE_CLOSE_SCENE 3
 		
 	@define COMP_PHYSICS_0          %00000001
 	@define COMP_COLLIDE_ABLE_0     %00000010
@@ -207,7 +207,7 @@ var
 	@define CTRL_STATE_DESTROY 5
 	@define CTRL_STATE_RETRY 6
 	@define CTRL_STATE_FINISH 7
-	@define CTRL_STATE_DIE 8
+	@define CTRL_STATE_NEXT 8
 
 	@define EVENT_INIT_LEVEL 0
 	@define EVENT_SWITCH_ON 1
@@ -254,9 +254,6 @@ var
 	txtActiveSwitch:   string=("SWITCH ACTIVATED");
 	@define DEACTIVATE_SWITCH_START 11
 	txtDeactiveSwitch: string=("SWITCH DEACTIVATED");
-	@define PLAYER_DIED_START 6
-	txtPlayerDied: Array[2] of string=("PLAYER 1 DIED (F1 TO RESTART)", "PLAYER 2 DIED (F3 TO RESTART)");
-	
 	
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
@@ -273,7 +270,6 @@ var
 	state: byte;
 	pa: pointer of byte;
 	textTimer: byte;
-	level: byte;
 
 	@define ANIM_CONSIDER_GRAV_IGNORE 0
 	@define ANIM_CONSIDER_GRAV_FULL 1
@@ -375,22 +371,18 @@ var
 
 @startblock $5800 "Code"
 
-procedure InitLevel();
+procedure Init();
 begin
 	state := @STATE_PLAY;
+	oldState := 255;
+	killDuration := 0;
+	killTimer := 0;
+	newSceneAfterKill := true;
 	countObjects := 0;
 	countDyn := 0;
 	countAnim := 0;
 	textTimer := 0;
-	countSprite := 0;	
 end;
-
-procedure InitGame(lev: byte);
-begin
-	state := @STATE_INIT;
-	level := lev;
-end;
-
 
 procedure print2x2block(x,y,c: byte);
 begin
@@ -964,13 +956,7 @@ begin
 		deletedObjects[@MAX_OBJECTS - 1 - countObjects] := id;
 		dec(countObjects);
 		DeleteMapItem(id, objectList[id].transX, objectList[id].transY, objectList[id].transZ);
-		if(isDyn = true) then begin
-			DeleteDynObject(id); 
-			PaintPos(objectList[id].transX + ystart[objectList[id].transY], true);
-			if(objectList[id].rendType = @REND_TYPE_SPRITE) then
-			 	PrintSprite(0,@DIMY+1,0,objectList[id].rendSpriteNum);
-		end;
-
+		if(isDyn = true) then DeleteDynObject(id); 
 		if(isAnim = true) then DeleteAnimObject(id);
 		PaintPos(objectList[id].transX + ystart[objectList[id].transY], true);
 	end; 
@@ -1166,14 +1152,13 @@ begin
 	if(objectList[id].component1 & @COMP_LASER_1 = @COMP_LASER_1) then begin 
 		UpdateLaser(id);
 	end;
-	if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin 
-		ProcessDestroyObj(id);
-		InputControl(id); 
-		UpdateControl(id);
-		ProcessBackObj(id);
-	end;
 	if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then begin
 		UpdatePhysics(id);
+		ProcessBackObj(id);
+	end;
+	if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin 
+		InputControl(id); 
+		UpdateControl(id);
 		ProcessBackObj(id);
 	end;
 	if(objectList[id].component1 & @COMP_FLOATER_1 = @COMP_FLOATER_1) then begin 
@@ -1198,7 +1183,6 @@ begin
 		for i:=0 to countDyn do	begin
 			id := dynObjectList[i];
 			UpdateObject(id);
-	
 		end;
 	end;
 end;
@@ -1223,7 +1207,7 @@ begin
 	startirq(@USE_KERNAL);
 	setmulticolormode();
 	setcharsetlocation(@tilesetLoc1);
-	SCREEN_FG_COL:=BLACK;
+	SCREEN_FG_COL:= SCREEN_FG_COL + 1;
 	if(frameStatus = 1) then begin
 		if(time = 0) then begin
 			SwitchBank();
@@ -1235,9 +1219,7 @@ begin
       	frameStatus := 0;
     end;
     if(time < 4) then inc(time)
-	else if(frameStatus = 1) then begin 
-		time:=0;
-	end;
+	else if(frameStatus = 1) then time:=0;
 	RasterIRQ(RasterBottomText(), 242, @USE_KERNAL);
 	closeIrq();
 end;
@@ -1247,7 +1229,6 @@ begin
 	startirq(@USE_KERNAL);
 	setregularcolormode();
 	setcharsetlocation(@charsetLoc1);
-	
 	SCREEN_FG_COL:=WHITE;
 
 	@IFDEF DEBUG
@@ -1581,41 +1562,34 @@ begin
 	clearscreen($FF,^$4400);
 	clearscreen(BLACK,^$D800);
 	
-	InitGame(0);
+	Init();
+	InitMap();
+	InitActors();	
+	SwitchBank();
+	PaintFull();
+	SwitchBank();
+	PaintFull();
+	InitSprites();
+	InitAnimations();
 	StartRasterChain(RasterTopLevel(), 0,@USE_KERNAL); // Don't use kernal
+	frameStatus := 1;
 	enableirq();
-	enablerasterirq();	
-	
+	enablerasterirq();
+	ClearText();
+	DispatchEvent(@EVENT_INIT_LEVEL, $FF, $FF, $FF);
 	While(true) do begin
-		case state of
-			@STATE_INIT: begin
-				InitLevel();
-				InitMap();
-				InitActors();	
-				SwitchBank();
-				PaintFull();
-				SwitchBank();
-				PaintFull();
-				InitSprites();
-				InitAnimations();
-				ClearText();
-				DispatchEvent(@EVENT_INIT_LEVEL, $FF, $FF, $FF);				
-			end;
-			@STATE_PLAY: begin
-				frameStatus := 1; // will be updated in raster chain
-				time := 0;
-				while(state = @STATE_PLAY) do begin
-					if(frameStatus = 0)	then begin
-						inc(globaltime);	
-						Update();
-						Animate();
-						CycleWater();
-						DecreaseTextTimer();
-						frameStatus := 1;
-					end;					
-				end;
-			end;
+		if(frameStatus = 0)	then begin
+			inc(globaltime);	
+			Update();
+			Animate();
+			CycleWater();
+			DecreaseTextTimer();
+	//		PaintFull();
+			frameStatus := 1;
 		end;
 	end;
-	Loop();
+	Loop(); 
 end.
+
+
+
