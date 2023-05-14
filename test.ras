@@ -1,0 +1,72 @@
+program test;
+var  
+@setvalue "exomizer_toggle" 0
+
+@export "title/title.flf" "title/title.bin" 256
+
+ img_data:incbin("title/title_data.bin", $6000);
+ img_col : incbin("title/title_color.bin");
+
+@ifndef IS_DEMO
+@setvalue "output_type" "prg"
+@endif
+
+	lev0: string = ("LEV0");
+
+// This effect starts at $1000!	
+
+@startblock $4000 "code"
+procedure Init();
+begin
+
+//@ifndef IS_DEMO 
+
+	// Executed in stand-alone
+//	disableciainterrupts();
+//	preventirq();
+//	setmemoryconfig(1,0,0);
+//@endif	
+	setmulticolormode();
+	setbank(VIC_BANK1);
+	setcharsetandscreenlocation($6000,$4400);
+	screen_bg_col:=blue;
+	screen_fg_col:=blue;
+	
+	clearscreen(0,^$4400);	
+	clearscreen(0,^$D800);	
+	setbitmapmode();
+end;
+@endblock
+
+begin
+	Init();
+asm(
+"
+	ldx #<lev0
+	ldy #>lev0
+	jsr $200
+	bcc loadkrill
+loadkrillcrash
+	inc $D021
+	jmp loadkrillcrash
+loadkrill
+
+");
+	
+	
+	//KrillLoad(#lev0);
+	
+	Loop();
+	/*
+	while (true) do
+	begin
+		// EndClearInsideWhileLoop will simply jump to the loader address at $810 if "advance" is set to 1
+		DemoUnit::EndClearInsideWhileLoop();
+		if (peek(^@transition,0)=4) then
+		begin
+			// perform fadeout if transition is close to 0
+			FadeInOut::DefaultFadeOut(#img_col,$4400,#fadedata,4);
+		end;
+	end;
+	*/
+end.

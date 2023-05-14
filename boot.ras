@@ -1,0 +1,27 @@
+program boot;
+
+@setvalue "remove_unused_symbols" "1"
+// always toggle exomizer on
+@setvalue "exomizer_toggle" 1
+@setvalue "main_ras_file" "boot.ras"
+// Set disk output
+
+var	
+	//@define DEBUG 1	
+	zp: pointer;
+	@use KrillsLoader $0200 $3000 $6000
+
+// Empty NMI interrupt
+interrupt NMI();
+begin
+end;
+ 
+begin
+	// First, load from disk using KERNAL. Slow as %($/%
+	nmiirq(NMI());				
+	// Initialise Krill	
+	InitKrill();
+
+	KrillLoad(#test);
+	asm( " jmp @programStartAddress")
+end.

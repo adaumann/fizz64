@@ -111,7 +111,7 @@ begin
 	textId := actorList[actorId].param0;
 	x := actorList[actorId].param1;
 	textTimer := actorList[actorId].param2;
-	PrintText(x, lev0strings[textId]);
+	PrintText(x, levStrings[textId]);
 end;	
 
 procedure DispatchEvent(event: byte, senderId: byte, p1,p2: byte);
