@@ -1,0 +1,75 @@
+program intro;
+@setvalue "exomizer_toggle" 0
+@ifndef IS_DEMO
+	@setvalue "output_type" "prg"
+@endif
+
+// @use "demounit"
+@use "tables/luminosities"
+@use "screen/fadeinout"
+
+var  
+	@perlinnoise "title/per1.bin" 40 25 2 1 1  170 140
+	fadedata : incbin("title/per1.bin",$C000);
+	@export "title/title.flf" "title/title.bin" 256
+
+	img_data:incbin("title/title_data.bin", $6000);
+	img_col : incbin("title/title_color.bin");
+
+
+@startblock $2000 "code"
+procedure Init();
+begin
+
+@ifndef IS_DEMO 
+
+// Executed in stand-alone
+	disableciainterrupts();
+	preventirq();
+	setmemoryconfig(1,0,0);
+@endif	
+	setmulticolormode();
+	setbitmapmode();
+	setcharsetandscreenlocation($6000,$4400);
+	setbank(VIC_BANK1);
+	//copyimagecolordata(#img_col,1);	
+
+	screen_bg_col:=black;
+	screen_fg_col:=black;
+	clearscreen(0,^$4400);	
+	clearscreen(0,^$D800);		
+	FadeInOut::InitCols(#Luminosities::fromBlue);
+	FadeInOut::DefaultFadeIn(#img_col,$4400,#fadedata,2);	
+end;
+@endblock
+
+// This effect starts at $1000!	
+begin
+	Init();
+	// Loop();
+	ReadJoy2();
+	while(joy2 & JOY_FIRE <> JOY_FIRE) do begin
+		ReadJoy2();
+	end;
+	FadeInOut::DefaultFadeOut(#img_col,$4400,#fadedata,2);	
+	@ifdef IS_DEMO 
+	asm("
+		jmp @bootStartAddress
+	");
+	@endif
+	Loop();
+/*
+asm(
+"
+	ldx #<lev0
+	ldy #>lev0
+	jsr $200
+	bcc loadkrill
+loadkrillcrash
+	inc $D021
+	jmp loadkrillcrash
+loadkrill
+
+");
+*/
+end.

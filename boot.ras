@@ -1,27 +1,83 @@
 program boot;
 
-@setvalue "remove_unused_symbols" "1"
-// always toggle exomizer on
-@setvalue "exomizer_toggle" 1
-@setvalue "main_ras_file" "boot.ras"
 // Set disk output
 
 var	
-	//@define DEBUG 1	
-	zp: pointer;
-	@use KrillsLoader $0200 $3000 $6000
+	@define useKernal 0
 
-// Empty NMI interrupt
+
+	// Make sure that we compile the demo only when pressing ctrl+R here
+	@setvalue "remove_unused_symbols" "0"
+	// always toggle exomizer on
+	@setvalue "exomizer_toggle" 1
+	@setvalue "main_ras_file" "boot.ras"
+	// Set disk output
+	@setvalue "output_type" "d64"
+
+	//@define DEBUG 1	
+	isInitialized: byte = 0;
+	ldr: byte; // the current position in the order array	
+
+// Loader at $200
+	@use KrillsLoader $0200 $2000 $4000
+
 interrupt NMI();
 begin
 end;
- 
-begin
-	// First, load from disk using KERNAL. Slow as %($/%
-	nmiirq(NMI());				
-	// Initialise Krill	
-	InitKrill();
 
-	KrillLoad(#test);
+procedure LoadGameIgnoreCrash();
+var
+begin
+	asm(
+"
+	ldx #<game
+	ldy #>game
+	jsr $200	
+");
+end;
+
+
+begin
+	if (isInitialized<>0) offpage then 
+	begin
+		// Black screen in between loading
+		//StartChain();
+		// Cleanup
+		
+		setbank(vic_bank0);
+		screen_fg_col:=black;
+		screen_bg_col:=black;
+		setcharsetlocation($1000);
+		clearscreen($20,^$0400);
+		setregularcolormode();
+		
+		sprite_bitmask:=0;
+		
+		setregularcolormode();
+		// Reset time counters
+	end else 
+	begin
+		// First time the loader is run! 
+		// Set an empty NMI irq
+		//nmiirq(NMI());				
+		// Initialise Krill	
+		InitKrill();
+		preventirq();
+		disableciainterrupts();
+		ldr := 0;
+	end;	
+	// Ensure memory config is correctly set	
+	setmemoryconfig(1,0,0);
+
+	if (isInitialized=0) then begin	
+		// Initialse the SID file for first use		
+		//initsid(sidfile_1_init);
+		isInitialized:=1;
+		// Start the music while loading the first part. Remove the next line if you don't want that. 
+		//StartChain();
+	end;
+	inc(ldr);
+	if(ldr = 1) then KrillLoadCompressed(#intro)
+	else if(ldr = 2) then KrillLoad(#game2);
 	asm( " jmp @programStartAddress")
 end.

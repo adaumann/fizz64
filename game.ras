@@ -1,14 +1,9 @@
 program game;
-@projectsettings "exomize" "1"
-//@use "system"
+@projectsettings "exomize" "0"
+@use "system/str"
 
 @startblock $1200 "Variables"
 var	
-	fp : pointer;
-	len : byte;
-	addr : integer;
-
-	//@use KrillsLoader $0200 $3000 $2000 
 	//@define DEBUG 1
 	@define OVERFLOW_CHECK 1
 	@define USE_KERNAL 0
@@ -33,8 +28,6 @@ var
   	sprite2: incbin("sprites/spr.bin", @spriteLoc2);
 	tilesetColors :  incbin("charsets/tileset_color.bin", @tilesetCol);
 
-	//@include "d64_include.ras"
-	
 	// Double Buffer
 	currentBank: byte=0;
 	time: byte=0;
@@ -278,9 +271,9 @@ var
 	animList : Array[@DIMANIMS] of animObject;
 
 @endblock
+
 @startblock $1c00 "level"
     lev: string = (" X{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a6   1[12    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa& 4------====hh   aa&m   n   b@   =  4aa   x===ss rs8 h o aaaa    aaaaaaaaaaaaaa");
-	levStrings: Array[@MAX_LEV_STRINGS] of string = ("WELCOME","aa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p4
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
@@ -298,6 +291,7 @@ var
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF); 	
+	levStrings: Array[@MAX_LEV_STRINGS] of string = ("WELCOME","aa");
 //	lev0: string = ("    ccccccccccccc                                               @                                          t u        Yaa     ^  b b b b ^Yaa    b b b b b     aa  b b b b b   o   aa        d e o     aa   n d  gg  m  e  aaaaaaaaaaaaaaaaaaaaaa");
 
 @endblock
@@ -380,9 +374,9 @@ var
 		// PushPull  , Door, Exit, Switch
 		onOff: byte;
 	end;
-	objectList : Array[@MAX_OBJECTS] of gobject;
 	controlList : Array[@MAX_CONTROLS] of controlObject;
 	actorList : Array[@MAX_ACTORS] of actorObject;
+	objectList : Array[@MAX_OBJECTS] of gobject;
 @endblock
 
 @startblock $5800 "Code"
@@ -1474,7 +1468,6 @@ begin
 	sprite_bitmask := $FF;
 //	togglebit(sprite_bitmask,0,1);
 end;
-@endblock
 
 function Pos2ObjectId(pos: byte) : byte;
 var
@@ -1580,34 +1573,29 @@ begin
 	end; 
 end;
 
-procedure LoadFileKernal(fp: pointer, addr: integer);
+procedure LoadLevel();
 var
-	len: byte;
+	levStr: string = "LFF";
 begin
-	len := length(fp);
-asm("
-	 lda len
-     ldx fp
-     ldy fp+1
-     jsr $ffbd    // call setnam
-     ldx $ba       // last used device number
-     bne loadfile_loop
-     ldx #$08      // default to device 8
-loadfile_loop				ldy #$00      // $00 means: load to new address
-     jsr $ffba    // call setlfs
-     ldx addr
-     ldy addr+1
-     lda #$00      // $00 means: load to memory (not verify)
-     jsr $ffd5      // call load
+	str::itoa(level, #levStr+1, 16);
+	asm(
+"
+	ldx #<localVariable_LoadLevel_levStr
+	ldy #>localVariable_LoadLevel_levStr
+	jsr $200
+");
+end;
 
-");	
-end;	
+@endblock
 
 begin
-	preventirq();
+@ifndef IS_DEMO 
+
+// Executed in stand-alone
 	disableciainterrupts();
-	LoadFileKernal(#lev0, $1C00);	
-	AddBreakpoint();	
+	preventirq();
+	setmemoryconfig(1,@USE_KERNAL,0);
+@endif		
 	SCREEN_BG_COL:=BLACK;
 	SCREEN_FG_COL:=BLACK;
 	multicolor_char_col[1]:=brown;
@@ -1626,6 +1614,7 @@ begin
 		case state of
 			@STATE_INIT: begin
 				InitLevel();
+				//LoadLevel();
 				InitMap();
 				InitActors();	
 				SwitchBank();
