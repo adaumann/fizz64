@@ -47,6 +47,7 @@ var
 	@define MAX_ACTORS 16
 	@define MAX_LEV_STRINGS 8
 	@define ACTOR_LENGTH 8
+	@define MAX_LEVELS 40
 
 	@define DIMTILES 240
 	@define DIMANIMS 14
@@ -228,7 +229,6 @@ var
 	@define ACTION_FONTAINE_OFF 10
 	
 	
-//	lev0: string = ("^>aa<ao  ao ao ao aaa   a aa  a  aa o  aao    aaa  aa o  @ aaa a  o o o o  ^ ^Yaao        ^    o ^Yaa      ^   oo o  ^Yaa     ^  o o o o ^Yaa    o o o o o     aa  o o o o o       aa                  aa                  aa                 4aa");
 	@define DO_ACTIVATE_SWITCH_START 17
 	txtDoActiveSwitch: string=("SWITCH");
 	@define ACTIVATE_SWITCH_START 12
@@ -237,6 +237,8 @@ var
 	txtDeactiveSwitch: string=("SWITCH DEACTIVATED");
 	@define PLAYER_DIED_START 6
 	txtPlayerDied: Array[2] of string=("PLAYER 1 DIED (F1 TO RESTART)", "PLAYER 2 DIED (F3 TO RESTART)");
+	@define EXIT_CLOSED_START 16
+    txtExitClosed: string=("EXIT CLOSED");
 	
 	
 	countObjects: byte;
@@ -255,7 +257,7 @@ var
 	pa: pointer of byte;
 	textTimer: byte;
 	level: byte;
-	lev0: string = "lev0";
+	nextLevel : byte;
 
 	@define ANIM_CONSIDER_GRAV_IGNORE 0
 	@define ANIM_CONSIDER_GRAV_FULL 1
@@ -273,14 +275,14 @@ var
 @endblock
 
 @startblock $1c00 "level"
-    lev: string = (" X{aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a6   1[12    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa& 4------====hh   aa&m   n   b@   =  4aa   x===ss rs8 h o aaaa    aaaaaaaaaaaaaa");
+    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a6   1[12    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa& 4------====hh   aa&m   n   b@   =  4aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaaa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p4
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
 												 		    1, 1, 211,  0,   $FF, $FF, $FF, $FF,
 												 			2, 2, 211,  0, $FF, $FF, $FF, $FF,
-												 			1, 3, 211, 1,$FF, $FF, $FF, $FF,
-												 			2, 4, 211, 1,$FF, $FF, $FF, $FF,
+												 			1, 3, 211, 201,$FF, $FF, $FF, $FF,
+												 			2, 4, 211, 201,$FF, $FF, $FF, $FF,
 												 			3, 5, 211, $FF, $00, 17, 10, $FF,
 												 			4, 6, 211, $FF, $FF, $FF, $FF, $FF,
 												 			0, 5, $FF, $FF, $00, 17, 10, $FF,
@@ -291,9 +293,7 @@ var
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF); 	
-	levStrings: Array[@MAX_LEV_STRINGS] of string = ("WELCOME","aa");
-//	lev0: string = ("    ccccccccccccc                                               @                                          t u        Yaa     ^  b b b b ^Yaa    b b b b b     aa  b b b b b   o   aa        d e o     aa   n d  gg  m  e  aaaaaaaaaaaaaaaaaaaaaa");
-
+	levStrings: Array[@MAX_LEV_STRINGS] of string = ("WELCOME","aa","bb","cc","dd","ee","ff","gg");
 @endblock
 
 @startblock $e000 "Objects"
@@ -382,6 +382,9 @@ var
 @startblock $5800 "Code"
 
 procedure InitLevel();
+var 
+	i : integer;
+	p : pointer of byte;
 begin
 	state := @STATE_PLAY;
 	countObjects := 0;
@@ -389,12 +392,36 @@ begin
 	countAnim := 0;
 	textTimer := 0;
 	countSprite := 0;	
+	
+	for i:= $E000 to $FFF0 do begin
+		p := int2ptr(i);
+		p[0] := 0;
+	end;
+	
+	if(nextLevel <> level) then begin
+		level := nextLevel;
+		@ifdef IS_DEMO 
+		LoadLevel();
+		@endif
+	end;
+	
+	
 end;
+
+procedure SetNextLevel();
+begin 
+	if(level + 1 > @MAX_LEVELS) then nextLevel := 0
+	else begin
+		nextLevel := level + 1;
+	end;
+end;
+
 
 procedure InitGame(lev: byte);
 begin
 	state := @STATE_INIT;
 	level := lev;
+	nextLevel := lev;
 end;
 
 
@@ -572,7 +599,7 @@ begin
 		if(pa.mode = @ANIM_MODE_FIX) then objectList[t].animPos := 0
 		else if(pa.mode = @ANIM_MODE_LR and objectList[t].animFinish = false) then begin
 			if(objectList[t].animPos = pa.size - 1) then begin
-				objectList[t].animPos := 0;
+				objectList[t].animPos := pa.size - 1;
 				objectList[t].animFinish := true;
 			end
 			else if(mod(globaltime, pa.speed) = 0) then inc(objectList[t].animPos);
@@ -1429,20 +1456,20 @@ begin
 	pa.mode := @ANIM_MODE_FIX;	
 
 	pa := #animList[@ANIM_EXIT_ON];
-	pa.animSeq[0] := $1e; 
+	pa.animSeq[0] := $22; 
  	pa.animSeq[1] := $20;
-	pa.animSeq[2] := $22;
-	pa.animSeq[3] := $22;
+	pa.animSeq[2] := $1e;
+	pa.animSeq[3] := $1e;
 	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
 	pa.size := 4;
 	pa.speed := 4;
 	pa.mode := @ANIM_MODE_LR;	
 	
 	pa := #animList[@ANIM_EXIT_OFF];
-	pa.animSeq[0] := $22; 
+	pa.animSeq[0] := $1e; 
  	pa.animSeq[1] := $20;
-	pa.animSeq[2] := $1e;
-	pa.animSeq[3] := $1e;
+	pa.animSeq[2] := $22;
+	pa.animSeq[3] := $22;
 	pa.considerGravity := @ANIM_CONSIDER_GRAV_IGNORE;
 	pa.size := 4;
 	pa.speed := 4;
@@ -1614,7 +1641,6 @@ begin
 		case state of
 			@STATE_INIT: begin
 				InitLevel();
-				//LoadLevel();
 				InitMap();
 				InitActors();	
 				SwitchBank();

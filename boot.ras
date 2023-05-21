@@ -25,18 +25,6 @@ interrupt NMI();
 begin
 end;
 
-procedure LoadGameIgnoreCrash();
-var
-begin
-	asm(
-"
-	ldx #<game
-	ldy #>game
-	jsr $200	
-");
-end;
-
-
 begin
 	if (isInitialized<>0) offpage then 
 	begin

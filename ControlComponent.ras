@@ -31,24 +31,10 @@ var
 	gravity: byte;
 	backObj, backObj2: byte;
 	pos,v: byte;
-	robeAbleId, portalId, gravPadId, switchId, laserBeanId:  byte;
+	robeAbleId, portalId, gravPadId, switchId, laserBeanId, exitId:  byte;
 	newx, newy: byte;
 begin
 	defWalk := true;
-/*	controlId := objectList[id].controlId;
-	
-	laserBeanId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_FRONT, @COMP_LASERBEAN_2, 2);
-	
-
-	if(laserBeanId <> $FF and (controlList[controlId].controlState <> @CTRL_STATE_DESTROY and (objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[laserBeanId].component0 & @COMP_DESTROY_COLLIDE_0 = @COMP_DESTROY_COLLIDE_0))) then begin
-		objectList[id].b_physFallDown := false;
-		controlList[controlId].controlState := @CTRL_STATE_DESTROY;
-		controlList[controlId].controlJumpStep := 0;
-		controlList[controlId].controlCollideLaserTag := objectList[laserBeanId].laserTag; 
-		defWalk := false;
-	end;
-	*/
-	
 	if(objectList[id].b_hasMoved = true) then begin
 		robeAbleId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_ROBE_ABLE_1, 1);
 		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
@@ -120,6 +106,8 @@ begin
 	end;
 	
 	switchId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_SWITCH_2, 2);
+	exitId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_EXIT_3, 3);
+	
 	if(switchId <> $FF) then begin
 		if(controlList[controlId].b_controlPressAction = true) then begin
 			textTimer := 20;
@@ -137,8 +125,21 @@ begin
 				controlList[controlId].b_controlPressAction := false;
 				DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
 			end;
-		end;
+		end
 	end
+	else if(exitId <> $FF) then begin
+		if(controlList[controlId].b_controlPressAction = true) then begin
+			if(objectList[exitId].onOff = @ON) then begin
+				SetNextLevel();
+				state := @STATE_INIT;
+			end
+			else begin
+				PrintText(@EXIT_CLOSED_START,#txtExitClosed);
+				controlList[controlId].b_controlPressAction := false;
+			end;
+			
+		end;
+	end;
 end;
 
 procedure InputControl(id: byte);

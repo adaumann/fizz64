@@ -35,6 +35,7 @@ begin
 	receiverId := actorList[actorId].receiverId;
 	if(objectList[receiverId].component3 & @COMP_EXIT_3 = @COMP_EXIT_3) then begin
 		if(objectList[receiverId].onOff = @OFF) then begin
+			objectList[receiverId].animId := $FF;
 			SwitchAnimation(receiverId,@ANIM_EXIT_ON);
 			objectList[receiverId].onOff := @ON;
 //			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
@@ -49,6 +50,7 @@ begin
 	receiverId := actorList[actorId].receiverId;
 	if(objectList[receiverId].component3 & @COMP_EXIT_3 = @COMP_EXIT_3) then begin
 		if(objectList[receiverId].onOff = @ON) then begin
+			objectList[receiverId].animId := $FF;
 			SwitchAnimation(receiverId,@ANIM_EXIT_OFF);
 			objectList[receiverId].onOff := @OFF;
 //			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
@@ -126,7 +128,6 @@ begin
 		        @ACTION_DOOR_OPEN: ActionOpenDoor(i);
 		        @ACTION_DOOR_CLOSE: ActionCloseDoor(i);
 		        @ACTION_EXIT_OPEN: ActionOpenExit(i);
-		        @ACTION_EXIT_CLOSE: ActionCloseExit(i);
 		        @ACTION_EXIT_CLOSE: ActionCloseExit(i);
 		        @ACTION_PRINT_TEXT: ActionPrintText(i);
 				@ACTION_LASERCANNON_ON: ActionLaserCannonOn(i);
