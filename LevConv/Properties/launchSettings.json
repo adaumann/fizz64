@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LevConv": {
+      "commandName": "Project",
+      "commandLineArgs": "-i c:\\temp\\sample.json -e c:\\temp -t 0 true -g c:\\temp\\game.prg"
+    }
+  }
+}

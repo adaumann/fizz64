@@ -1,11 +1,15 @@
 program game;
 @projectsettings "exomize" "0"
 @use "system/str"
+@use "screen/screen"
+
+// @use "input/key"
+
 
 @startblock $1200 "Variables"
 var	
 	//@define DEBUG 1
-	@define OVERFLOW_CHECK 1
+	//@define OVERFLOW_CHECK 1
 	@define USE_KERNAL 0
 
 	// Charsets
@@ -16,14 +20,17 @@ var
 	@define spriteLoc1  $2000
 	@define spriteLoc2  $4800
 	@define tilesetCol  $3a00
+	@define logoLoc     $3e00
 	// Automatically export charsets 
 	@export "charsets/charset.flf" "charsets/charset.bin" 60	
  	@export "charsets/tileset.flf" "charsets/tileset.bin" 256	
+ 	@export "charsets/logo.flf" "charsets/logo.bin" 120
 	@export "sprites/spr.flf" "sprites/spr.bin" 4096	
   	charset1: incbin("charsets/charset.bin", @charsetLoc1);
   	charset2: incbin("charsets/charset.bin", @charsetLoc2);
   	tileset1: incbin("charsets/tileset.bin", @tilesetLoc1);
-   	tileset2: incbin("charsets/tileset.bin", @tilesetLoc2);
+  	tileset2: incbin("charsets/tileset.bin", @tilesetLoc2);
+   	logo: incbin("charsets/logo.bin", @logoLoc);
   	sprite1: incbin("sprites/spr.bin", @spriteLoc1);
   	sprite2: incbin("sprites/spr.bin", @spriteLoc2);
 	tilesetColors :  incbin("charsets/tileset_color.bin", @tilesetCol);
@@ -47,7 +54,8 @@ var
 	@define MAX_ACTORS 16
 	@define MAX_LEV_STRINGS 8
 	@define ACTOR_LENGTH 8
-	@define MAX_LEVELS 40
+	@define MAX_LEVELS_SINGLE 40
+	@define MAX_LEVELS_COOP 40
 
 	@define DIMTILES 240
 	@define DIMANIMS 14
@@ -124,11 +132,19 @@ var
 	
 	tempPointer: pointer of byte;
 	
-	@define STATE_INIT 0
-	@define STATE_OPEN_SCENE 1
-	@define STATE_PLAY 2
-	@define STATE_PAUSE 3
-	@define STATE_CLOSE_SCENE 4
+	@define STATE_MENU 0
+	@define STATE_INIT 1
+ 	@define STATE_OPEN_SCENE 2
+	@define STATE_PLAY 3
+	@define STATE_CLOSE_SCENE 5
+	@define STATE_MENU_INPUT 6
+	@define STATE_OPEN_SCENE_INPUT 7
+	@define STATE_OPEN_SCENE_REQUEST 8
+	
+	
+	@define MODE_SINGLE 0
+	@define MODE_SINGLE_2CHAR 1
+	@define MODE_COOP 2
 		
 	@define COMP_PHYSICS_0          %00000001
 	@define COMP_COLLIDE_ABLE_0     %00000010
@@ -158,6 +174,7 @@ var
 	@define COMP_WAYPOINT_3         %00000010
  	// https://www.aivosto.com/articles/petscii.pdf
  	@define LEV_CHARACTER $40
+ 	@define LEV_CHARACTER2 $25
 	@define LEV_BRICK $61
 	@define LEV_STONE $62
 	@define LEV_SAND $73
@@ -208,7 +225,7 @@ var
 	@define CTRL_STATE_JUMP 4
 	@define CTRL_STATE_DESTROY 5
 	@define CTRL_STATE_RETRY 6
-	@define CTRL_STATE_FINISH 7
+	@define CTRL_STATE_EXITED 7
 	@define CTRL_STATE_DIE 8
 
 	@define EVENT_INIT_LEVEL 0
@@ -239,6 +256,10 @@ var
 	txtPlayerDied: Array[2] of string=("PLAYER 1 DIED (F1 TO RESTART)", "PLAYER 2 DIED (F3 TO RESTART)");
 	@define EXIT_CLOSED_START 16
     txtExitClosed: string=("EXIT CLOSED");
+	@define CHAR_SWAP 12
+	txtCharSwap: string=("CHARACTER SWAPPED");
+	@define RETRY_START 14
+	txtRetry: string=("RETRY LEVEL");
 	
 	
 	countObjects: byte;
@@ -256,8 +277,13 @@ var
 	state: byte;
 	pa: pointer of byte;
 	textTimer: byte;
-	level: byte;
-	nextLevel : byte;
+	levelSingle: byte;
+	levelCoop: byte;
+	nextLevel: byte;
+	gameMode: byte;
+	activeChar: byte;
+	retryPressed: byte;
+	menuItem: byte = 0;
 
 	@define ANIM_CONSIDER_GRAV_IGNORE 0
 	@define ANIM_CONSIDER_GRAV_FULL 1
@@ -275,7 +301,7 @@ var
 @endblock
 
 @startblock $1c00 "level"
-    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6    aaa  aa      aaa a6   1[12    ^ ^Yaa     o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    aa& 4------====hh   aa&m   n   b@   =  4aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaaa");
+    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    7a& 4------====hh   aa&m   n   b@   =  4aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaaa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p4
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
@@ -293,6 +319,8 @@ var
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF); 	
+	levTwoPlayerAllowed: boolean = true;
+	levBothMustComplete: boolean = false;
 	levStrings: Array[@MAX_LEV_STRINGS] of string = ("WELCOME","aa","bb","cc","dd","ee","ff","gg");
 @endblock
 
@@ -329,7 +357,6 @@ var
 //		rendEnergyX, rendEnergyY, rendEnergyPercent: byte; 
 		rendTilePos: byte;
 		rendType: byte;
-		rendSpriteNum: byte;
 		
 		// Physics
 		physGravity: byte;
@@ -342,11 +369,6 @@ var
 		// Control
 		controlId: byte;
 		b_hasMoved: byte;
-		
-		// DestroyCollide
-//		destColIgnoreTag: byte;
-//		destColDamageEnergy: byte;
-//		destColKey: byte;
 		
 		// Water
 		waterFloaterDir: byte;
@@ -392,36 +414,57 @@ begin
 	countAnim := 0;
 	textTimer := 0;
 	countSprite := 0;	
+	retryPressed := false;
 	
 	for i:= $E000 to $FFF0 do begin
 		p := int2ptr(i);
 		p[0] := 0;
 	end;
 	
-	if(nextLevel <> level) then begin
-		level := nextLevel;
-		@ifdef IS_DEMO 
-		LoadLevel();
-		@endif
+	if(gameMode = @MODE_SINGLE) then begin
+		if(nextLevel <> levelSingle) then begin
+			levelSingle := nextLevel;
+			@ifdef IS_DEMO 
+	//		LoadLevel(true);
+			@endif
+		end;
+	end
+	else begin
+		if(nextLevel <> levelCoop) then begin
+			levelCoop := nextLevel;
+			@ifdef IS_DEMO 
+	//		LoadLevel(false);
+			@endif
+		end;
 	end;
-	
-	
 end;
 
 procedure SetNextLevel();
 begin 
-	if(level + 1 > @MAX_LEVELS) then nextLevel := 0
+	if(gameMode = @MODE_SINGLE) then begin
+		if(levelSingle + 1 > @MAX_LEVELS_SINGLE) then nextLevel := 0
+		else begin
+			nextLevel := levelSingle + 1;
+		end;
+	end
 	else begin
-		nextLevel := level + 1;
+		if(levelCoop + 1 > @MAX_LEVELS_COOP) then nextLevel := 0
+		else begin
+			nextLevel := levelCoop + 1;
+		end;
+		
 	end;
 end;
 
 
-procedure InitGame(lev: byte);
+procedure InitGame(levSingle, levCoop: byte, mode: byte);
 begin
-	state := @STATE_INIT;
-	level := lev;
-	nextLevel := lev;
+	levelSingle := levSingle;
+	levelCoop := levCoop;
+	gameMode := mode;
+	if(gameMode = @MODE_SINGLE) then nextLevel := levSingle else nextLevel := levCoop;
+	activeChar := 0;
+	menuItem := 0;
 end;
 
 
@@ -659,10 +702,10 @@ begin
 		if(hideSprite = true) then begin
 			tHide := mapmain[pos];
 			if(tHide <> $FF and objectList[tHide].rendType = @REND_TYPE_SPRITE) then
-			 	PrintSprite(0,@DIMY+1,0,objectList[tHide].rendSpriteNum)
+			 	PrintSprite(0,@DIMY+1,0,objectList[tHide].controlId)
 		end;
 	 	if(objectList[t].rendType = @REND_TYPE_SPRITE and hideSprite = false) then
-		 	PrintSprite(x,y,currentTile,objectList[t].rendSpriteNum)
+		 	PrintSprite(x,y,currentTile,objectList[t].controlId)
 	 	else if(objectList[t].rendType = @REND_TYPE_TILE) then 
 	 		print2x2block(x,y,currentTile)
 	 	else 
@@ -769,8 +812,6 @@ begin
 	end;
 	GetObjArea := ret;
 end;
-@endblock
-@startblock $7a00 "Code1"
 
 function CalcPositionX(startx,offsetx: byte) : byte;
 var
@@ -961,7 +1002,7 @@ begin
 	end;
 	if(found = true) then begin
 		dec(countDyn); 
-		for j:= i to countDyn - 1 do begin
+		for j:= i to countDyn do begin
 			dynObjectList[j] := dynObjectList[j+1];
 		end;
 	end;
@@ -983,7 +1024,7 @@ begin
 	end;
 	if(found = true) then begin
 		dec(countAnim); 
-		for j:= i to countAnim - 1 do begin
+		for j:= i to countAnim do begin
 			animObjectList[j] := animObjectList[j+1];
 		end;
 	end;
@@ -1001,13 +1042,15 @@ begin
 			DeleteDynObject(id); 
 			PaintPos(objectList[id].transX + ystart[objectList[id].transY], true);
 			if(objectList[id].rendType = @REND_TYPE_SPRITE) then
-			 	PrintSprite(0,@DIMY+1,0,objectList[id].rendSpriteNum);
+			 	PrintSprite(0,@DIMY+1,0,objectList[id].controlId);
 		end;
 
 		if(isAnim = true) then DeleteAnimObject(id);
 		PaintPos(objectList[id].transX + ystart[objectList[id].transY], true);
 	end; 
 end;	
+@endblock
+@startblock $7a00 "Code1"
 
 procedure SwitchBank();
 begin
@@ -1195,21 +1238,30 @@ end;
 @include "LaserComponent.ras"
 
 procedure UpdateObject(id: byte);
+var
+	controlId: byte;
 begin
 	if(objectList[id].component1 & @COMP_LASER_1 = @COMP_LASER_1) then begin 
 		UpdateLaser(id);
 	end;
-	if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin 
+	if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin
+		controlId := objectList[id].controlId;
+		if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
+			objectList[id].b_physFallDown := false;
+			controlList[controlId].controlState := @CTRL_STATE_DESTROY;
+			controlList[controlId].controlJumpStep := 0;
+//			retryPressed := $FF;
+ 		end;
 		ProcessDestroyObj(id);
 		InputControl(id); 
 		UpdateControl(id);
 		ProcessBackObj(id);
 	end;
-	if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then begin
+	if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0 and objectList[id].b_hasMoved = false) then begin
 		UpdatePhysics(id);
 		ProcessBackObj(id);
 	end;
-	if(objectList[id].component1 & @COMP_FLOATER_1 = @COMP_FLOATER_1) then begin 
+	if(objectList[id].component1 & @COMP_FLOATER_1 = @COMP_FLOATER_1 and objectList[id].b_hasMoved = false) then begin 
 		UpdateFloater(id);
 		ProcessBackObj(id);
 	end;
@@ -1224,14 +1276,24 @@ var
 	i: byte;
 	id: byte;
 begin
-	ReadJoy2();
 	ClearAllLaser();
+	i := getkey();
+	if(gameMode = @MODE_SINGLE_2CHAR) then begin
+		//Key::Read();
+		if (i = KEY_SPACE) then begin
+			if(activeChar = 0) then activeChar := 1 else activeChar := 0;
+			textTimer := 20;
+			PrintText(@CHAR_SWAP,#txtCharSwap);
+		end;
+	end;
+	if (i = KEY_F7) then begin
+		retryPressed := true;
+	end;
 
 	if(countDyn <> 0) then begin
 		for i:=0 to countDyn do	begin
 			id := dynObjectList[i];
 			UpdateObject(id);
-	
 		end;
 	end;
 end;
@@ -1256,12 +1318,21 @@ begin
 	startirq(@USE_KERNAL);
 	setmulticolormode();
 	setcharsetlocation(@tilesetLoc1);
+	poke(^56320, 0, 127);
+	poke(^56322, 0, 224);
+	ReadJoy1();
+	ReadJoy2();
+	poke(^56322, 0, 255);
 	SCREEN_FG_COL:=BLACK;
 	if(frameStatus = 1) then begin
 		if(time = 0) then begin
 			SwitchBank();
+						if(state = @STATE_OPEN_SCENE_REQUEST) then state := @STATE_OPEN_SCENE;
+
 		end
-		else if(time = 1 and currentBank = 0) then copyFullScreen(^$0400, ^$4400)
+		else if(time = 1 and currentBank = 0) then begin 
+			copyFullScreen(^$0400, ^$4400);
+		end
 		else if(time = 1 and currentBank = 1) then copyFullScreen(^$4400, ^$0400)
 	end;
 	if(time = 2) then begin
@@ -1293,6 +1364,124 @@ begin
 	RasterIRQ(RasterTopLevel(),20,@USE_KERNAL);
 	closeIrq();
 //	setcharsetandscreenlocation(@tilesetLoc1,$4400);
+end;
+
+procedure MenuMove(len: byte);
+begin
+	if(mod(time,4) = 0) then begin
+		if(joy1 & JOY_UP = JOY_UP or joy2 & JOY_UP = JOY_UP) then begin
+			if(menuItem > 0) then dec(menuItem);
+		end
+		else if(joy1 & JOY_DOWN = JOY_DOWN or joy2 & JOY_DOWN = JOY_DOWN) then begin
+			if(menuItem < len-1 ) then inc(menuItem); 
+		end;
+	end;
+end;
+
+interrupt RasterMain();
+
+interrupt RasterMainTop();
+var
+	i:byte;
+begin
+	startirq(@USE_KERNAL);
+	setmulticolormode();
+	setcharsetlocation(@tilesetLoc1);
+	
+	//setcharsetlocation(@logoLoc);
+
+	multicolor_char_col[1]:=green;
+	multicolor_char_col[2]:=white;
+
+	RasterIRQ(RasterMain(), 110, @USE_KERNAL);
+
+	closeIrq();
+
+end;
+
+
+interrupt RasterMain();
+var
+	levStr: string = "00";
+	pos : byte;
+	len: byte;
+	ps: pointer of byte;
+	col1, col2, col3: byte;
+begin
+	startirq(@USE_KERNAL);
+	setregularcolormode();
+	setcharsetlocation(@charsetLoc1);
+	
+	ReadJoy1();
+	ReadJoy2();
+	inc(time);
+	
+	if(state = @STATE_MENU or state = @STATE_MENU_INPUT) then begin
+		Screen::PrintStringColor("SELECT GAME MODE:",12,8,5);
+
+		col1 := @DARK_GREY;
+		col2 := @DARK_GREY;
+		col3 := @DARK_GREY;
+		
+		if(menuItem = 0) then col1 := @WHITE
+		else if(menuItem = 1) then col2 := @WHITE
+		else if(menuItem = 2) then col3 := @WHITE;
+		
+		Screen::PrintStringColor("SINGLE PLAYER",14,12,col1);
+		Screen::PrintStringColor("SINGLE PLAYER TWO CHARACTERS",6,13,col2);
+		Screen::PrintStringColor("TWO PLAYER CO-OP",12,14,col3);
+		
+		if(mod(time,4) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
+			if(menuItem = 0) then InitGame(0,0,@MODE_SINGLE);
+			if(menuItem = 1) then InitGame(0,0,@MODE_SINGLE_2CHAR);
+			if(menuItem = 2) then InitGame(0,0,@MODE_COOP);
+			state := @STATE_OPEN_SCENE; //TODO
+		end;
+		MenuMove(3);
+		RasterIRQ(RasterMainTop(),20,@USE_KERNAL);
+	end
+	
+	else if(state = @STATE_OPEN_SCENE or state = @STATE_OPEN_SCENE_INPUT) then begin
+	
+		if(gameMode = @MODE_SINGLE) then begin
+			if(levelSingle > 9) then pos := 0 else pos := 1; 
+			str::itoa(levelSingle + 1, #levStr + pos, 10)
+		end
+		else begin
+			if(levelCoop > 9) then pos := 0 else pos := 1; 
+			str::itoa(levelCoop + 1, #levStr + pos, 10)
+		end;
+		
+		Screen::PrintStringColor("LEVEL: ",16,8,5);
+		Screen::PrintStringColor(#levStr,23,8,5);
+		
+		len := str::strlen(levStrings[0]);
+		pos := 20 - (len / 2);
+	
+		Screen::PrintStringColor(levStrings[0],pos,10,5);
+		
+		col1 := @DARK_GREY;
+		col2 := @DARK_GREY;
+		
+		if(menuItem = 0) then col1 := @WHITE
+		else if(menuItem = 1) then col2 := @WHITE ;
+		
+		Screen::PrintStringColor("START LEVEL",15,12,col1);
+		Screen::PrintStringColor("MAIN MENU",16,13,col2);
+	
+		Screen::PrintStringColor("PRESS 'DEL' TO RETRY",10,22,@DARK_GREY);
+		if(gameMode = @MODE_SINGLE_2CHAR) then Screen::PrintStringColor("PRESS 'SPACE' TO SWAP CHARACTER",3,23,@DARK_GREY);
+		if(levBothMustComplete = true) then Screen::PrintStringColor("BOTH PLAYERS MUST EXIT",9,24,@DARK_GREY) 
+		else Screen::PrintStringColor("ONLY ONE PLAYER MUST EXIT",8,24,@DARK_GREY);
+	
+		if(mod(time,4) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
+			if(menuItem = 0) then state := @STATE_INIT
+			else if(menuItem = 1) then state := @STATE_MENU;
+		end;
+		MenuMove(2);
+	end;
+		
+	closeIrq();
 end;
 
 
@@ -1353,7 +1542,6 @@ begin
 	pa.size := 4;
 	pa.speed := 1;
 	pa.mode := @ANIM_MODE_MANUAL;
-
 
 	pa := #animList[@ANIM_STAND];
 	pa.animSeq[0] := $20; 
@@ -1491,6 +1679,7 @@ begin
 		sprite_color[i]:=light_red;
 		SpritePos(0,0,i);
 	end;
+	sprite_color[1]:=light_green;
 	// Turn on sprite 0 (or @useSprite)
 	sprite_bitmask := $FF;
 //	togglebit(sprite_bitmask,0,1);
@@ -1547,7 +1736,27 @@ begin
 		x := mod(i,@DIMX);
 		y := i / @DIMX;
 		case c of
+			@LEV_FONTAINE_DOWN: InitFontaine(x,y, 176, @DOWN);
+			@LEV_FONTAINE_UP: InitFontaine(x,y,178,@UP);
+			@LEV_FONTAINE_LEFT: InitFontaine(x,y, 180, @LEFT);
+			@LEV_FONTAINE_RIGHT: InitFontaine(x,y,182,@RIGHT);
+			@LEV_CANNON_DOWN: InitCannon(x,y, 14, @DOWN);
+			@LEV_CANNON_UP: InitCannon(x,y,12,@UP);
+			@LEV_CANNON_LEFT: InitCannon(x,y, 16, @LEFT);
+			@LEV_CANNON_RIGHT: InitCannon(x,y,18,@RIGHT);
+		end;
+	end;	
+	
+	for i := 0 to @DIMTILES do
+	begin
+		c := lev[i];
+		x := mod(i,@DIMX);
+		y := i / @DIMX;
+		case c of
 			@LEV_CHARACTER: InitCharacter(x,y,0);
+			@LEV_CHARACTER2: begin
+				if(gameMode = @MODE_SINGLE_2CHAR or gameMode = @MODE_COOP) then InitCharacter(x,y,1);
+			end;
 			@LEV_BRICK: InitBrick(x, y);
 			@LEV_STONE: InitStone(x, y);
 			@LEV_WATER: InitWater(x, y);
@@ -1577,14 +1786,6 @@ begin
 //			@LEV_LASER_TRANSPORT_ONCE: InitLaserTransportOnce(x,y);
 			@LEV_PUSH_BOX: InitBox(x,y, 162 , 1);
 			@LEV_PULL_BOX: InitBox(x,y, 164 , -1);
-			@LEV_FONTAINE_DOWN: InitFontaine(x,y, 176, @DOWN);
-			@LEV_FONTAINE_UP: InitFontaine(x,y,178,@UP);
-			@LEV_FONTAINE_LEFT: InitFontaine(x,y, 180, @LEFT);
-			@LEV_FONTAINE_RIGHT: InitFontaine(x,y,182,@RIGHT);
-			@LEV_CANNON_DOWN: InitCannon(x,y, 14, @DOWN);
-			@LEV_CANNON_UP: InitCannon(x,y,12,@UP);
-			@LEV_CANNON_LEFT: InitCannon(x,y, 16, @LEFT);
-			@LEV_CANNON_RIGHT: InitCannon(x,y,18,@RIGHT);
 			@LEV_SWITCH_MANUAL: InitSwitchManual(x,y);
 			@LEV_DOOR: InitDoor(x,y);
 			@LEV_EXIT: InitExit(x,y);
@@ -1600,17 +1801,117 @@ begin
 	end; 
 end;
 
-procedure LoadLevel();
+procedure LoadLevel(isSingle:boolean);
 var
-	levStr: string = "LFF";
+	levStr: string = "LMFF";	
 begin
-	str::itoa(level, #levStr+1, 16);
+	if(isSingle = true) then begin 
+		levStr[1] := "S";
+		str::itoa(levelSingle, #levStr+2, 16);
+	end
+	else str::itoa(levelCoop, #levStr+2, 16);
+/*
 	asm(
 "
 	ldx #<localVariable_LoadLevel_levStr
 	ldy #>localVariable_LoadLevel_levStr
 	jsr $200
-");
+");*/
+end;
+
+
+procedure OpenMain();
+var
+	i: byte;
+begin
+	preventirq();
+	SetBank(VIC_BANK0);
+	setcharsetlocation(@charsetLoc1);
+	screen := hi(screen_char_loc);
+	clearscreen($20,^$0400);
+	clearscreen($20,^$4400);
+	clearscreen(BLACK,^$D800);
+	time := 0;
+	menuItem := 0;
+	if(state = @STATE_OPEN_SCENE) then begin 
+		InitLevel();
+		state := @STATE_OPEN_SCENE_INPUT;
+		StartRasterChain(RasterMain(), 0,@USE_KERNAL); // Don't use kernal
+
+	end
+	else begin 
+		BlockMemCpy(^@logoLoc , ^@tilesetLoc1, 4);
+		for i:=0 to 24 do begin
+			moveto(i+8,1,screen);
+			
+			screenmemory[0]:=i;
+			screenmemory[40]:=i+24;
+			screenmemory[80]:=i+48;
+			screenmemory[120]:=i+72;
+			screenmemory[160]:=i+96;
+			moveto(i+8,1,hi(SCREEN_COL_LOC));
+			screenmemory[0]:= $AE;
+			screenmemory[40]:= $AE;
+			screenmemory[80]:= $AE;
+			screenmemory[120]:= $AE;
+			screenmemory[160]:= $AE;
+		end;		
+		state := @STATE_MENU_INPUT;
+		StartRasterChain(RasterMainTop(), 0,@USE_KERNAL); // Don't use kernal
+	end;
+	enableirq();
+	enablerasterirq();
+end;
+
+procedure InitScene();
+begin
+	preventirq();
+	multicolor_char_col[1]:=brown;
+	multicolor_char_col[2]:=grey;
+	clearscreen($FF,^$0400);
+	clearscreen($FF,^$4400);
+	clearscreen(BLACK,^$D800);
+	BlockMemCpy(^@tilesetLoc2 , ^@tilesetLoc1, 8);
+
+	InitMap();
+	InitActors();	
+	SwitchBank();
+	PaintFull();
+	SwitchBank();
+	PaintFull();
+	InitSprites();
+	InitAnimations();
+	ClearText();
+	state := @STATE_PLAY;
+	StartRasterChain(RasterTopLevel(), 0,@USE_KERNAL); // Don't use kernal
+	enableirq();
+	enablerasterirq();	
+	DispatchEvent(@EVENT_INIT_LEVEL, $FF, $FF, $FF);
+end;
+
+procedure GameLoop();
+begin
+	While(true) do begin
+		case state of
+			@STATE_MENU: OpenMain();
+			@STATE_OPEN_SCENE: OpenMain();
+			@STATE_INIT: InitScene();
+			@STATE_PLAY: begin
+				frameStatus := 1; // will be updated in raster chain
+				time := 0;
+				while(state = @STATE_PLAY) do begin
+					if(frameStatus = 0)	then begin
+						Update();
+						Animate();
+						CycleWater();
+						DecreaseTextTimer();
+						frameStatus := 1;
+						inc(globaltime);	
+					end;					
+				end;
+			end;
+		end;
+	end;	
 end;
 
 @endblock
@@ -1625,48 +1926,13 @@ begin
 @endif		
 	SCREEN_BG_COL:=BLACK;
 	SCREEN_FG_COL:=BLACK;
-	multicolor_char_col[1]:=brown;
-	multicolor_char_col[2]:=grey;
 	clearscreen($FF,^$0400);
 	clearscreen($FF,^$4400);
 	clearscreen(BLACK,^$D800);
 	setmemoryconfig(1,0,0);
+	InitGame(0, 0, @MODE_COOP);
+	state := @STATE_MENU;
 
-	InitGame(0);
-	StartRasterChain(RasterTopLevel(), 0,@USE_KERNAL); // Don't use kernal
-	enableirq();
-	enablerasterirq();	
-	
-	While(true) do begin
-		case state of
-			@STATE_INIT: begin
-				InitLevel();
-				InitMap();
-				InitActors();	
-				SwitchBank();
-				PaintFull();
-				SwitchBank();
-				PaintFull();
-				InitSprites();
-				InitAnimations();
-				ClearText();
-				DispatchEvent(@EVENT_INIT_LEVEL, $FF, $FF, $FF);				
-			end;
-			@STATE_PLAY: begin
-				frameStatus := 1; // will be updated in raster chain
-				time := 0;
-				while(state = @STATE_PLAY) do begin
-					if(frameStatus = 0)	then begin
-						inc(globaltime);	
-						Update();
-						Animate();
-						CycleWater();
-						DecreaseTextTimer();
-						frameStatus := 1;
-					end;					
-				end;
-			end;
-		end;
-	end;
+	GameLoop();
 	Loop();
 end.

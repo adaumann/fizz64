@@ -6,8 +6,6 @@ begin
 	if(id <> $FF) then begin
 		objectList[id].rendTilePos := 0;
 		objectList[id].rendType := @REND_TYPE_SPRITE;
-		objectList[id].rendSpriteNum := countSprite;
-		inc(countSprite);
 		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 | @COMP_CONTROL_0 | @COMP_PHYSICS_0 | @COMP_ANIMATION_0;
 		objectList[id].component1 := $00 | @COMP_FLOATER_1 | @COMP_LASER_1;
 		objectList[id].component2 := $00 | @COMP_DESTROY_ABLE_2;
@@ -37,7 +35,7 @@ begin
 		objectList[id].physGravity := @DOWN;
 		objectList[id].b_physRollLeftRight := false;
 		objectList[id].b_physFallDown := true;
-		objectList[id].shiftDir := @RIGHT;
+		objectList[id].shiftDir := $FF;
 		objectList[id].laserType := @LASER_TYPE_USER;
 		objectList[id].lastLaserDir := $FF;
 		objectList[id].laserDir := $FF;

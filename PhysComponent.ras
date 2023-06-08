@@ -17,10 +17,9 @@ begin
 	fall := @UNKNOWN;
 	doPhys := true;
 	controlId := objectList[id].controlId;
-		
+	
+
 	if(objectList[id].b_physFallDown = true) then begin
-		moveto(2,24,screen);
-		printnumber(controlList[controlId].controlState);
 		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
 	
 		if(colObj = $FF) then fallDown := true

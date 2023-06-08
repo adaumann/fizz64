@@ -1,0 +1,43 @@
+{
+    "Levels": [
+        {
+            "Number": 0,
+            "Name": "Level 1",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": false,
+            "Rows": [
+                " 01234567890123456789",
+                "0  @                 ",
+                "1  aaaa       aaaa   ",
+                "2  a==a3      a==a   ",
+                "3  aaaa       aaaa   ",
+                "4t   X               ",
+                "5         aaa        ",
+                "6aa            ta  aa",
+                "7           8        ",
+                "8           aaaaa 4  ",
+                "9                    ",
+                "0     a             7",
+                "1                    "
+            ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel",
+                    "Action": "ExitOpen",
+                    "SenderX": 0,
+                    "SenderY": 0,
+                    "ReceiverX": 4,
+                    "ReceiverY": 4,
+                    "Param1": 0,
+                    "Param2": 0,
+                    "Param3": 0,
+                    "Param4": 0
+                }
+            ],
+            "Texts": [
+                "Hello World",
+                "Hello Again"
+            ]
+        }
+    ]
+}l

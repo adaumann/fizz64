@@ -15,6 +15,7 @@ var
 	controlId, laserBeanId : byte;
 begin
 	controlId := objectList[id].controlId;
+
 	laserBeanId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_FRONT, @COMP_LASERBEAN_2, 2);
 	if(laserBeanId <> $FF and (controlList[controlId].controlState <> @CTRL_STATE_DESTROY and (objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[laserBeanId].component0 & @COMP_DESTROY_COLLIDE_0 = @COMP_DESTROY_COLLIDE_0))) then begin
 		objectList[id].b_physFallDown := false;
@@ -35,7 +36,9 @@ var
 	newx, newy: byte;
 begin
 	defWalk := true;
-	if(objectList[id].b_hasMoved = true) then begin
+	controlId := objectList[id].controlId;
+
+	if(objectList[id].b_hasMoved = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
 		robeAbleId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_ROBE_ABLE_1, 1);
 		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
 		gravPadId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_GRAVPAD_1, 1);
@@ -103,11 +106,10 @@ begin
 		else if(controlList[controlId].lastWaypointId <> $FF and controlList[controlId].waypointId = $FF) then begin
 			DispatchEvent(@EVENT_WAYPOINT_LEAVE, controlList[controlId].lastWaypointId, $FF, $FF);	
 		end;
-	end;
-	
-	switchId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_SWITCH_2, 2);
-	exitId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_EXIT_3, 3);
-	
+
+		switchId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_SWITCH_2, 2);
+		exitId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_EXIT_3, 3);
+	end;	
 	if(switchId <> $FF) then begin
 		if(controlList[controlId].b_controlPressAction = true) then begin
 			textTimer := 20;
@@ -130,8 +132,26 @@ begin
 	else if(exitId <> $FF) then begin
 		if(controlList[controlId].b_controlPressAction = true) then begin
 			if(objectList[exitId].onOff = @ON) then begin
+			 	controlList[controlId].controlState := @CTRL_STATE_EXITED;
+			 	if(gameMode = @MODE_SINGLE) then begin 
+					state := @STATE_OPEN_SCENE;
+					SetNextLevel();
+				end	
+			 	else begin
+				 	if(levBothMustComplete = false) then begin 
+						state := @STATE_OPEN_SCENE;
+						SetNextLevel();
+					end
+				 	else begin
+					 	if(controlList[0].controlState = @CTRL_STATE_EXITED and controlList[1].controlState = @CTRL_STATE_EXITED) then begin
+							state := @STATE_OPEN_SCENE;
+							SetNextLevel();
+						end; 
+					end;		 	
+			 	end;
+				
 				SetNextLevel();
-				state := @STATE_INIT;
+				state := @STATE_OPEN_SCENE;
 			end
 			else begin
 				PrintText(@EXIT_CLOSED_START,#txtExitClosed);
@@ -140,73 +160,89 @@ begin
 			
 		end;
 	end;
+
 end;
 
 procedure InputControl(id: byte);
 var
-	controlId : byte;
+	controlId, joyShift : byte;
 	gravity: byte;
+	joy: byte;
 begin
 	controlId := objectList[id].controlId;
+
 	ReleaseKeys(id);
-	if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then gravity := objectList[id].physGravity else gravity := @DOWN ;
-	if(joy2 = $80 and controlList[controlId].b_controlPressAction = true) then begin 
-		controlList[controlId].b_controlPressAction := false;
-	end;
-		
-	if(joy2 = $90 and controlList[controlId].b_controlPressAction = false) then begin
-		controlList[controlId].b_controlPressAction := true;
-	end;
-	if(joy2 & joy_fire = joy_fire) then
-		// ignore		
+	if(gameMode = @MODE_SINGLE_2CHAR and activeChar <> controlId) then
+		// do nothin
 	else begin
-		if(joy2 & joy_left = joy_left) then begin
-			if(gravity = @DOWN) then controlList[controlId].b_controlPressLeft := true;
-			if(gravity = @UP) then controlList[controlId].b_controlPressRight := true;
-			if(gravity = @LEFT) then controlList[controlId].b_controlPressDown := true;			
-			if(gravity = @RIGHT) then controlList[controlId].b_controlPressUp := true;			
+		if(gameMode = @MODE_COOP and controlId = 1) then begin 
+			joy := joy1;
+			joyShift := 0;
+		end
+		else begin 
+			joy := joy2;
+			joyShift := 1;
 		end;
-		if(joy2 & joy_left <> joy_left) then begin
-			if(gravity = @DOWN) then controlList[controlId].b_controlPressLeft := false;
-			if(gravity = @UP) then controlList[controlId].b_controlPressRight := false;
-			if(gravity = @LEFT) then controlList[controlId].b_controlPressDown := false;			
-			if(gravity = @RIGHT) then controlList[controlId].b_controlPressUp := false;			
+		if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then gravity := objectList[id].physGravity else gravity := @DOWN;
+		if(joy = (joyShift shl 7) and controlList[controlId].b_controlPressAction = true) then begin 
+			controlList[controlId].b_controlPressAction := false;
 		end;
-		if(joy2 & joy_right) then begin
-			if(gravity = @DOWN) then controlList[controlId].b_controlPressRight := true;
-			if(gravity = @UP) then controlList[controlId].b_controlPressLeft := true;
-			if(gravity = @LEFT) then controlList[controlId].b_controlPressUp := true;			
-			if(gravity = @RIGHT) then controlList[controlId].b_controlPressDown := true;
+			
+		if(joy = ((joyShift shl 7) | $10) and controlList[controlId].b_controlPressAction = false) then begin
+			controlList[controlId].b_controlPressAction := true;
 		end;
-		if(joy2 & joy_right <> joy_right) then begin
-			if(gravity = @DOWN) then controlList[controlId].b_controlPressRight := false;
-			if(gravity = @UP) then controlList[controlId].b_controlPressLeft := false;
-			if(gravity = @LEFT) then controlList[controlId].b_controlPressUp := false;			
-			if(gravity = @RIGHT) then controlList[controlId].b_controlPressDown := false;			
-		end;
-		if(joy2 & joy_up = joy_up) then begin
-			if(gravity = @DOWN) then controlList[controlId].b_controlPressUp := true;
-			if(gravity = @UP) then controlList[controlId].b_controlPressDown := true;
-			if(gravity = @LEFT) then controlList[controlId].b_controlPressLeft := true;			
-			if(gravity = @RIGHT) then controlList[controlId].b_controlPressRight := true;
-		end;
-		if(joy2 & joy_up <> joy_up) then begin
-			if(gravity = @DOWN) then controlList[controlId].b_controlPressUp := false;
-			if(gravity = @UP) then controlList[controlId].b_controlPressDown := false;
-			if(gravity = @LEFT) then controlList[controlId].b_controlPressLeft := false;			
-			if(gravity = @RIGHT) then controlList[controlId].b_controlPressRight := false;
-		end;
-		if(joy2 & joy_down = joy_down) then begin
-			if(gravity = @DOWN) then controlList[controlId].b_controlPressDown := true;
-			if(gravity = @UP) then controlList[controlId].b_controlPressUp := true;
-			if(gravity = @LEFT) then controlList[controlId].b_controlPressRight := true;			
-			if(gravity = @RIGHT) then controlList[controlId].b_controlPressLeft := true;
-		end;
-		if(joy2 & joy_down <> joy_down) then begin
-			if(gravity = @DOWN) then controlList[controlId].b_controlPressDown := false;
-			if(gravity = @UP) then controlList[controlId].b_controlPressUp := false;
-			if(gravity = @LEFT) then controlList[controlId].b_controlPressRight := false;			
-			if(gravity = @RIGHT) then controlList[controlId].b_controlPressLeft := false;
+		
+		if(joy & joy_fire = joy_fire) then
+			// ignore		
+		else begin
+			if(joy & joy_left = joy_left) then begin
+				if(gravity = @DOWN) then controlList[controlId].b_controlPressLeft := true;
+				if(gravity = @UP) then controlList[controlId].b_controlPressRight := true;
+				if(gravity = @LEFT) then controlList[controlId].b_controlPressDown := true;			
+				if(gravity = @RIGHT) then controlList[controlId].b_controlPressUp := true;			
+			end;
+			if(joy & joy_left <> joy_left) then begin
+				if(gravity = @DOWN) then controlList[controlId].b_controlPressLeft := false;
+				if(gravity = @UP) then controlList[controlId].b_controlPressRight := false;
+				if(gravity = @LEFT) then controlList[controlId].b_controlPressDown := false;			
+				if(gravity = @RIGHT) then controlList[controlId].b_controlPressUp := false;			
+			end;
+			if(joy & joy_right) then begin
+				if(gravity = @DOWN) then controlList[controlId].b_controlPressRight := true;
+				if(gravity = @UP) then controlList[controlId].b_controlPressLeft := true;
+				if(gravity = @LEFT) then controlList[controlId].b_controlPressUp := true;			
+				if(gravity = @RIGHT) then controlList[controlId].b_controlPressDown := true;
+			end;
+			if(joy & joy_right <> joy_right) then begin
+				if(gravity = @DOWN) then controlList[controlId].b_controlPressRight := false;
+				if(gravity = @UP) then controlList[controlId].b_controlPressLeft := false;
+				if(gravity = @LEFT) then controlList[controlId].b_controlPressUp := false;			
+				if(gravity = @RIGHT) then controlList[controlId].b_controlPressDown := false;			
+			end;
+			if(joy & joy_up = joy_up) then begin
+				if(gravity = @DOWN) then controlList[controlId].b_controlPressUp := true;
+				if(gravity = @UP) then controlList[controlId].b_controlPressDown := true;
+				if(gravity = @LEFT) then controlList[controlId].b_controlPressLeft := true;			
+				if(gravity = @RIGHT) then controlList[controlId].b_controlPressRight := true;
+			end;
+			if(joy & joy_up <> joy_up) then begin
+				if(gravity = @DOWN) then controlList[controlId].b_controlPressUp := false;
+				if(gravity = @UP) then controlList[controlId].b_controlPressDown := false;
+				if(gravity = @LEFT) then controlList[controlId].b_controlPressLeft := false;			
+				if(gravity = @RIGHT) then controlList[controlId].b_controlPressRight := false;
+			end;
+			if(joy & joy_down = joy_down) then begin
+				if(gravity = @DOWN) then controlList[controlId].b_controlPressDown := true;
+				if(gravity = @UP) then controlList[controlId].b_controlPressUp := true;
+				if(gravity = @LEFT) then controlList[controlId].b_controlPressRight := true;			
+				if(gravity = @RIGHT) then controlList[controlId].b_controlPressLeft := true;
+			end;
+			if(joy & joy_down <> joy_down) then begin
+				if(gravity = @DOWN) then controlList[controlId].b_controlPressDown := false;
+				if(gravity = @UP) then controlList[controlId].b_controlPressUp := false;
+				if(gravity = @LEFT) then controlList[controlId].b_controlPressRight := false;			
+				if(gravity = @RIGHT) then controlList[controlId].b_controlPressLeft := false;
+			end;
 		end;
 	end;
 end;
@@ -313,7 +349,7 @@ begin
     else if(controlList[controlId].controlState = @CTRL_STATE_JUMP) then begin
 	    if(controlList[controlId].controlJumpStep = 0) then moveDir := @UP			// TODO: check for collideable?
 	    else if(controlList[controlId].controlJumpStep = 1 or controlList[controlId].controlJumpStep = 2) then begin
-		    	colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
+		    colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
 			eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
 			if((colObj = $FF or eraseObj <> $FF) and (controlList[controlId].b_controlPressLeft = true)) then moveDir := @LEFT;  //TODO: AnimationWalkL
 		
@@ -367,7 +403,7 @@ begin
 		
 		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
 		eraseObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_ERASE_ABLE_0,0, false);
-		if((colObj = $FF or eraseObj <> $FF) and (controlList[controlId].b_controlPressDown and controlList[controlId].controlState <> @CTRL_STATE_ROBE)) then moveDir := @DOWN;  //TODO: AnimationSwimR
+		if((colObj = $FF or eraseObj <> $FF) and controlList[controlId].b_controlPressDown) then moveDir := @DOWN;  //TODO: AnimationSwimR
 		
 		if(controlList[controlId].controlState = @CTRL_STATE_SWIM) then begin
 			if(moveDir = @LEFT or moveDir = @UP) then SwitchAnimation(id, @ANIM_SWIM_L)
@@ -419,7 +455,13 @@ begin
 			DeletePos(id, true, true);
 			controlList[controlId].controlJumpStep := 0;
 		 	controlList[controlId].controlState := @CTRL_STATE_DIE;
-		 	state := @STATE_INIT;
+		 	if(gameMode = @MODE_SINGLE) then state := @STATE_OPEN_SCENE
+		 	else begin
+			 	if(levBothMustComplete = true) then state := @STATE_OPEN_SCENE
+			 	else begin
+				 	if(controlList[0].controlState = @CTRL_STATE_DIE and controlList[1].controlState = @CTRL_STATE_DIE) then state := @STATE_OPEN_SCENE;  
+				end;		 	
+		 	end;
 		end;
 	end;	
 	
