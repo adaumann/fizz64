@@ -226,7 +226,7 @@ begin
 				pos := lastx + ystart[lasty];
 				if(mapback1[pos] = $FF and mapmain[pos] = $FF) then begin
 					if(portals[0] <> $FF and portals[1] <> $FF) then begin
-						if(lastPortal = 0) then portalIdMove := portals[1] else portalIdMove := portals[0];
+						if(lastPortal = portals[0]) then portalIdMove := portals[1] else portalIdMove := portals[0];
 						tempx := objectList[portalIdMove].transX;
 						tempy := objectList[portalIdMove].transY;
 						SetPos(portalIdMove, tempx, tempy, lastx, lasty, @Z_BACK1);

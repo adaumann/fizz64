@@ -76,14 +76,19 @@ namespace LevConv.Services
                         }
                         i++;
                     }
+                    bwWriter.Write((byte)0x0);
                     // Action events
                     for (int a = 0; a < 32; a++)
                     {
                         var actionEvent = level.ActionEvents.ElementAtOrDefault(a);
                         if (actionEvent != null)
                         {
-                            var senderPos = GetPos(actionEvent.SenderX, actionEvent.SenderY);
-                            var receiverPos = GetPos(actionEvent.ReceiverX, actionEvent.ReceiverY);
+                            var senderPos = 0xff;
+                            var receiverPos = 0xff;
+                            if(actionEvent.SenderX != 0xff && actionEvent.SenderY != 0xff) 
+                                senderPos = GetPos(actionEvent.SenderX, actionEvent.SenderY);
+                            if(actionEvent.ReceiverX != 0xff && actionEvent.ReceiverY != 0xff) 
+                                receiverPos = GetPos(actionEvent.ReceiverX, actionEvent.ReceiverY);
                             bwWriter.Write((byte)actionEvent.Event);
                             bwWriter.Write((byte)actionEvent.Action);
                             bwWriter.Write((byte)senderPos);
@@ -102,10 +107,9 @@ namespace LevConv.Services
                         }
                     }
                     // Flags
-                    bwWriter.Write(level.IsAllowedTwoPlayers);
                     bwWriter.Write(level.BothPlayersMustExit);
                     // Strings
-                    var pos = 0x1df3;
+                    var pos = 0x1df2;
                     pos += (level.Texts.Count * 2);
                     foreach (var str in level.Texts)
                     {

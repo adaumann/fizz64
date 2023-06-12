@@ -51,7 +51,7 @@ var
 	@define MAX_OBJECTS 240
 	@define MAX_CONTROLS 2
 	@define MAX_LASER 30
-	@define MAX_ACTORS 16
+	@define MAX_ACTORS 32
 	@define MAX_LEV_STRINGS 8
 	@define ACTOR_LENGTH 8
 	@define MAX_LEVELS_SINGLE 40
@@ -141,7 +141,6 @@ var
 	@define STATE_OPEN_SCENE_INPUT 7
 	@define STATE_OPEN_SCENE_REQUEST 8
 	
-	
 	@define MODE_SINGLE 0
 	@define MODE_SINGLE_2CHAR 1
 	@define MODE_COOP 2
@@ -173,50 +172,49 @@ var
 	@define COMP_EXIT_3             %00000001
 	@define COMP_WAYPOINT_3         %00000010
  	// https://www.aivosto.com/articles/petscii.pdf
- 	@define LEV_CHARACTER $40
- 	@define LEV_CHARACTER2 $25
-	@define LEV_BRICK $61
-	@define LEV_STONE $62
-	@define LEV_SAND $73
-	@define LEV_WATER $3d
-	@define LEV_WATER_UP $27
-	@define LEV_WATER_DOWN $26
-	@define LEV_WATER_LEFT $7b
-	@define LEV_WATER_RIGHT $7d
-	@define LEV_SHIFT_DOWN $59
-	@define LEV_SHIFT_UP $5E
-	@define LEV_SHIFT_LEFT $3C
-	@define LEV_SHIFT_RIGHT $3E
-	@define LEV_LADDER $68
-	@define LEV_ROBE_DOWN $5f
-	@define LEV_ROBE_UP $2d
-	@define LEV_ROBE_LEFT $21
-	@define LEV_ROBE_RIGHT $7C
-	@define LEV_LADDER $68
-	@define LEV_PORTAL $6F
-	@define LEV_GRAVPAD_DOWN $32
-	@define LEV_GRAVPAD_UP $38
-	@define LEV_GRAVPAD_LEFT $34
-	@define LEV_GRAVPAD_RIGHT $36
-	@define LEV_MIRROR_LEFT $6e
-	@define LEV_MIRROR_RIGHT $6d
-	@define LEV_GLASS $67
-	@define LEV_LASER_TRANSPORT $74
-	@define LEV_LASER_TRANSPORT_ONCE $75
-	@define LEV_PUSH_BOX $64
-	@define LEV_PULL_BOX $65
-	@define LEV_PORTAL_ACTIVATE  $63
-	@define LEV_FONTAINE_DOWN $5b
-	@define LEV_FONTAINE_LEFT $28
-	@define LEV_FONTAINE_RIGHT $29
-	@define LEV_FONTAINE_UP $5d
-	@define LEV_CANNON_DOWN $31
-	@define LEV_CANNON_UP $39
-	@define LEV_CANNON_LEFT $37
-	@define LEV_CANNON_RIGHT $33
-	@define LEV_SWITCH_MANUAL $72
-	@define LEV_DOOR $78
-	@define LEV_EXIT $58
+ 	@define LEV_CHARACTER $40  //@
+ 	@define LEV_CHARACTER2 $25 //%
+	@define LEV_BRICK $61 // a
+	@define LEV_STONE $62 // b
+	@define LEV_SAND $73 // s
+	@define LEV_WATER $3d // =
+	@define LEV_WATER_UP $27 // '
+	@define LEV_WATER_DOWN $26 // &
+	@define LEV_WATER_LEFT $7b // ?  
+	@define LEV_WATER_RIGHT $7d // ?
+	@define LEV_SHIFT_DOWN $59 // Y
+	@define LEV_SHIFT_UP $5E // ^
+	@define LEV_SHIFT_LEFT $3C // <
+	@define LEV_SHIFT_RIGHT $3E // >
+	@define LEV_LADDER $68 // h
+	@define LEV_ROBE_DOWN $5f  // _ 
+	@define LEV_ROBE_UP $2d // -
+	@define LEV_ROBE_LEFT $21 // !
+	@define LEV_ROBE_RIGHT $7C // |
+	@define LEV_PORTAL $6F // o
+	@define LEV_GRAVPAD_DOWN $32 // 2
+	@define LEV_GRAVPAD_UP $38 // 8
+	@define LEV_GRAVPAD_LEFT $34 // 4
+	@define LEV_GRAVPAD_RIGHT $36 // 6
+	@define LEV_MIRROR_LEFT $6e // n 
+	@define LEV_MIRROR_RIGHT $6d // m
+	@define LEV_GLASS $67 // g
+	@define LEV_LASER_TRANSPORT $74 // t
+	@define LEV_PUSH_BOX $64 // d 
+	@define LEV_PULL_BOX $65 // e
+	@define LEV_PORTAL_ACTIVATE  $63 // c
+	@define LEV_FONTAINE_DOWN $5b // [
+	@define LEV_FONTAINE_LEFT $28 // (
+	@define LEV_FONTAINE_RIGHT $29 // )
+	@define LEV_FONTAINE_UP $5d // ]
+	@define LEV_CANNON_DOWN $31 // 1
+	@define LEV_CANNON_UP $39 // 9
+	@define LEV_CANNON_LEFT $37 // 7
+	@define LEV_CANNON_RIGHT $33 // 3
+	@define LEV_SWITCH_MANUAL $72 // r
+	@define LEV_DOOR $78 // x
+	@define LEV_EXIT $58 // X
+	@define LEV_WAYPOINT $2E // .
 
 	@define CTRL_STATE_WALK 0
 	@define CTRL_STATE_CLIMB 1
@@ -252,14 +250,10 @@ var
 	txtActiveSwitch:   string=("SWITCH ACTIVATED");
 	@define DEACTIVATE_SWITCH_START 11
 	txtDeactiveSwitch: string=("SWITCH DEACTIVATED");
-	@define PLAYER_DIED_START 6
-	txtPlayerDied: Array[2] of string=("PLAYER 1 DIED (F1 TO RESTART)", "PLAYER 2 DIED (F3 TO RESTART)");
 	@define EXIT_CLOSED_START 16
     txtExitClosed: string=("EXIT CLOSED");
 	@define CHAR_SWAP 12
 	txtCharSwap: string=("CHARACTER SWAPPED");
-	@define RETRY_START 14
-	txtRetry: string=("RETRY LEVEL");
 	
 	
 	countObjects: byte;
@@ -301,7 +295,20 @@ var
 @endblock
 
 @startblock $1c00 "level"
-    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h    7a& 4------====hh   aa&m   n   b@   =  4aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaaa");
+lev: string = (
+"                   " +
+"                   " +
+"                   " +
+"     2@  t    2    " +
+"    6aa>>aaaaaa4   " +
+"     a        a    " +
+"     Y        ^    " +
+"     a        a    " +
+"    6aaaa<aaaaa4   " +
+"     8        8    " +
+"                   " +
+"                   ");
+    //lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   =   aaX  x===ss rs8 h o a>>>>>>>>>>>>>>>>>>>>");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p4
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
@@ -318,8 +325,25 @@ var
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF, 	
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF); 	
-	levTwoPlayerAllowed: boolean = true;
+
+//	levTwoPlayerAllowed: boolean = true;
 	levBothMustComplete: boolean = false;
 	levStrings: Array[@MAX_LEV_STRINGS] of string = ("WELCOME","aa","bb","cc","dd","ee","ff","gg");
 @endblock
@@ -1679,7 +1703,7 @@ begin
 		sprite_color[i]:=light_red;
 		SpritePos(0,0,i);
 	end;
-	sprite_color[1]:=light_green;
+	sprite_color[1]:=green;
 	// Turn on sprite 0 (or @useSprite)
 	sprite_bitmask := $FF;
 //	togglebit(sprite_bitmask,0,1);
@@ -1767,14 +1791,15 @@ begin
 			@LEV_SAND: InitSand(x, y);
 			@LEV_SHIFT_UP: InitShiftPlattform(x, y,4,@UP);
 			@LEV_SHIFT_DOWN: InitShiftPlattform(x, y,6,@DOWN);
-			@LEV_SHIFT_RIGHT: InitShiftPlattform(x, y, 8,@RIGHT);
-			@LEV_SHIFT_LEFT: InitShiftPlattform(x, y, 10,@LEFT);
+			@LEV_SHIFT_RIGHT: InitShiftPlattform(x, y, 10,@RIGHT);
+			@LEV_SHIFT_LEFT: InitShiftPlattform(x, y, 8,@LEFT);
 			@LEV_LADDER: InitLadder(x,y);
 			@LEV_ROBE_UP: InitRobe(x,y,100,@DOWN);
 			@LEV_ROBE_DOWN: InitRobe(x,y,102,@UP);
 			@LEV_ROBE_LEFT: InitRobe(x,y,104,@LEFT);
 			@LEV_ROBE_RIGHT: InitRobe(x,y,106,@RIGHT);
 			@LEV_PORTAL: InitPortal(x,y,@UP);
+			@LEV_PORTAL_ACTIVATE: InitPortalActivate(x,y);
 			@LEV_GRAVPAD_UP: InitGravPad(x,y,38,@UP);
 			@LEV_GRAVPAD_DOWN: InitGravPad(x,y,80,@DOWN);
 			@LEV_GRAVPAD_LEFT: InitGravPad(x,y,82,@LEFT);
@@ -1789,6 +1814,7 @@ begin
 			@LEV_SWITCH_MANUAL: InitSwitchManual(x,y);
 			@LEV_DOOR: InitDoor(x,y);
 			@LEV_EXIT: InitExit(x,y);
+			@LEV_WAYPOINT: InitWaypoint(x,y);
 		end;
 	end;
 end;

@@ -445,6 +445,28 @@ begin
 	end;
 end;
 
+procedure InitWaypoint(x: byte, y: byte);
+var 
+	id: byte;
+begin
+	id := GetId();
+	if(id <> $FF) then begin
+		id := GetId();
+		objectList[id].rendTilePos := $FF;
+		objectList[id].rendType := @REND_TYPE_BYTE;		
+		objectList[id].component0 := $00;
+		objectList[id].component1 := $00;
+		objectList[id].component2 := $00;
+		objectList[id].component3 := $00 | @COMP_WAYPOINT_3 ;
+		objectList[id].transX := x;
+		objectList[id].transY := y;
+		objectList[id].transZ := @Z_BACK1;
+		objectList[id].physGravity := @DOWN;
+		objectList[id].onOff := @ON;		// Push=off
+		AddMapItem(id, x, y, @Z_BACK1);
+	end;
+end;
+
 procedure InitDoor(x: byte, y: byte);
 var 
 	id: byte;

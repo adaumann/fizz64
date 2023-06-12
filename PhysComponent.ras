@@ -33,7 +33,7 @@ begin
 			destroyObj := GetObjArea(id, objectList[id].transZ, objectList[colObj].shiftDir, @COMP_DESTROY_COLLIDE_0,0, false);
 				if(destroyObj <> $FF) then DamageCollide(destroyObj);*/
 				if(GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_COLLIDE_ABLE_0,0, false) = $FF 
-						or GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_ERASE_ABLE_0,0, false) = $FF ) then begin
+						or GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_ERASE_ABLE_0,0, false) <> $FF ) then begin
 					if(gravity = @DOWN and shiftDir = @LEFT) then fall := @LEFT
 					else if(gravity = @DOWN and shiftDir = @RIGHT) then fall := @RIGHT
 					else if(gravity = @LEFT and shiftDir = @UP) then fall := @LEFT
