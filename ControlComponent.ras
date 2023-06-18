@@ -341,10 +341,19 @@ begin
 					moveDir := @DOWN;
 				end;
 			end;
+		end
+		else begin
+			colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_COLLIDE_ABLE_0,0, false);
+			eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
+		
+			if((colObj = $FF or eraseObj <> $FF) and (controlList[controlId].b_controlPressUp = true and grounded = true)) then begin 
+				controlList[controlId].controlState := @CTRL_STATE_JUMP;
+				controlList[controlId].controlJumpStep := 0;
+				objectList[id].b_physFallDown := false; 
+			end;
 		end;
 		if(moveDir = @LEFT or moveDir = @UP_LEFT) then SwitchAnimation(id, @ANIM_WALK_L)
-		else if(moveDir = @RIGHT or moveDir = @UP_RIGHT) then SwitchAnimation(id, @ANIM_WALK_R)
-//		else if(moveDir = $FF) then SwitchAnimation(id, @ANIM_STAND);
+		else if(moveDir = @RIGHT or moveDir = @UP_RIGHT) then SwitchAnimation(id, @ANIM_WALK_R);
     end
     else if(controlList[controlId].controlState = @CTRL_STATE_JUMP) then begin
 	    if(controlList[controlId].controlJumpStep = 0) then moveDir := @UP			// TODO: check for collideable?

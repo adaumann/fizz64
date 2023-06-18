@@ -20,20 +20,15 @@ begin
 	
 
 	if(objectList[id].b_physFallDown = true) then begin
-		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);
-	
+		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);	
 		if(colObj = $FF) then fallDown := true
 		else if((GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false) = $FF and GetObjArea(id, objectList[id].transZ, 6, @COMP_COLLIDE_ABLE_0,0, false) = $FF) and objectList[id].b_physRollLeftRight = true) then fallLeftDown := true
 		else if((GetObjArea(id, objectList[id].transZ, 5, @COMP_COLLIDE_ABLE_0,0, false) = $FF and GetObjArea(id, objectList[id].transZ, 8, @COMP_COLLIDE_ABLE_0,0, false) = $FF) and objectList[id].b_physRollLeftRight = true) then fallRightDown := true;
 		if(colObj <> $FF) then begin
-			if(objectList[id].b_physHighFall = true) then objectList[id].b_physHighFall := false;
 			shiftDir := objectList[colObj].shiftDir;
 			if(objectList[colObj].component0 & @COMP_SHIFT_PLATTFORM_0 = @COMP_SHIFT_PLATTFORM_0) then begin		
-				/*
-			destroyObj := GetObjArea(id, objectList[id].transZ, objectList[colObj].shiftDir, @COMP_DESTROY_COLLIDE_0,0, false);
-				if(destroyObj <> $FF) then DamageCollide(destroyObj);*/
-				if(GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_COLLIDE_ABLE_0,0, false) = $FF 
-						or GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_ERASE_ABLE_0,0, false) <> $FF ) then begin
+				if(GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_COLLIDE_ABLE_0,0, true) = $FF 
+						or GetObjArea(id, objectList[id].transZ, shiftDir, @COMP_ERASE_ABLE_0,0, true) <> $FF ) then begin
 					if(gravity = @DOWN and shiftDir = @LEFT) then fall := @LEFT
 					else if(gravity = @DOWN and shiftDir = @RIGHT) then fall := @RIGHT
 					else if(gravity = @LEFT and shiftDir = @UP) then fall := @LEFT
@@ -43,13 +38,13 @@ begin
 					else if(gravity = @RIGHT and shiftDir = @UP) then fall := @RIGHT		
 					else if(gravity = @RIGHT and shiftDir = @DOWN) then fall := @LEFT; 
 				end;
+				
 			end;
 		end;
 			
 		if(fallDown = true) then begin
 			SwitchAnimation(id, @ANIM_STAND);
 			fall := @DOWN;
-			objectList[id].b_physHighFall := true;
 		end
 		else if(fallLeftDown = true) then fall := @DOWN_LEFT
 		else if(fallRightDown = true) then fall := @DOWN_RIGHT;

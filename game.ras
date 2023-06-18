@@ -42,6 +42,8 @@ var
 	frameStatus: byte;
 	screen: byte;
 	countSprite: byte=0;
+	cycle: byte;
+	needExtraCycle : boolean;
 	
 	// Game	
 	@define SCENES_SIZE 1
@@ -299,10 +301,10 @@ lev: string = (
 "                   " +
 "                   " +
 "                   " +
-"     2@  t    2    " +
+"     2@  t.   2    " +
 "    6aa>>aaaaaa4   " +
 "     a        a    " +
-"     Y        ^    " +
+"     ^        Y    " +
 "     a        a    " +
 "    6aaaa<aaaaa4   " +
 "     8        8    " +
@@ -319,7 +321,7 @@ lev: string = (
 												 			3, 5, 211, $FF, $00, 17, 10, $FF,
 												 			4, 6, 211, $FF, $FF, $FF, $FF, $FF,
 												 			0, 5, $FF, $FF, $00, 17, 10, $FF,
-												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+												 			3, 5, 70, $FF, $00, 17, 10, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
@@ -385,7 +387,7 @@ lev: string = (
 		// Physics
 		physGravity: byte;
 		b_physFallDown: byte;
-		b_physRollLeftRight, b_physHighFall: byte;
+		b_physRollLeftRight: byte;
 
 		// ShiftPlattform
 		shiftDir: byte;
@@ -476,7 +478,26 @@ begin
 		else begin
 			nextLevel := levelCoop + 1;
 		end;
-		
+	end;
+end;
+
+procedure IncLevel(mode: byte);
+begin 
+	if(mode = @MODE_SINGLE) then begin
+		if(levelSingle < @MAX_LEVELS_SINGLE - 1) then inc(levelSingle);
+	end
+	else begin
+		if(levelCoop < @MAX_LEVELS_SINGLE - 1) then inc(levelCoop);
+	end;
+end;
+
+procedure DecLevel(mode: byte);
+begin 
+	if(mode = @MODE_SINGLE) then begin
+		if(levelSingle > 0) then dec(levelSingle);
+	end
+	else begin
+		if(levelCoop > 0) then dec(levelCoop);
 	end;
 end;
 
@@ -489,6 +510,8 @@ begin
 	if(gameMode = @MODE_SINGLE) then nextLevel := levSingle else nextLevel := levCoop;
 	activeChar := 0;
 	menuItem := 0;
+	cycle := 0;
+	needExtraCycle := false;
 end;
 
 
@@ -650,7 +673,8 @@ begin
 		else if(pa.considerGravity = @ANIM_CONSIDER_GRAV_FULL) then begin
 			gravity := @DOWN;
 			if((objectList[t].component0 & @COMP_PHYSICS_0) = @COMP_PHYSICS_0) then gravity := objectList[t].physGravity;
-			if(gravity = @UP) then shiftAnim := 1
+			if(gravity = @DOWN) then shiftAnim := 0
+			else if(gravity = @UP) then shiftAnim := 1
 			else if(gravity = @RIGHT) then shiftAnim := 2
 			else if(gravity = @LEFT) then shiftAnim := 3;
 		end;
@@ -902,7 +926,7 @@ begin
 	@ENDIF
 	controlId := objectList[i].controlId;
 	objectList[i].b_hasMoved := true; 
-	
+
 	if(controlId <> $FF) then begin
 		waypointId := GetObjectByPosFilterComp(x, y, @Z_BACK1, @COMP_WAYPOINT_3, 3);
 		if(waypointId = $FF) then
@@ -1073,8 +1097,6 @@ begin
 		PaintPos(objectList[id].transX + ystart[objectList[id].transY], true);
 	end; 
 end;	
-@endblock
-@startblock $7a00 "Code1"
 
 procedure SwitchBank();
 begin
@@ -1252,6 +1274,9 @@ begin
 	end;
 end;
 
+@endblock
+@startblock $7a00 "Code1"
+
 
 @include "GObjects.ras"
 @include "Actions.ras"
@@ -1268,29 +1293,49 @@ begin
 	if(objectList[id].component1 & @COMP_LASER_1 = @COMP_LASER_1) then begin 
 		UpdateLaser(id);
 	end;
-	if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin
-		controlId := objectList[id].controlId;
-		if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
-			objectList[id].b_physFallDown := false;
-			controlList[controlId].controlState := @CTRL_STATE_DESTROY;
-			controlList[controlId].controlJumpStep := 0;
-//			retryPressed := $FF;
- 		end;
-		ProcessDestroyObj(id);
-		InputControl(id); 
-		UpdateControl(id);
-		ProcessBackObj(id);
-	end;
-	if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0 and objectList[id].b_hasMoved = false) then begin
-		UpdatePhysics(id);
-		ProcessBackObj(id);
-	end;
-	if(objectList[id].component1 & @COMP_FLOATER_1 = @COMP_FLOATER_1 and objectList[id].b_hasMoved = false) then begin 
-		UpdateFloater(id);
-		ProcessBackObj(id);
-	end;
 	if(objectList[id].component2 & @COMP_FONTAINE_2 = @COMP_FONTAINE_2) then begin 
 		UpdateFontaine(id);
+	end;
+		
+	if(cycle = 0) then begin
+		if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then begin
+			UpdatePhysics(id);
+			ProcessBackObj(id);
+		end;
+		if(objectList[id].component1 & @COMP_FLOATER_1 = @COMP_FLOATER_1) then begin 
+			UpdateFloater(id);
+			ProcessBackObj(id);
+		end;
+		if(objectList[id].b_hasMoved = true) then needExtraCycle := true;
+		
+		if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[id].b_hasMoved = false) then begin
+			controlId := objectList[id].controlId;
+			if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
+				objectList[id].b_physFallDown := false;
+				controlList[controlId].controlState := @CTRL_STATE_DESTROY;
+				controlList[controlId].controlJumpStep := 0;
+	//			retryPressed := $FF;
+	 		end;
+			ProcessDestroyObj(id);
+			InputControl(id); 
+			UpdateControl(id);
+			ProcessBackObj(id);
+		end;
+	end
+	else begin	
+		if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin
+			controlId := objectList[id].controlId;
+			if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
+				objectList[id].b_physFallDown := false;
+				controlList[controlId].controlState := @CTRL_STATE_DESTROY;
+				controlList[controlId].controlJumpStep := 0;
+	//			retryPressed := $FF;
+	 		end;
+			ProcessDestroyObj(id);
+			InputControl(id); 
+			UpdateControl(id);
+			ProcessBackObj(id);
+		end;
 	end;
 	objectList[id].b_hasMoved := false;
 end;
@@ -1313,13 +1358,16 @@ begin
 	if (i = KEY_F7) then begin
 		retryPressed := true;
 	end;
+	
+	if(cycle = 0 and needExtraCycle = true) then cycle := 1 else cycle := 0;
 
-	if(countDyn <> 0) then begin
-		for i:=0 to countDyn do	begin
-			id := dynObjectList[i];
-			UpdateObject(id);
-		end;
+	for i:=0 to countDyn do	begin
+		id := dynObjectList[i];
+		UpdateObject(id);
 	end;
+	
+	if(cycle = 1) then needExtraCycle := false;
+	
 end;
 
 procedure Animate();
@@ -1351,7 +1399,7 @@ begin
 	if(frameStatus = 1) then begin
 		if(time = 0) then begin
 			SwitchBank();
-						if(state = @STATE_OPEN_SCENE_REQUEST) then state := @STATE_OPEN_SCENE;
+			if(state = @STATE_OPEN_SCENE_REQUEST) then state := @STATE_OPEN_SCENE;
 
 		end
 		else if(time = 1 and currentBank = 0) then begin 
@@ -1390,7 +1438,16 @@ begin
 //	setcharsetandscreenlocation(@tilesetLoc1,$4400);
 end;
 
-procedure MenuMove(len: byte);
+procedure ColorLine(y: byte, col: byte);
+var
+	i: byte;
+begin
+	moveto(0,y,hi(SCREEN_COL_LOC));
+	for i:=0 to 40 do screenmemory[i]:= col;
+end;
+
+
+procedure MenuMove(len: byte, oldMenuItem: byte);
 begin
 	if(mod(time,4) = 0) then begin
 		if(joy1 & JOY_UP = JOY_UP or joy2 & JOY_UP = JOY_UP) then begin
@@ -1400,6 +1457,8 @@ begin
 			if(menuItem < len-1 ) then inc(menuItem); 
 		end;
 	end;
+	ColorLine(12 + oldMenuItem, @DARK_GREY);
+	ColorLine(12 + menuItem, @WHITE);
 end;
 
 interrupt RasterMain();
@@ -1427,10 +1486,10 @@ end;
 interrupt RasterMain();
 var
 	levStr: string = "00";
+	levStr2: string = "00";
 	pos : byte;
 	len: byte;
 	ps: pointer of byte;
-	col1, col2, col3: byte;
 begin
 	startirq(@USE_KERNAL);
 	setregularcolormode();
@@ -1439,40 +1498,46 @@ begin
 	ReadJoy1();
 	ReadJoy2();
 	inc(time);
+	levStr := "00";
+	levStr2 := "00";
 	
 	if(state = @STATE_MENU or state = @STATE_MENU_INPUT) then begin
-		Screen::PrintStringColor("SELECT GAME MODE:",12,8,5);
-
-		col1 := @DARK_GREY;
-		col2 := @DARK_GREY;
-		col3 := @DARK_GREY;
+		if(levelSingle >= 9) then pos := 0 else pos := 1; 
+		str::itoa(levelSingle + 1, #levStr + pos, 10);
+		if(levelCoop >= 9) then pos := 0 else pos := 1; 
+		str::itoa(levelCoop + 1, #levStr2 + pos, 10);
 		
-		if(menuItem = 0) then col1 := @WHITE
-		else if(menuItem = 1) then col2 := @WHITE
-		else if(menuItem = 2) then col3 := @WHITE;
 		
-		Screen::PrintStringColor("SINGLE PLAYER",14,12,col1);
-		Screen::PrintStringColor("SINGLE PLAYER TWO CHARACTERS",6,13,col2);
-		Screen::PrintStringColor("TWO PLAYER CO-OP",12,14,col3);
-		
-		if(mod(time,4) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
+		if(mod(time,8) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
 			if(menuItem = 0) then InitGame(0,0,@MODE_SINGLE);
 			if(menuItem = 1) then InitGame(0,0,@MODE_SINGLE_2CHAR);
 			if(menuItem = 2) then InitGame(0,0,@MODE_COOP);
 			state := @STATE_OPEN_SCENE; //TODO
 		end;
-		MenuMove(3);
-		RasterIRQ(RasterMainTop(),20,@USE_KERNAL);
+		if(mod(time,4) = 0 and (joy1 & JOY_LEFT = JOY_LEFT or joy2 & JOY_LEFT = JOY_LEFT)) then begin
+			if(menuItem = 3) then DecLevel(@MODE_SINGLE);
+			if(menuItem = 4) then DecLevel(@MODE_COOP);
+		end;
+		if(mod(time,4) = 0 and (joy1 & JOY_RIGHT = JOY_RIGHT or joy2 & JOY_RIGHT = JOY_RIGHT)) then begin
+			if(menuItem = 3) then IncLevel(@MODE_SINGLE);
+			if(menuItem = 4) then IncLevel(@MODE_COOP);
+		end;
+		
+		Screen::PrintStringColor(#levStr,33,15,@WHITE);
+		Screen::PrintStringColor(#levStr2,31,16,@WHITE);
+		
+		MenuMove(5, menuItem);
+		RasterIRQ(RasterMainTop(),28,@USE_KERNAL);
 	end
 	
 	else if(state = @STATE_OPEN_SCENE or state = @STATE_OPEN_SCENE_INPUT) then begin
 	
 		if(gameMode = @MODE_SINGLE) then begin
-			if(levelSingle > 9) then pos := 0 else pos := 1; 
+			if(levelSingle >= 9) then pos := 0 else pos := 1; 
 			str::itoa(levelSingle + 1, #levStr + pos, 10)
 		end
 		else begin
-			if(levelCoop > 9) then pos := 0 else pos := 1; 
+			if(levelCoop >= 9) then pos := 0 else pos := 1; 
 			str::itoa(levelCoop + 1, #levStr + pos, 10)
 		end;
 		
@@ -1483,26 +1548,12 @@ begin
 		pos := 20 - (len / 2);
 	
 		Screen::PrintStringColor(levStrings[0],pos,10,5);
-		
-		col1 := @DARK_GREY;
-		col2 := @DARK_GREY;
-		
-		if(menuItem = 0) then col1 := @WHITE
-		else if(menuItem = 1) then col2 := @WHITE ;
-		
-		Screen::PrintStringColor("START LEVEL",15,12,col1);
-		Screen::PrintStringColor("MAIN MENU",16,13,col2);
 	
-		Screen::PrintStringColor("PRESS 'DEL' TO RETRY",10,22,@DARK_GREY);
-		if(gameMode = @MODE_SINGLE_2CHAR) then Screen::PrintStringColor("PRESS 'SPACE' TO SWAP CHARACTER",3,23,@DARK_GREY);
-		if(levBothMustComplete = true) then Screen::PrintStringColor("BOTH PLAYERS MUST EXIT",9,24,@DARK_GREY) 
-		else Screen::PrintStringColor("ONLY ONE PLAYER MUST EXIT",8,24,@DARK_GREY);
-	
-		if(mod(time,4) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
+		if(mod(time,8) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
 			if(menuItem = 0) then state := @STATE_INIT
 			else if(menuItem = 1) then state := @STATE_MENU;
 		end;
-		MenuMove(2);
+		MenuMove(2, menuItem);
 	end;
 		
 	closeIrq();
@@ -1845,7 +1896,6 @@ begin
 ");*/
 end;
 
-
 procedure OpenMain();
 var
 	i: byte;
@@ -1861,6 +1911,15 @@ begin
 	menuItem := 0;
 	if(state = @STATE_OPEN_SCENE) then begin 
 		InitLevel();
+		Screen::PrintStringColor("START LEVEL",15,12,@DARK_GREY);
+		Screen::PrintStringColor("MAIN MENU",16,13,@DARK_GREY);
+	
+		Screen::PrintStringColor("PRESS 'DEL' TO RETRY",10,22,@DARK_GREY);
+		if(gameMode = @MODE_SINGLE_2CHAR) then Screen::PrintStringColor("PRESS 'SPACE' TO SWAP CHARACTER",3,23,@DARK_GREY);
+		if(gameMode = @MODE_COOP) then begin
+			if(levBothMustComplete = true) then Screen::PrintStringColor("BOTH PLAYERS MUST EXIT",9,24,@DARK_GREY) 
+			else Screen::PrintStringColor("ONLY ONE PLAYER MUST EXIT",8,24,@DARK_GREY);
+		end;
 		state := @STATE_OPEN_SCENE_INPUT;
 		StartRasterChain(RasterMain(), 0,@USE_KERNAL); // Don't use kernal
 
@@ -1881,7 +1940,16 @@ begin
 			screenmemory[80]:= $AE;
 			screenmemory[120]:= $AE;
 			screenmemory[160]:= $AE;
-		end;		
+		end;	
+		Screen::PrintStringColor("SELECT GAME MODE:",12,9,5);
+
+		Screen::PrintStringColor("SINGLE PLAYER",14,12,@DARK_GREY);
+		Screen::PrintStringColor("SINGLE PLAYER TWO CHARACTERS",6,13,@DARK_GREY);
+		Screen::PrintStringColor("TWO PLAYER CO-OP",12,14,@DARK_GREY);
+
+		Screen::PrintStringColor("SINGLE PLAYER START LEVEL:",6,15,@DARK_GREY);
+		Screen::PrintStringColor("CO-OP  START LEVEL:",11,16,@DARK_GREY);
+	
 		state := @STATE_MENU_INPUT;
 		StartRasterChain(RasterMainTop(), 0,@USE_KERNAL); // Don't use kernal
 	end;

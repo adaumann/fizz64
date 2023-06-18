@@ -147,7 +147,7 @@
                 "1  a    t    t    a  ",
                 "2  1              1  ",
                 "3      2 . @  2      ",
-                "4aa   6agaxxaga4     ",
+                "4aa   6agaxxaga4     ",        
                 "5ar    a txxt a 6  aa",
                 "6a8    Ygg&&gg^    2a",
                 "7aa  4 a     Xa    ra",
@@ -463,20 +463,4 @@
             ]
         }		
     ]
-}
-
-
-"                    "
-"                    "
-"                    "
-"     2@       2     "
-"    8aaa>aaaaa4     "
-"     a        a     "
-"     Y        ^     "
-"     a        a     "
-"    8aaaa<aaaaa4    "
-"     6        6     "
-"                    "
-"                    "   
-   
-   
+}   
