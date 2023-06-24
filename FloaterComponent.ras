@@ -9,7 +9,7 @@ begin
 	if(mod(globaltime, 4) = 0) then begin
 		waterId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK2, @COMP_WATER_0, 0);
 		floatDir := $FF;
-		if(waterId <> $FF) then floatDir := objectList[waterId].waterFloaterDir;
+		if(waterId <> $FF) then floatDir := objectList[waterId].physGravity;
 		if(floatDir <> $FF) then begin
 			moveDir := $FF;
 			shift := 0;
@@ -33,7 +33,7 @@ begin
 			if((colObj = $FF or eraseObj <> $FF) and floatDir = @DOWN) then moveDir := @DOWN;  //TODO: AnimationSwimR
 
 			oldx := objectList[id].transX;
-			oldy := objectList[id].transY;
+     		oldy := objectList[id].transY;
 			
 			if(moveDir = @LEFT) then begin
 				eraseObj := GetObjArea(id, z, 3, @COMP_ERASE_ABLE_0,0, true);

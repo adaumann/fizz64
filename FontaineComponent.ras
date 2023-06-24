@@ -1,6 +1,10 @@
 procedure IncCurrentWater(id: byte);
+var
+	laserEmitId : byte;
 begin
-	if(objectList[id].currentLaser < @MAX_LASER) then objectList[id].currentLaser := objectList[id].currentLaser + @LASER_STEP; 
+	laserEmitId := objectList[id].laserEmitId;
+	if(laserList[laserEmitId].currentLaser < @MAX_LASER_SIZE) then 
+		laserList[laserEmitId].currentLaser := laserList[laserEmitId].currentLaser + @LASER_STEP; 
 end;
 
 
@@ -8,36 +12,37 @@ procedure UpdateFontaine(id: byte);
 var
 	id1,i,x,y: byte;
 	pos,id2: byte;
+	laserEmitId : byte;
 begin
-//	ClearAllWater(id);
-	objectList[id].laserDir := $FF;
-	if(objectList[id].laserType = @LEFT) then begin
-		if (objectList[id].lastLaserDir <> @LEFT) then objectList[id].currentLaser := 0;
+	laserEmitId := objectList[id].laserEmitId;
+	laserList[laserEmitId].laserDir := $FF;
+	if(laserList[laserEmitId].laserType = @LEFT) then begin
+		if (laserList[laserEmitId].lastLaserDir <> @LEFT) then laserList[laserEmitId].currentLaser := 0;
 		IncCurrentWater(id);
 		DirectFire(id, objectList[id].transX,objectList[id].transY, -1, 0, false);
-		objectList[id].laserDir := @LEFT;
-		objectList[id].lastLaserDir := objectList[id].laserDir;
+		laserList[laserEmitId].laserDir := @LEFT;
+		laserList[laserEmitId].lastLaserDir := laserList[laserEmitId].laserDir;
 	end
-	else if	(objectList[id].laserType = @RIGHT) then begin
-		if (objectList[id].lastLaserDir <> @RIGHT) then objectList[id].currentLaser := 0;
+	else if	(laserList[laserEmitId].laserType = @RIGHT) then begin
+		if (laserList[laserEmitId].lastLaserDir <> @RIGHT) then laserList[laserEmitId].currentLaser := 0;
 		IncCurrentWater(id);
 		DirectFire(id, objectList[id].transX,objectList[id].transY, 1, 0, false);
-		objectList[id].laserDir := @RIGHT;
-		objectList[id].lastLaserDir := objectList[id].laserDir;
+		laserList[laserEmitId].laserDir := @RIGHT;
+		laserList[laserEmitId].lastLaserDir := laserList[laserEmitId].laserDir;
 	end
-	else if	(objectList[id].laserType = @UP) then begin
-		if (objectList[id].lastLaserDir <> @UP) then objectList[id].currentLaser := 0;
+	else if	(laserList[laserEmitId].laserType = @UP) then begin
+		if (laserList[laserEmitId].lastLaserDir <> @UP) then laserList[laserEmitId].currentLaser := 0;
 		IncCurrentWater(id);
 		DirectFire(id, objectList[id].transX,objectList[id].transY, 0, -1, false);
-		objectList[id].laserDir := @UP;
-		objectList[id].lastLaserDir := objectList[id].laserDir;
+		laserList[laserEmitId].laserDir := @UP;
+		laserList[laserEmitId].lastLaserDir := laserList[laserEmitId].laserDir;
 	end
-	else if	(objectList[id].laserType = @DOWN) then begin
-		if (objectList[id].lastLaserDir <> @DOWN) then objectList[id].currentLaser := 0;
+	else if	(laserList[laserEmitId].laserType = @DOWN) then begin
+		if (laserList[laserEmitId].lastLaserDir <> @DOWN) then laserList[laserEmitId].currentLaser := 0;
 		IncCurrentWater(id);
 		DirectFire(id, objectList[id].transX,objectList[id].transY, 0, 1, false);
-		objectList[id].laserDir := @DOWN;
-		objectList[id].lastLaserDir := objectList[id].laserDir;
+		laserList[laserEmitId].laserDir := @DOWN;
+		laserList[laserEmitId].lastLaserDir := laserList[laserEmitId].laserDir;
 	end;
-	if(objectList[id].laserDir = $FF) then objectList[id].currentLaser := 0;
+	if(laserList[laserEmitId].laserDir = $FF) then laserList[laserEmitId].currentLaser := 0;
 end;

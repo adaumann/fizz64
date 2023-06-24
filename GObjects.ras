@@ -1,9 +1,11 @@
 procedure InitCharacter(x: byte, y: byte, controlId: byte);
 var 
 	id: byte;
+	laserEmitId: byte;
 begin
 	id := GetId();
-	if(id <> $FF) then begin
+	laserEmitId := GetLaserEmitId();
+	if(id <> $FF and laserEmitId <> $FF) then begin
 		objectList[id].rendTilePos := 0;
 		objectList[id].rendType := @REND_TYPE_SPRITE;
 		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0 | @COMP_CONTROL_0 | @COMP_PHYSICS_0 | @COMP_ANIMATION_0;
@@ -36,9 +38,10 @@ begin
 		objectList[id].b_physRollLeftRight := false;
 		objectList[id].b_physFallDown := true;
 		objectList[id].shiftDir := $FF;
-		objectList[id].laserType := @LASER_TYPE_USER;
-		objectList[id].lastLaserDir := $FF;
-		objectList[id].laserDir := $FF;
+		objectList[id].laserEmitId := laserEmitId;
+		laserList[laserEmitId].laserType := @LASER_TYPE_USER;
+		laserList[laserEmitId].lastLaserDir := $FF;
+		laserList[laserEmitId].laserDir := $FF;
 		objectList[id].onOff := @ON;
 		AddDynItem(id);
 		AddAnimItem(id);
@@ -68,14 +71,14 @@ begin
 	end;
 end;
 
-procedure InitStone(x: byte, y: byte);
+procedure InitStone(tilen: byte, x: byte, y: byte, rollLeftRight: boolean);
 var 
 	pg: pointer of gobject;
 	id: byte;
 begin
 	id := GetId();
 	if(id <> $FF) then begin
-		objectList[id].rendTilePos := 2;
+		objectList[id].rendTilePos := tilen;
 		objectList[id].rendType := @REND_TYPE_TILE;		
 		objectList[id].component0 := $00 | @COMP_PHYSICS_0 | @COMP_COLLIDE_ABLE_0;
 		objectList[id].component1 := $00 | @COMP_PUSHPULL_1;
@@ -85,7 +88,7 @@ begin
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_MAIN;
 		objectList[id].physGravity := @DOWN;
-		objectList[id].b_physRollLeftRight := true;
+		objectList[id].b_physRollLeftRight := rollLeftRight;
 		objectList[id].b_physFallDown := true;
 		objectList[id].onOff := 1;		
 		AddDynItem(id);
@@ -127,7 +130,6 @@ begin
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_BACK2;
-		objectList[id].waterFloaterDir := $FF;
 		objectList[id].laserTag := $FF;
 		AddMapItem(id, x, y, @Z_BACK2);
 	end;
@@ -148,7 +150,7 @@ begin
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_BACK2;
-		objectList[id].waterFloaterDir := grav;
+		objectList[id].physGravity := grav;
 		objectList[id].laserTag := $FF;
 		AddMapItem(id, x, y, @Z_BACK2);
 	end;
@@ -372,9 +374,12 @@ end;
 procedure InitFontaine(x: byte, y: byte, tilen: byte, grav: byte);
 var 
 	id: byte;
+	laserId: byte;
+	laserEmitId: byte;
 begin
 	id := GetId();
-	if(id <> $FF) then begin
+	laserEmitId := GetLaserEmitId();
+	if(id <> $FF and laserId <> $FF) then begin
 		objectList[id].rendTilePos := tilen;
 		objectList[id].rendType := @REND_TYPE_TILE;		
 		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0;
@@ -385,9 +390,10 @@ begin
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_MAIN;
 		objectList[id].physGravity := @DOWN;
-		objectList[id].laserType := grav;
-		objectList[id].lastLaserDir := $FF;
-		objectList[id].laserDir := $FF;
+		objectList[id].laserEmitId := laserEmitId;
+		laserList[laserEmitId].laserType := grav;
+		laserList[laserEmitId].lastLaserDir := $FF;
+		laserList[laserEmitId].laserDir := $FF;
 		objectList[id].onOff := @ON;
 		AddDynItem(id);
 		AddMapItem(id, x, y, @Z_MAIN);
@@ -397,9 +403,11 @@ end;
 procedure InitCannon(x: byte, y: byte, tilen: byte, grav: byte);
 var 
 	id: byte;
+	laserEmitId: byte;
 begin
 	id := GetId();
-	if(id <> $FF) then begin
+	laserEmitId := GetLaserEmitId();
+	if(id <> $FF and laserEmitId <> $FF) then begin
 		objectList[id].rendTilePos := tilen;
 		objectList[id].rendType := @REND_TYPE_TILE;		
 		objectList[id].component0 := $00 | @COMP_COLLIDE_ABLE_0;
@@ -410,9 +418,10 @@ begin
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_MAIN;
 		objectList[id].physGravity := @DOWN;
-		objectList[id].laserType := grav;
-		objectList[id].lastLaserDir := $FF;
-		objectList[id].laserDir := $FF;
+		objectList[id].laserEmitId := laserEmitId;
+		laserList[laserEmitId].laserType := grav;
+		laserList[laserEmitId].lastLaserDir := $FF;
+		laserList[laserEmitId].laserDir := $FF;
 		objectList[id].onOff := @ON;
 		AddDynItem(id);
 		AddMapItem(id, x, y, @Z_MAIN);

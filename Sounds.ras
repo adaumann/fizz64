@@ -1,0 +1,150 @@
+
+/* program test;
+var
+		@define SOUND_TRANSPORT 0
+	@define SOUND_DAMAGE 1
+	@define SOUND_LASER 2
+	@define SOUND_PUSH 3 
+	@define SOUND_JUMP 4
+
+	soundTimer: byte;
+	freq: byte;
+	initSound: byte;
+	soundId: byte;
+	globaltime: byte;
+
+	rands: array[256] of byte;
+
+procedure InitRand();
+var
+	i,m: byte;
+begin
+	for i:=0 to 0 do begin
+		rand(0,255,m);
+//		m:=perlin40[i]*109;
+		rands[i]:=m;		
+	end;
+end;
+*/
+procedure UpdateSound();
+var
+	i: byte;
+begin
+	if (soundTimer=0) then return();
+	dec(soundTimer);
+	// Reward
+	if (soundId=@SOUND_TRANSPORT) then begin
+		if (initSound=1) then 
+			PlaySound(SID_CHANNEL3, 
+				8,  // Volume
+				7,  // Hi byte frequency
+				1*16+7,  // Attack voice 1
+				13*16 + 6,   // Sustain = 16*15 + release=6
+				1 + SID_SAW,  // Waveform
+				SID_SAW);  // waveform 
+		setfrequency(SID_CHANNEL3, freq);
+
+	end;
+	// Hurt
+	if (soundId=@SOUND_DAMAGE) then begin
+		i:=rands[globaltime]/4+60;
+		PlaySound(SID_CHANNEL3, 
+				15,  // Volume
+				i,  // Hi byte frequency
+				0*16+0,  // Attack voice 1
+				3*16 + 12,   // Sustain = 16*15 + release=6
+				1 +SID_NOISE  // Waveform
+				SID_NOISE);  // waveform 
+
+	end;
+	// Shoot
+	if (soundId=@SOUND_LASER) then begin
+		PlaySound(SID_CHANNEL3, 
+				7,  // Volume
+				rands[globaltime]/2+60,  // Hi byte frequency
+				0*16+0,  // Attack voice 1
+				3*16 + 9,   // Sustain = 16*15 + release=6
+				1 +SID_NOISE  // Waveform
+				SID_NOISE);  // waveform 
+
+	end;
+	// Hit
+	if (soundId=@SOUND_STEP) then begin
+		PlaySound(SID_CHANNEL3, 
+				8,  // Volume
+				6, //rands[time]/2+40,  // Hi byte frequency
+				1*16+7,  // Attack voice 1
+				13*16 + 2,   // Sustain = 16*15 + release=6
+				1 +SID_NOISE  // Waveform
+				SID_NOISE);  // waveform 
+
+	end;
+	// jump
+	if (soundId=@SOUND_JUMP) then begin
+		if (initSound=1) then 
+		PlaySound(SID_CHANNEL3, 
+				8,  // Volume
+				rands[globaltime]/2+40, //sine[freq]/2, //rands[time]/2+40,  // Hi byte frequency
+				0*16+0,  // Attack voice 1
+				3*16 + 9,   // Sustain = 16*15 + release=6
+				1 +SID_SAW  // Waveform
+				SID_SAW);  // waveform 
+		setfrequency(SID_CHANNEL3,sine[freq+20]/2);
+
+	end;
+	if (soundId=@SOUND_SWIM) then begin
+		PlaySound(SID_CHANNEL3, 
+				8,  // Volume
+				255, //sine[freq]/2, //rands[time]/2+40,  // Hi byte frequency
+				14*16+5,  // Attack voice 1
+				1*16 + 8,   // Sustain = 16*15 + release=6
+				1 +SID_NOISE  // Waveform
+				SID_NOISE);  // waveform
+	end; 
+	if (soundId=@SOUND_GRAV_ACTIVATE) then begin
+		PlaySound(SID_CHANNEL3, 
+				9,  // Volume
+				60, //sine[freq]/2, //rands[time]/2+40,  // Hi byte frequency
+				14*16+5,  // Attack voice 1
+				1*16 + 8,   // Sustain = 16*15 + release=6
+				1 + SID_SAW  // Waveform
+				SID_SAW);  // waveform 
+	end;
+	if (soundId=@SOUND_SWITCH) then begin
+		if (initSound=1) then 
+			PlaySound(SID_CHANNEL3, 
+				9,  // Volume
+				80, //sine[freq]/2, //rands[time]/2+40,  // Hi byte frequency
+				14*16+5,  // Attack voice 1
+				1*16 + 8,   // Sustain = 16*15 + release=6
+				1 + SID_TRI  // Waveform
+				SID_TRI);  // waveform 
+		setfrequency(SID_CHANNEL3,sine[freq+20]/2);
+	end;
+
+	freq:=freq+4;
+	initSound:=0;
+end;
+
+procedure Play();
+begin
+
+	freq:=20;
+
+	initSound:=1;
+	UpdateSound();
+end;
+/*
+begin
+	soundTimer := 200;
+	soundId := 0;
+	InitRand();
+	Play();
+	while(true) do begin 
+		inc(globaltime);
+		UpdateSound();
+	end;
+	Loop();
+
+end.
+*/

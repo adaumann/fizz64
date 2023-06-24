@@ -34,6 +34,11 @@ var
   	sprite1: incbin("sprites/spr.bin", @spriteLoc1);
   	sprite2: incbin("sprites/spr.bin", @spriteLoc2);
 	tilesetColors :  incbin("charsets/tileset_color.bin", @tilesetCol);
+	music: incsid("music/ingame.sid",2);
+	
+	
+	rands: array[256] of byte;
+
 
 	// Double Buffer
 	currentBank: byte=0;
@@ -50,9 +55,10 @@ var
 	@define DIMX 20
 	@define DIMY 12
 	@define DIMZ 4
-	@define MAX_OBJECTS 240
+	@define MAX_OBJECTS 220
 	@define MAX_CONTROLS 2
-	@define MAX_LASER 30
+	@define MAX_LASERS 12
+	@define MAX_LASER_SIZE 30
 	@define MAX_ACTORS 32
 	@define MAX_LEV_STRINGS 8
 	@define ACTOR_LENGTH 8
@@ -115,6 +121,15 @@ var
 	@define ANIM_DOOR_OFF 11
 	@define ANIM_EXIT_ON 12
 	@define ANIM_EXIT_OFF 13
+	
+	@define SOUND_TRANSPORT 0
+	@define SOUND_DAMAGE 1
+	@define SOUND_LASER 2
+	@define SOUND_STEP 3 
+	@define SOUND_JUMP 4
+	@define SOUND_SWIM 5
+	@define SOUND_GRAV_ACTIVATE 6
+	@DEFINE SOUND_SWITCH 7	
 	
 	collAreaUp: array[9] of byte = (8,7,6,5,4,3,2,1,0);
 	collAreaLeft: array[9] of byte = (2,5,8,1,4,7,0,3,6);
@@ -217,6 +232,7 @@ var
 	@define LEV_DOOR $78 // x
 	@define LEV_EXIT $58 // X
 	@define LEV_WAYPOINT $2E // .
+	@define LEV_BLOCK $66 // f
 
 	@define CTRL_STATE_WALK 0
 	@define CTRL_STATE_CLIMB 1
@@ -264,6 +280,7 @@ var
 	animObjectList : Array[@MAX_OBJECTS] of byte;
 	countDyn: byte;
 	countAnim: byte;
+	countLasers: byte;
 	mapback2 : Array[@DIMTILES] of byte;
 	mapback1 : Array[@DIMTILES] of byte;
 	mapmain : Array[@DIMTILES] of byte;
@@ -280,7 +297,11 @@ var
 	activeChar: byte;
 	retryPressed: byte;
 	menuItem: byte = 0;
-
+	soundId: byte;
+	soundTimer: byte;
+	initSound: byte;
+	freq: byte;
+	
 	@define ANIM_CONSIDER_GRAV_IGNORE 0
 	@define ANIM_CONSIDER_GRAV_FULL 1
 //	@define ANIM_CONSIDER_GRAV_HALF 2
@@ -294,23 +315,55 @@ var
 	end;
 	animList : Array[@DIMANIMS] of animObject;
 
+	actorObject = record
+		event: byte;
+		senderId: byte;
+		action: byte;
+		receiverId: byte;
+		param0, param1, param2, param3: byte;
+	end;
+
+	controlObject = record
+		controlJumpStep: byte;
+		controlState: byte;
+		b_controlPermanentSwim: byte;
+		controlFollowKeyRight, controlFollowKeyLeft: byte;
+		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown, b_controlPressAction: byte;
+		controlLastPortal: byte;
+		b_waitRelease, b_release: byte;
+		waypointId: byte;
+		lastWaypointId: byte;
+		controlCollideLaserTag: byte;
+	end;
+	
+	laserObject = record
+		laserDir: byte;
+		lastLaserDir: byte;
+ 		laserLastTransportAble: byte;
+ 		laserType : byte;
+		currentLaser: byte; 		
+	end;
+	controlList : Array[@MAX_CONTROLS] of controlObject;
+	actorList : Array[@MAX_ACTORS] of actorObject;
+	laserList : Array[@MAX_LASERS] of laserObject;
+
 @endblock
 
 @startblock $1c00 "level"
-lev: string = (
+/*lev: string = (
+"                1  " +
 "                   " +
 "                   " +
-"                   " +
-"     2@  t.   2    " +
-"    6aa>>aaaaaa4   " +
+"     2@  t. f 2    " +
+"    6aa>>aaaaaaa   " +
 "     a        a    " +
-"     ^        Y    " +
+"     ^        Y t  " +
 "     a        a    " +
 "    6aaaa<aaaaa4   " +
 "     8        8    " +
 "                   " +
-"                   ");
-    //lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   =   aaX  x===ss rs8 h o a>>>>>>>>>>>>>>>>>>>>");
+"                8  "); */
+    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   =   aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p4
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
@@ -350,27 +403,7 @@ lev: string = (
 	levStrings: Array[@MAX_LEV_STRINGS] of string = ("WELCOME","aa","bb","cc","dd","ee","ff","gg");
 @endblock
 
-@startblock $e000 "Objects"
-	actorObject = record
-		event: byte;
-		senderId: byte;
-		action: byte;
-		receiverId: byte;
-		param0, param1, param2, param3: byte;
-	end;
-
-	controlObject = record
-		controlJumpStep: byte;
-		controlState: byte;
-		b_controlPermanentSwim: byte;
-		controlFollowKeyRight, controlFollowKeyLeft: byte;
-		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown, b_controlPressAction: byte;
-		controlLastPortal: byte;
-		b_waitRelease, b_release: byte;
-		waypointId: byte;
-		lastWaypointId: byte;
-		controlCollideLaserTag: byte;
-	end;
+@startblock $ea00 "Objects"
 
 	gobject = record
 		component0, component1, component2, component3: byte;
@@ -379,8 +412,6 @@ lev: string = (
 		transX, transY, transZ: byte;
 	
 		// Render
-//		rendLastXpos, rendLastYpos, rendLastPathElem, rendMoveoffsetx, rendMoveoffsety, rendCenterX, rendCentery: byte;
-//		rendEnergyX, rendEnergyY, rendEnergyPercent: byte; 
 		rendTilePos: byte;
 		rendType: byte;
 		
@@ -395,26 +426,18 @@ lev: string = (
 		// Control
 		controlId: byte;
 		b_hasMoved: byte;
-		
-		// Water
-		waterFloaterDir: byte;
-				
+						
 		// Animation
 		animId: byte;
 		animPos: byte;
 		animFinish: byte;
-		
 
 		// Portal
 		portalFireExitDir: byte;
 		
 		// Laser, Fontaine
-		laserDir: byte;
-		lastLaserDir: byte;
- 		laserLastTransportAble: byte;
- 		laserType : byte;
+		laserEmitId: byte;
  		laserTag: byte;
-		currentLaser: byte; 		
  		
 		// Mirror
  		mirrorTurn: byte;
@@ -422,12 +445,22 @@ lev: string = (
 		// PushPull  , Door, Exit, Switch
 		onOff: byte;
 	end;
-	controlList : Array[@MAX_CONTROLS] of controlObject;
-	actorList : Array[@MAX_ACTORS] of actorObject;
 	objectList : Array[@MAX_OBJECTS] of gobject;
 @endblock
 
 @startblock $5800 "Code"
+
+procedure InitRand();
+var
+	i,m: byte;
+begin
+	for i:=0 to 0 do begin
+		rand(0,255,m);
+//		m:=perlin40[i]*109;
+		rands[i]:=m;		
+	end;
+end;
+
 
 procedure InitLevel();
 var 
@@ -439,10 +472,11 @@ begin
 	countDyn := 0;
 	countAnim := 0;
 	textTimer := 0;
-	countSprite := 0;	
+	countSprite := 0;
+	countLasers := 0;
 	retryPressed := false;
 	
-	for i:= $E000 to $FFF0 do begin
+	for i:= $EA00 to $FFF0 do begin
 		p := int2ptr(i);
 		p[0] := 0;
 	end;
@@ -512,6 +546,7 @@ begin
 	menuItem := 0;
 	cycle := 0;
 	needExtraCycle := false;
+	InitRand();
 end;
 
 
@@ -1014,6 +1049,19 @@ begin
 	GetId := ret;
 end;
 
+function GetLaserEmitId() : byte;
+var
+	ret: byte;
+begin
+    if (countObjects = @MAX_LASERS) then	 ret := $FF
+    	else begin	
+		inc(countLasers);
+		ret := countLasers;
+	end;
+
+	GetLaserEmitId := ret;
+end;
+
 procedure PaintFull();
 var
 	i: byte;
@@ -1185,6 +1233,7 @@ end;
 
 procedure DirectFire(id: byte, xpos, ypos: byte, xdir, ydir: byte, bomb: boolean);
 var
+	laserEmitId: byte;
 	laserId: byte;
 	collideId, floaterId: byte;
 	collide: boolean;
@@ -1194,6 +1243,7 @@ var
 	tileUp, tileDown, tileLeft, tileRight, z, rendType, comp0, comp2: byte;
 begin	
 	if(objectList[id].onOff = @ON) then begin
+		laserEmitId := objectList[id].laserEmitId;
 		if(bomb = true) then begin
 			tileLeft := 90;
 			tileRight := 90;
@@ -1224,7 +1274,7 @@ begin
 		collideId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
 		floaterId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_FLOATER_1, 1);
 		if (collideId <> $FF and floaterId = $FF) then collide := true;
-		while (collide = false and countLaser < objectList[id].currentLaser) do begin
+		while (collide = false and countLaser < laserList[laserEmitId].currentLaser) do begin
 			collideId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
 			floaterId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_FLOATER_1, 1);
 			if (collideId <> $FF and floaterId = $FF) then begin
@@ -1237,19 +1287,19 @@ begin
 					if(laserId <> $FF) then begin				
 						if (xdir = -1 and ydir = 0) then begin 
 							objectList[laserId].rendTilePos := tileLeft;
-							objectList[laserId].waterFloaterDir := @LEFT;
+							objectList[laserId].physGravity := @LEFT;
 						end
 						else if (xdir = 1 and ydir = 0) then begin
 							objectList[laserId].rendTilePos := tileRight;
-							objectList[laserId].waterFloaterDir := @RIGHT;
+							objectList[laserId].physGravity := @RIGHT;
 						end
 						else if (xdir = 0 and ydir = -1) then begin
 						    objectList[laserId].rendTilePos := tileUp;
-							objectList[laserId].waterFloaterDir := @UP;
+							objectList[laserId].physGravity := @UP;
 						end
 						else if (xdir = 0 and ydir = 1) then begin
 							objectList[laserId].rendTilePos := tileDown;
-							objectList[laserId].waterFloaterDir := @DOWN;
+							objectList[laserId].physGravity := @DOWN;
 						end;
 						objectList[laserId].rendType := rendType;
 						objectList[laserId].component0 := comp0;
@@ -1273,10 +1323,10 @@ begin
 		end;
 	end;
 end;
+@include "Sounds.ras"
 
 @endblock
 @startblock $7a00 "Code1"
-
 
 @include "GObjects.ras"
 @include "Actions.ras"
@@ -1311,6 +1361,9 @@ begin
 		if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[id].b_hasMoved = false) then begin
 			controlId := objectList[id].controlId;
 			if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
+				soundId := @SOUND_DAMAGE;
+				soundTimer := 1;
+				Play(); 
 				objectList[id].b_physFallDown := false;
 				controlList[controlId].controlState := @CTRL_STATE_DESTROY;
 				controlList[controlId].controlJumpStep := 0;
@@ -1388,6 +1441,7 @@ interrupt RasterBottomText();
 interrupt RasterTopLevel();
 begin
 	startirq(@USE_KERNAL);
+	call(SIDFILE_1_PLAY);
 	setmulticolormode();
 	setcharsetlocation(@tilesetLoc1);
 	poke(^56320, 0, 127);
@@ -1833,7 +1887,8 @@ begin
 				if(gameMode = @MODE_SINGLE_2CHAR or gameMode = @MODE_COOP) then InitCharacter(x,y,1);
 			end;
 			@LEV_BRICK: InitBrick(x, y);
-			@LEV_STONE: InitStone(x, y);
+			@LEV_STONE: InitStone(2, x, y, true);
+			@LEV_BLOCK: InitStone(114, x, y, false);
 			@LEV_WATER: InitWater(x, y);
 			@LEV_WATER_UP: InitWaterFlow(x, y, 23, @UP);
 			@LEV_WATER_DOWN: InitWaterFlow(x, y, 22, @DOWN);
@@ -1915,10 +1970,10 @@ begin
 		Screen::PrintStringColor("MAIN MENU",16,13,@DARK_GREY);
 	
 		Screen::PrintStringColor("PRESS 'DEL' TO RETRY",10,22,@DARK_GREY);
-		if(gameMode = @MODE_SINGLE_2CHAR) then Screen::PrintStringColor("PRESS 'SPACE' TO SWAP CHARACTER",3,23,@DARK_GREY);
+		if(gameMode = @MODE_SINGLE_2CHAR) then Screen::PrintStringColor("PRESS 'SPACE' TO SWAP CHARACTER",4,23,@DARK_GREY);
 		if(gameMode = @MODE_COOP) then begin
 			if(levBothMustComplete = true) then Screen::PrintStringColor("BOTH PLAYERS MUST EXIT",9,24,@DARK_GREY) 
-			else Screen::PrintStringColor("ONLY ONE PLAYER MUST EXIT",8,24,@DARK_GREY);
+			else Screen::PrintStringColor("ONLY ONE PLAYER MUST EXIT",9,24,@DARK_GREY);
 		end;
 		state := @STATE_OPEN_SCENE_INPUT;
 		StartRasterChain(RasterMain(), 0,@USE_KERNAL); // Don't use kernal
@@ -1948,7 +2003,7 @@ begin
 		Screen::PrintStringColor("TWO PLAYER CO-OP",12,14,@DARK_GREY);
 
 		Screen::PrintStringColor("SINGLE PLAYER START LEVEL:",6,15,@DARK_GREY);
-		Screen::PrintStringColor("CO-OP  START LEVEL:",11,16,@DARK_GREY);
+		Screen::PrintStringColor("CO-OP START LEVEL:",11,16,@DARK_GREY);
 	
 		state := @STATE_MENU_INPUT;
 		StartRasterChain(RasterMainTop(), 0,@USE_KERNAL); // Don't use kernal
@@ -1996,6 +2051,7 @@ begin
 				while(state = @STATE_PLAY) do begin
 					if(frameStatus = 0)	then begin
 						Update();
+						UpdateSound();
 						Animate();
 						CycleWater();
 						DecreaseTextTimer();
@@ -2017,9 +2073,11 @@ begin
 	disableciainterrupts();
 	preventirq();
 	setmemoryconfig(1,@USE_KERNAL,0);
-@endif		
+@endif
+		
 	SCREEN_BG_COL:=BLACK;
 	SCREEN_FG_COL:=BLACK;
+	InitSid(SIDFILE_1_INIT);
 	clearscreen($FF,^$0400);
 	clearscreen($FF,^$4400);
 	clearscreen(BLACK,^$D800);

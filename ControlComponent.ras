@@ -18,6 +18,9 @@ begin
 
 	laserBeanId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_FRONT, @COMP_LASERBEAN_2, 2);
 	if(laserBeanId <> $FF and (controlList[controlId].controlState <> @CTRL_STATE_DESTROY and (objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[laserBeanId].component0 & @COMP_DESTROY_COLLIDE_0 = @COMP_DESTROY_COLLIDE_0))) then begin
+		soundId := @SOUND_DAMAGE;
+		soundTimer := 1;
+		Play(); 
 		objectList[id].b_physFallDown := false;
 		controlList[controlId].controlState := @CTRL_STATE_DESTROY;
 		controlList[controlId].controlJumpStep := 0;
@@ -71,6 +74,9 @@ begin
 					newy := objectList[portals[0]].transY;
 					controlList[controlId].controlLastPortal := portalId;
 				end;
+				soundId := @SOUND_TRANSPORT;
+				soundTimer := 1;
+				Play(); 
 			end;
 			if(newx <> $FF) then SetPos(id, objectList[id].transX, objectList[id].transY, newx, newy, objectList[id].transZ);
 			defWalk := true;
@@ -84,6 +90,10 @@ begin
 			end
 		end
 		else if(gravPadId <> $FF) then begin
+			soundId := @SOUND_GRAV_ACTIVATE;
+			soundTimer := 1;
+			Play(); 
+
 			objectList[id].physGravity := objectList[gravPadId].physGravity;
 		end;
 		
@@ -127,6 +137,10 @@ begin
 				controlList[controlId].b_controlPressAction := false;
 				DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
 			end;
+			soundId := @SOUND_SWITCH;
+			soundTimer := 2;
+			Play(); 
+			
 		end
 	end
 	else if(exitId <> $FF) then begin
@@ -256,7 +270,7 @@ var
 	oldx, oldy, newx, newy, moveDir: byte; 
 
 	shift: integer;
-	d: byte;
+	laserEmitId: byte;
 
 	colObj, eraseObj, colObj2, eraseObj2, laserId: byte;
 	shiftDir: byte;
@@ -427,8 +441,9 @@ begin
 	end
 	else if(controlList[controlId].controlState = @CTRL_STATE_DESTROY) then begin
 		ClearLaserWithTag(id);
+		laserEmitId := objectList[id].laserEmitId;
 		if(controlList[controlId].controlJumpStep = 0) then begin 
-			objectList[id].currentLaser := 4;
+			laserList[laserEmitId].currentLaser := 4;
 		 	moveDir := $FF;
 			objectList[id].b_physFallDown := false;
 			ClearLaserWithTag(controlList[controlId].controlCollideLaserTag);
@@ -448,10 +463,10 @@ begin
 				PaintPos(objectList[id].transX + ystart[objectList[id].transY], false);
 			end;
 		end
-		else if(controlList[controlId].controlJumpStep = 1) then objectList[id].currentLaser := 5
-		else if(controlList[controlId].controlJumpStep = 2) then objectList[id].currentLaser := 5
-		else if(controlList[controlId].controlJumpStep = 3) then objectList[id].currentLaser := 2
-		else if(controlList[controlId].controlJumpStep = 4) then objectList[id].currentLaser := 1;
+		else if(controlList[controlId].controlJumpStep = 1) then laserList[laserEmitId].currentLaser := 5
+		else if(controlList[controlId].controlJumpStep = 2) then laserList[laserEmitId].currentLaser := 5
+		else if(controlList[controlId].controlJumpStep = 3) then laserList[laserEmitId].currentLaser := 2
+		else if(controlList[controlId].controlJumpStep = 4) then laserList[laserEmitId].currentLaser := 1;
 		DirectFire(id, objectList[id].transX,objectList[id].transY, -1, 0, true);
 		DirectFire(id, objectList[id].transX,objectList[id].transY, 1, 0, true);
 		DirectFire(id, objectList[id].transX,objectList[id].transY, 0, -1, true);
@@ -477,6 +492,15 @@ begin
 	// Do Moves
 	oldx := objectList[id].transX;
 	oldy := objectList[id].transY;
+	
+	if(moveDir <> $FF) then begin
+		if(controlList[controlId].controlState = @CTRL_STATE_SWIM) then soundId := @SOUND_SWIM
+		else if(controlList[controlId].controlState = @CTRL_STATE_JUMP) then soundId := @SOUND_JUMP
+		else  soundId := @SOUND_STEP;
+		soundTimer := 1;
+		Play();
+	end;
+
 	
 	if(moveDir = @LEFT) then begin
 		eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
