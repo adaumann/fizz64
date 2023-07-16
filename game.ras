@@ -34,10 +34,12 @@ var
   	sprite1: incbin("sprites/spr.bin", @spriteLoc1);
   	sprite2: incbin("sprites/spr.bin", @spriteLoc2);
 	tilesetColors :  incbin("charsets/tileset_color.bin", @tilesetCol);
+@ifndef IS_DEMO 
 	music: incsid("music/ingame.sid",2);
+@endif
 	
 	
-	rands: array[256] of byte;
+//	rands: array[256] of byte;
 
 
 	// Double Buffer
@@ -55,7 +57,7 @@ var
 	@define DIMX 20
 	@define DIMY 12
 	@define DIMZ 4
-	@define MAX_OBJECTS 220
+	@define MAX_OBJECTS 240
 	@define MAX_CONTROLS 2
 	@define MAX_LASERS 12
 	@define MAX_LASER_SIZE 30
@@ -350,21 +352,21 @@ var
 @endblock
 
 @startblock $1c00 "level"
-/*lev: string = (
-"                1  " +
-"                   " +
-"                   " +
-"     2@  t. f 2    " +
-"    6aa>>aaaaaaa   " +
-"     a        a    " +
-"     ^        Y t  " +
-"     a        a    " +
-"    6aaaa<aaaaa4   " +
-"     8        8    " +
-"                   " +
-"                8  "); */
-    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   =   aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaa");
-										  //event, action, senderpos, receiverpos, p1, p2, p3, p4
+lev: string = ( 
+                "                    " 
+                "a                   " 
+                "a        m      t  X" 
+                "a @%            aaaa" 
+                "a        n          " 
+                "aaaaa               " 
+                "                    " 
+                "3                  a" 
+                "                    " 
+                "                    " 
+                "                    " 
+                "                    "); 
+//    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h a aaaaaaaaaaaaaaaaaaaaa");
+										  //event, action, senderpos, receiverpos, p1, p2, p3, p48
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
 												 		    1, 1, 211,  0,   $FF, $FF, $FF, $FF,
@@ -450,6 +452,7 @@ var
 
 @startblock $5800 "Code"
 
+/*
 procedure InitRand();
 var
 	i,m: byte;
@@ -460,7 +463,7 @@ begin
 		rands[i]:=m;		
 	end;
 end;
-
+*/
 
 procedure InitLevel();
 var 
@@ -478,7 +481,7 @@ begin
 	
 	for i:= $EA00 to $FFF0 do begin
 		p := int2ptr(i);
-		p[0] := 0;
+		p[0] := $FF;
 	end;
 	
 	if(gameMode = @MODE_SINGLE) then begin
@@ -546,7 +549,7 @@ begin
 	menuItem := 0;
 	cycle := 0;
 	needExtraCycle := false;
-	InitRand();
+//	InitRand();
 end;
 
 
@@ -1053,7 +1056,7 @@ function GetLaserEmitId() : byte;
 var
 	ret: byte;
 begin
-    if (countObjects = @MAX_LASERS) then	 ret := $FF
+    if (countLasers = @MAX_LASERS) then	 ret := $FF
     	else begin	
 		inc(countLasers);
 		ret := countLasers;
@@ -1369,7 +1372,7 @@ begin
 				controlList[controlId].controlJumpStep := 0;
 	//			retryPressed := $FF;
 	 		end;
-			ProcessDestroyObj(id);
+			//ProcessDestroyObj(id);
 			InputControl(id); 
 			UpdateControl(id);
 			ProcessBackObj(id);
@@ -1384,7 +1387,7 @@ begin
 				controlList[controlId].controlJumpStep := 0;
 	//			retryPressed := $FF;
 	 		end;
-			ProcessDestroyObj(id);
+			//ProcessDestroyObj(id);
 			InputControl(id); 
 			UpdateControl(id);
 			ProcessBackObj(id);
@@ -1441,7 +1444,9 @@ interrupt RasterBottomText();
 interrupt RasterTopLevel();
 begin
 	startirq(@USE_KERNAL);
+@ifndef IS_DEMO 
 	call(SIDFILE_1_PLAY);
+@endif
 	setmulticolormode();
 	setcharsetlocation(@tilesetLoc1);
 	poke(^56320, 0, 127);
@@ -2077,7 +2082,9 @@ begin
 		
 	SCREEN_BG_COL:=BLACK;
 	SCREEN_FG_COL:=BLACK;
+@ifndef IS_DEMO 
 	InitSid(SIDFILE_1_INIT);
+@endif
 	clearscreen($FF,^$0400);
 	clearscreen($FF,^$4400);
 	clearscreen(BLACK,^$D800);

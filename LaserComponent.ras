@@ -39,6 +39,7 @@ var
 	portalIdMove : byte;
 	tempx, tempy, tempx2, tempy2, pos: byte;
 	laserType: byte;
+	collideControlId: byte;
 begin
 	
 	if(objectList[id].onOff = @ON) then begin
@@ -60,13 +61,13 @@ begin
 		end;
 		collideId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
 		mirrorId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_MIRROR_1, 1);
-		destroyAbleId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_DESTROY_ABLE_2, 2);
-		if ((collideId <> $FF and mirrorId = $FF) and destroyAbleId = $FF) then collide := true;
+		// destroyAbleId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_DESTROY_ABLE_2, 2);
+		if ((collideId <> $FF and mirrorId = $FF) /* and destroyAbleId = $FF */ ) then collide := true;
 		while (collide = false and countLaser < laserList[laserEmitId].currentLaser) do begin
 			collideId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
 			mirrorId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_MIRROR_1, 1);
-			destroyAbleId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_DESTROY_ABLE_2, 2);
-			if ((collideId <> $FF and mirrorId = $FF) and destroyAbleId = $FF) then collide := true
+			// destroyAbleId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_DESTROY_ABLE_2, 2);
+			if ((collideId <> $FF and mirrorId = $FF) /* and destroyAbleId = $FF */) then collide := true
 			else begin
 				if (mapfront[laserx + ystart[lasery]] = $FF) then begin
 					laserId := GetId();
@@ -192,6 +193,21 @@ begin
 		// Collide Actions
 		
 		if(collide = true and collideId <> $FF) then begin
+			if(laserType <> @LASER_TYPE_USER) then begin
+				collideControlId := objectList[collideId].controlId;
+				if(collideControlId <> $FF and controlList[collideControlId].controlState <> @CTRL_STATE_DESTROY) then begin
+					soundId := @SOUND_DAMAGE;
+					soundTimer := 1;
+					Play(); 
+					objectList[collideId].b_physFallDown := false;
+					controlList[collideControlId].controlState := @CTRL_STATE_DESTROY;
+					controlList[collideControlId].controlJumpStep := 0;
+					controlList[collideControlId].controlCollideLaserTag := id; 
+				end; 
+			
+			end;
+
+ 
 			// PushPull
 			if(objectList[collideId].component1 & @COMP_PUSHPULL_1 = @COMP_PUSHPULL_1) then begin
 				if(mod(globaltime, 4) = 0) then begin

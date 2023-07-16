@@ -3,5 +3,5 @@ packed_address = $00
 output_dir = d64_auto/
 use_exomizer3 = 0
 address_field = 0
-data = ,intro, intro.prg, $900, game2, game_s.prg, $900, l0, levels/l0.inc, $1c00
-data_tinycrunch = ,1, 0, 0
+data = ,intro, intro.prg, $900, game2, game_s.prg, $900, l0, levels/l0.inc, $1c00, t, music/t.sid, $e000
+data_tinycrunch = ,1, 1, 0, 1

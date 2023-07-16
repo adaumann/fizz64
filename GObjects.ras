@@ -91,6 +91,7 @@ begin
 		objectList[id].b_physRollLeftRight := rollLeftRight;
 		objectList[id].b_physFallDown := true;
 		objectList[id].onOff := 1;		
+		objectList[id].controlId := $FF;
 		AddDynItem(id);
 		AddMapItem(id, x, y, @Z_MAIN);
 	end;

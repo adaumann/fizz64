@@ -97,7 +97,8 @@ begin
 			objectList[id].physGravity := objectList[gravPadId].physGravity;
 		end;
 		
-		if(defWalk = true) then begin 
+		if(defWalk = true) then begin
+ 
 			if(controlList[controlId].controlState <> @CTRL_STATE_JUMP) then	begin
 				if(objectList[id].animId <> @ANIM_WALK_L and objectList[id].animId <> @ANIM_WALK_R) then SwitchAnimation(id, @ANIM_STAND);
 				controlList[controlId].controlState := @CTRL_STATE_WALK;
