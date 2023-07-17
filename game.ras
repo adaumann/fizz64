@@ -262,6 +262,7 @@ var
 	@define ACTION_LASERCANNON_OFF 8
 	@define ACTION_FONTAINE_ON 9
 	@define ACTION_FONTAINE_OFF 10
+	@define ACTION_SET_GRAV 11
 	
 	
 	@define DO_ACTIVATE_SWITCH_START 17
@@ -360,7 +361,7 @@ lev: string = (
                 "a        n          " 
                 "aaaaa               " 
                 "                    " 
-                "3                  a" 
+                "                   a" 
                 "                    " 
                 "                    " 
                 "                    " 
@@ -427,7 +428,7 @@ lev: string = (
 		
 		// Control
 		controlId: byte;
-		b_hasMoved: byte;
+		moves: byte;
 						
 		// Animation
 		animId: byte;
@@ -488,7 +489,7 @@ begin
 		if(nextLevel <> levelSingle) then begin
 			levelSingle := nextLevel;
 			@ifdef IS_DEMO 
-	//		LoadLevel(true);
+			LoadLevel(true);
 			@endif
 		end;
 	end
@@ -496,7 +497,7 @@ begin
 		if(nextLevel <> levelCoop) then begin
 			levelCoop := nextLevel;
 			@ifdef IS_DEMO 
-	//		LoadLevel(false);
+			LoadLevel(false);
 			@endif
 		end;
 	end;
@@ -963,7 +964,7 @@ begin
 		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
 	@ENDIF
 	controlId := objectList[i].controlId;
-	objectList[i].b_hasMoved := true; 
+	inc(objectList[i].moves); 
 
 	if(controlId <> $FF) then begin
 		waypointId := GetObjectByPosFilterComp(x, y, @Z_BACK1, @COMP_WAYPOINT_3, 3);
@@ -990,7 +991,7 @@ begin
 	@IFDEF OVERFLOW_CHECK
 		if(pos >= @DIMTILES) then SCREEN_BG_COL:=CYAN;
 	@ENDIF
-	objectList[id].b_hasMoved := true; 
+	inc(objectList[id].moves); 
 	GetZLayerPointer(oldz);
 	tempPointer[pos] := $FF;
 	GetZLayerPointer(newz);
@@ -1359,9 +1360,9 @@ begin
 			UpdateFloater(id);
 			ProcessBackObj(id);
 		end;
-		if(objectList[id].b_hasMoved = true) then needExtraCycle := true;
+		if(objectList[id].moves > 0) then needExtraCycle := true;
 		
-		if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[id].b_hasMoved = false) then begin
+		if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[id].moves = 0) then begin
 			controlId := objectList[id].controlId;
 			if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
 				soundId := @SOUND_DAMAGE;
@@ -1382,6 +1383,10 @@ begin
 		if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin
 			controlId := objectList[id].controlId;
 			if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
+				
+				soundId := @SOUND_DAMAGE;
+				soundTimer := 1;
+				Play(); 
 				objectList[id].b_physFallDown := false;
 				controlList[controlId].controlState := @CTRL_STATE_DESTROY;
 				controlList[controlId].controlJumpStep := 0;
@@ -1393,7 +1398,7 @@ begin
 			ProcessBackObj(id);
 		end;
 	end;
-	objectList[id].b_hasMoved := false;
+		objectList[id].moves := 0;
 end;
 
 procedure Update();
@@ -1414,7 +1419,6 @@ begin
 	if (i = KEY_F7) then begin
 		retryPressed := true;
 	end;
-	
 	if(cycle = 0 and needExtraCycle = true) then cycle := 1 else cycle := 0;
 
 	for i:=0 to countDyn do	begin
@@ -1947,13 +1951,12 @@ begin
 		str::itoa(levelSingle, #levStr+2, 16);
 	end
 	else str::itoa(levelCoop, #levStr+2, 16);
-/*
 	asm(
 "
 	ldx #<localVariable_LoadLevel_levStr
 	ldy #>localVariable_LoadLevel_levStr
 	jsr $200
-");*/
+");
 end;
 
 procedure OpenMain();

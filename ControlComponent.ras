@@ -10,6 +10,7 @@ begin
 //	controlList[controlId].b_controlPressAction := false;
 end;
 
+/*
 procedure ProcessDestroyObj(id: byte);
 var
 	controlId, laserBeanId : byte;
@@ -27,7 +28,7 @@ begin
 		controlList[controlId].controlCollideLaserTag := objectList[laserBeanId].laserTag; 
 	end;
 end;
-
+*/
 procedure ProcessBackObj(id: byte);
 var
 	controlId : byte;
@@ -41,7 +42,7 @@ begin
 	defWalk := true;
 	controlId := objectList[id].controlId;
 
-	if(objectList[id].b_hasMoved = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
+	if(objectList[id].moves > 0 and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
 		robeAbleId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_ROBE_ABLE_1, 1);
 		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
 		gravPadId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_GRAVPAD_1, 1);

@@ -21,7 +21,7 @@ begin
 		controlList[controlId].controlLastPortal := $FF;
 		controlList[controlId].lastWaypointId := $FF;
 		controlList[controlId].controlCollideLaserTag := $FF;		
-		objectList[id].b_hasMoved := false;
+		objectList[id].moves := 0;
 		objectList[id].animId := @ANIM_STAND;
 		objectList[id].animPos := 0;
 		objectList[id].animFinish := true;

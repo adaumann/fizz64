@@ -690,11 +690,11 @@
             "Rows": [
                 " 01234567890123456789",
                 "0                    ",
-                "1         @%         ",
+                "1 n       @%       m ",
                 "2)        aa        (",
                 "3         aa         ",
                 "4         aa         ",
-                "5a  d   4 aa 6   d  a",
+                "5an d   4 aa 6   d ma",
                 "6aaa      aa      aaa",
                 "7a                  a",
                 "8a                  a",
@@ -722,7 +722,7 @@
             ]
         },
         {
-            "Number": 1,
+            "Number": 2,
             "Name": "Tubes",
             "IsAllowedTwoPlayers": true,
             "BothPlayersMustExit": true,

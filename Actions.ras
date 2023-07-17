@@ -114,7 +114,16 @@ begin
 	x := actorList[actorId].param1;
 	textTimer := actorList[actorId].param2;
 	PrintText(x, levStrings[textId]);
+end;
+
+procedure ActionSetGrav(actorId: byte);
+var
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	objectList[receiverId].physGravity := actorList[actorId].param0;
 end;	
+	
 
 procedure DispatchEvent(event: byte, senderId: byte, p1,p2: byte);
 var
@@ -134,7 +143,7 @@ begin
 				@ACTION_LASERCANNON_OFF: ActionLaserCannonOff(i);
 				@ACTION_FONTAINE_ON: ActionFontaineOn(i);
 				@ACTION_FONTAINE_OFF: ActionFontaineOff(i);
-		        
+				@ACTION_SET_GRAV: ActionSetGrav(i);
 		        @ACTION_CLEAR_TEXT: ClearText();
    			end;
 		end;
