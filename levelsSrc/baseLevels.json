@@ -651,7 +651,7 @@
             "Rows": [
                 " 01234567890123456789",
                 "0                    ",
-                "1a                   ",
+                "1                    ",
                 "2a        m      t  X",
                 "3a @%            aaaa",
                 "4a        n          ",
@@ -684,23 +684,132 @@
         },
         {
             "Number": 1,
-            "Name": "TwoHaveStarted",
+            "Name": "NeutrolizeGrav",
             "IsAllowedTwoPlayers": true,
             "BothPlayersMustExit": true,
             "Rows": [
                 " 01234567890123456789",
-                "0                    ",
+                "0  r              X  ",
                 "1 n       @%       m ",
                 "2)        aa        (",
-                "3         aa         ",
-                "4         aa         ",
+                "3a        aa        a",
+                "4a.       aa       .a",
                 "5an d   4 aa 6   d ma",
-                "6aaa      aa      aaa",
-                "7a                  a",
-                "8a                  a",
-                "9a                  a",
-                "0a                  a",
-                "1a                  a"
+                "6aagat    aa    tagaa",
+                "7                    ",
+                "8at      .gg.      ta",
+                "9arnd    8  8      ra",
+                "0a               dm a",
+                "1aga      99      aga"
+            ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitClose",
+                    "SenderX": 0, "SenderY": 0,
+                    "ReceiverX": 17, "ReceiverY": 0,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "InitLevel", "Action": "FontaineOff",
+                    "SenderX": 0, "SenderY": 0,
+                    "ReceiverX": 0, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "InitLevel", "Action": "FontaineOff",
+                    "SenderX": 0, "SenderY": 0,
+                    "ReceiverX": 19, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "FontaineOn",
+                    "SenderX": 1, "SenderY": 9,
+                    "ReceiverX": 19, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "FontaineOff",
+                    "SenderX": 1, "SenderY": 9,
+                    "ReceiverX": 19, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "FontaineOn",
+                    "SenderX": 18, "SenderY": 9,
+                    "ReceiverX": 0, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "FontaineOff",
+                    "SenderX": 18, "SenderY": 9,
+                    "ReceiverX": 0, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "ExitOpen",
+                    "SenderX": 2, "SenderY": 0,
+                    "ReceiverX": 17, "ReceiverY": 0,
+                    "Param1": 255, "Param2": 255, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "ExitClose",
+                    "SenderX": 2, "SenderY": 0,
+                    "ReceiverX": 17, "ReceiverY": 0,
+                    "Param1": 255, "Param2": 255, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 1, "SenderY": 4,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 14, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 18, "SenderY": 4,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 14, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 8, "SenderY": 8,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 8, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 11, "SenderY": 8,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 8, "Param3": 10, "Param4": 255
+                }
+
+
+            ],
+            "Texts": [
+                "NEUTRALIZE GRAVITY",
+                "EXIT",
+                "MAGIC MIRRORS",
+                "STAND ON EACH OTHER FEED"
+            ]
+        },
+        {
+            "Number": 2,
+            "Name": "StoneWash",
+            "IsAllowedTwoPlayers": true,
+            "BothPlayersMustExit": false,
+            "Rows": [
+                " 01234567890123456789",
+                "0        aaaaa       ",
+                "1     aaabbrb aaa X  ",
+                "2   aa bt b  bbtbaa  ",
+                "3  ab b b b b  bb  a ",
+                "4  a b  e  b  e b ba ",
+                "5 a   b b b  b   b  a",
+                "6 abeb   b b   b  eba",
+                "7  ae  bd   bdb b ea ",
+                "8  ae b b  @ b b bea ",
+                "9   aagggggggggggaa  ",
+                "0     aaarr%rrxaa    ",
+                "1        aaaaa       "
             ],
             "ActionEvents": [
                 {
@@ -711,18 +820,106 @@
                 },
                 {
                     "Event": "WaypointEnter", "Action": "PrintText",
-                    "SenderX": 19, "SenderY": 2,
+                    "SenderX": 17, "SenderY": 1,
                     "ReceiverX": 255, "ReceiverY": 255,
                     "Param1": 1, "Param2": 16, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointLeave", "Action": "SwitchOff",
+                    "SenderX": 8, "SenderY": 10,
+                    "ReceiverX": 8, "ReceiverY": 10,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "SetGravBulk",
+                    "SenderX": 8, "SenderY": 10,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 8, "SenderY": 10,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 19, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointLeave", "Action": "SwitchOff",
+                    "SenderX": 9, "SenderY": 10,
+                    "ReceiverX": 9, "ReceiverY": 10,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "SetGravBulk",
+                    "SenderX": 9, "SenderY": 10,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 7, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 9, "SenderY": 10,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 18, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointLeave", "Action": "SwitchOff",
+                    "SenderX": 11, "SenderY": 10,
+                    "ReceiverX": 11, "ReceiverY": 10,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "SetGravBulk",
+                    "SenderX": 11, "SenderY": 10,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 11, "SenderY": 10,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 4, "Param2": 18, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointLeave", "Action": "SwitchOff",
+                    "SenderX": 12, "SenderY": 10,
+                    "ReceiverX": 12, "ReceiverY": 10,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "SetGravBulk",
+                    "SenderX": 12, "SenderY": 10,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 5, "Param2": 255, "Param3": 255, "Param4": 255
+                },                                                
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 12, "SenderY": 10,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 5, "Param2": 18, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "ExitOpen",
+                    "SenderX": 10, "SenderY": 1,
+                    "ReceiverX": 17, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "DoorOpen",
+                    "SenderX": 10, "SenderY": 1,
+                    "ReceiverX": 13, "ReceiverY": 10,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
                 }
             ],
             "Texts": [
-                "TWO HAVE STARTED",
-                "EXIT"
+                "STONEWASHED",
+                "EXIT",
+                "UP",
+                "DOWN",
+                "LEFT",
+                "RIGHT"
             ]
-        },
+        },        
         {
-            "Number": 2,
+            "Number": 3,
             "Name": "Tubes",
             "IsAllowedTwoPlayers": true,
             "BothPlayersMustExit": true,

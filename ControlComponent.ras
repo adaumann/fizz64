@@ -40,20 +40,23 @@ var
 	newx, newy: byte;
 begin
 	defWalk := true;
-	controlId := objectList[id].controlId;
+	if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then
+		controlId := objectList[id].controlId
+	else
+		controlId := $FF;
 
-	if(objectList[id].moves > 0 and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
+	if(objectList[id].moves > 0 and (controlId = $FF or controlList[controlId].controlState <> @CTRL_STATE_DESTROY)) then begin
 		robeAbleId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_ROBE_ABLE_1, 1);
 		portalId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_PORTAL_1, 1);
 		gravPadId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_GRAVPAD_1, 1);
 
-		if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_CLIMB_ABLE_1, 1) <> $FF) then begin	
+		if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_CLIMB_ABLE_1, 1) <> $FF and controlId <> $FF) then begin	
 			objectList[id].b_physFallDown := false;
 			SwitchAnimation(id, @ANIM_CLIMB);
 			controlList[controlId].controlState := @CTRL_STATE_CLIMB;
 			defWalk := false;
 		end
-		else if(robeAbleId <> $FF) then begin	
+		else if(robeAbleId <> $FF and controlId <> $FF) then begin	
 			if (objectList[robeAbleId].physGravity = objectList[id].physGravity) then begin
 				objectList[id].b_physFallDown := false;
 				controlList[controlId].controlState := @CTRL_STATE_ROBE;
@@ -61,7 +64,7 @@ begin
 				defWalk := false;
 			end;
 		end
-		else if(portalId <> $FF and (controlList[controlId].controlLastPortal = $FF or controlList[controlId].controlLastPortal = portalId)) then begin
+		else if((portalId <> $FF and controlId <> $FF) and (controlList[controlId].controlLastPortal = $FF or controlList[controlId].controlLastPortal = portalId)) then begin
 			newx := $FF;
 			newy := $FF;
 			if(portals[0] <> $FF and portals[1] <> $FF) then begin
@@ -85,9 +88,11 @@ begin
 		else if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK2, @COMP_WATER_0, 0) <> $FF) then begin	
 			if(objectList[id].component1 & @COMP_FLOATER_1 = @COMP_FLOATER_1) then begin
 				objectList[id].b_physFallDown := false;
-				if(objectList[id].animId <> @ANIM_SWIM_L and objectList[id].animId <> @ANIM_SWIM_R) then SwitchAnimation(id, @ANIM_SWIM_L);
-				controlList[controlId].controlState := @CTRL_STATE_SWIM;
-				defWalk := false;
+				if(controlId <> $FF) then begin
+					if(objectList[id].animId <> @ANIM_SWIM_L and objectList[id].animId <> @ANIM_SWIM_R) then SwitchAnimation(id, @ANIM_SWIM_L);
+					controlList[controlId].controlState := @CTRL_STATE_SWIM;
+					defWalk := false;
+				end;
 			end
 		end
 		else if(gravPadId <> $FF) then begin
@@ -98,7 +103,7 @@ begin
 			objectList[id].physGravity := objectList[gravPadId].physGravity;
 		end;
 		
-		if(defWalk = true) then begin
+		if(defWalk = true and controlId <> $FF) then begin
  
 			if(controlList[controlId].controlState <> @CTRL_STATE_JUMP) then	begin
 				if(objectList[id].animId <> @ANIM_WALK_L and objectList[id].animId <> @ANIM_WALK_R) then SwitchAnimation(id, @ANIM_STAND);
@@ -106,74 +111,77 @@ begin
  				objectList[id].b_physFallDown := true;
  			end;
 		end;
-		if(portalId = $FF) then controlList[controlId].controlLastPortal := $FF;
+		if(portalId = $FF and controlId <> $FF) then controlList[controlId].controlLastPortal := $FF;
 		
-		if(controlList[controlId].lastWaypointId = $FF and controlList[controlId].waypointId <> $FF) then begin
-			DispatchEvent(@EVENT_WAYPOINT_ENTER, controlList[controlId].waypointId, $FF, $FF);
-		end
-		else if((controlList[controlId].lastWaypointId <> $FF and controlList[controlId].waypointId <> $FF) and controlList[controlId].lastWaypointId <> controlList[controlId].waypointId) then begin
-			DispatchEvent(@EVENT_WAYPOINT_LEAVE, controlList[controlId].lastWaypointId, $FF, $FF);
-			DispatchEvent(@EVENT_WAYPOINT_ENTER, controlList[controlId].waypointId, $FF, $FF);
-		end
-		else if(controlList[controlId].lastWaypointId <> $FF and controlList[controlId].waypointId = $FF) then begin
-			DispatchEvent(@EVENT_WAYPOINT_LEAVE, controlList[controlId].lastWaypointId, $FF, $FF);	
+		if(controlId <> $FF) then begin
+			if(controlList[controlId].lastWaypointId = $FF and controlList[controlId].waypointId <> $FF) then begin
+				DispatchEvent(@EVENT_WAYPOINT_ENTER, controlList[controlId].waypointId, $FF, $FF);
+			end
+			else if((controlList[controlId].lastWaypointId <> $FF and controlList[controlId].waypointId <> $FF) and controlList[controlId].lastWaypointId <> controlList[controlId].waypointId) then begin
+				DispatchEvent(@EVENT_WAYPOINT_LEAVE, controlList[controlId].lastWaypointId, $FF, $FF);
+				DispatchEvent(@EVENT_WAYPOINT_ENTER, controlList[controlId].waypointId, $FF, $FF);
+			end
+			else if(controlList[controlId].lastWaypointId <> $FF and controlList[controlId].waypointId = $FF) then begin
+				DispatchEvent(@EVENT_WAYPOINT_LEAVE, controlList[controlId].lastWaypointId, $FF, $FF);	
+			end;
 		end;
-
+	end;	
+	if(controlId <> $FF) then begin
 		switchId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_SWITCH_2, 2);
 		exitId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK1, @COMP_EXIT_3, 3);
-	end;	
-	if(switchId <> $FF) then begin
-		if(controlList[controlId].b_controlPressAction = true) then begin
-			textTimer := 20;
-			if(objectList[switchId].onOff = @ON) then begin
-				PrintText(@DEACTIVATE_SWITCH_START,#txtDeactiveSwitch);
-				SwitchAnimation(switchId,@ANIM_SWITCH_OFF);
-				objectList[switchId].onOff := @OFF;
-				controlList[controlId].b_controlPressAction := false;
-				DispatchEvent(@EVENT_SWITCH_OFF, switchId, $FF, $FF);
+		if(switchId <> $FF) then begin
+			if(controlList[controlId].b_controlPressAction = true) then begin
+				textTimer := 20;
+				if(objectList[switchId].onOff = @ON) then begin
+					PrintText(@DEACTIVATE_SWITCH_START,#txtDeactiveSwitch);
+					SwitchAnimation(switchId,@ANIM_SWITCH_OFF);
+					objectList[switchId].onOff := @OFF;
+					controlList[controlId].b_controlPressAction := false;
+					DispatchEvent(@EVENT_SWITCH_OFF, switchId, $FF, $FF);
+				end
+				else begin
+					PrintText(@ACTIVATE_SWITCH_START,#txtActiveSwitch);
+					SwitchAnimation(switchId,@ANIM_SWITCH_ON);
+					objectList[switchId].onOff := @ON;
+					controlList[controlId].b_controlPressAction := false;
+					DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
+				end;
+				soundId := @SOUND_SWITCH;
+				soundTimer := 2;
+				Play(); 
+				
 			end
-			else begin
-				PrintText(@ACTIVATE_SWITCH_START,#txtActiveSwitch);
-				SwitchAnimation(switchId,@ANIM_SWITCH_ON);
-				objectList[switchId].onOff := @ON;
-				controlList[controlId].b_controlPressAction := false;
-				DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
-			end;
-			soundId := @SOUND_SWITCH;
-			soundTimer := 2;
-			Play(); 
-			
 		end
-	end
-	else if(exitId <> $FF) then begin
-		if(controlList[controlId].b_controlPressAction = true) then begin
-			if(objectList[exitId].onOff = @ON) then begin
-			 	controlList[controlId].controlState := @CTRL_STATE_EXITED;
-			 	if(gameMode = @MODE_SINGLE) then begin 
-					state := @STATE_OPEN_SCENE;
-					SetNextLevel();
-				end	
-			 	else begin
-				 	if(levBothMustComplete = false) then begin 
+		else if(exitId <> $FF and controlId <> $FF) then begin
+			if(controlList[controlId].b_controlPressAction = true) then begin
+				if(objectList[exitId].onOff = @ON) then begin
+				 	controlList[controlId].controlState := @CTRL_STATE_EXITED;
+				 	if(gameMode = @MODE_SINGLE) then begin 
 						state := @STATE_OPEN_SCENE;
 						SetNextLevel();
-					end
+					end	
 				 	else begin
-					 	if(controlList[0].controlState = @CTRL_STATE_EXITED and controlList[1].controlState = @CTRL_STATE_EXITED) then begin
+					 	if(levBothMustComplete = false) then begin 
 							state := @STATE_OPEN_SCENE;
 							SetNextLevel();
-						end; 
-					end;		 	
-			 	end;
+						end
+					 	else begin
+						 	if(controlList[0].controlState = @CTRL_STATE_EXITED and controlList[1].controlState = @CTRL_STATE_EXITED) then begin
+								state := @STATE_OPEN_SCENE;
+								SetNextLevel();
+							end; 
+						end;		 	
+				 	end;
+					
+					SetNextLevel();
+					state := @STATE_OPEN_SCENE;
+				end
+				else begin
+					PrintText(@EXIT_CLOSED_START,#txtExitClosed);
+					controlList[controlId].b_controlPressAction := false;
+				end;
 				
-				SetNextLevel();
-				state := @STATE_OPEN_SCENE;
-			end
-			else begin
-				PrintText(@EXIT_CLOSED_START,#txtExitClosed);
-				controlList[controlId].b_controlPressAction := false;
 			end;
-			
 		end;
 	end;
 

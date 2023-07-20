@@ -210,7 +210,7 @@ begin
  
 			// PushPull
 			if(objectList[collideId].component1 & @COMP_PUSHPULL_1 = @COMP_PUSHPULL_1) then begin
-				if(mod(globaltime, 4) = 0) then begin
+				if(mod(globaltime, 2) = 0) then begin
 					tempx := objectList[collideId].transX;
 					tempy := objectList[collideId].transY;
 					laserx := CalcPositionX(laserx, xdir * objectList[collideId].onOff);

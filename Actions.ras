@@ -8,7 +8,6 @@ begin
 			SetZLayer(receiverId, @Z_MAIN, @Z_BACK1);
 			SwitchAnimation(receiverId,@ANIM_DOOR_ON);
 			objectList[receiverId].onOff := @ON;
-//			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
 		end;	
 	end;
 end;
@@ -23,7 +22,6 @@ begin
 			SetZLayer(receiverId, @Z_BACK1, @Z_MAIN);
 			SwitchAnimation(receiverId,@ANIM_DOOR_OFF);
 			objectList[receiverId].onOff := @OFF;
-//			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
 		end;	
 	end;
 end;
@@ -38,7 +36,6 @@ begin
 			objectList[receiverId].animId := $FF;
 			SwitchAnimation(receiverId,@ANIM_EXIT_ON);
 			objectList[receiverId].onOff := @ON;
-//			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
 		end;	
 	end;
 end;
@@ -53,7 +50,6 @@ begin
 			objectList[receiverId].animId := $FF;
 			SwitchAnimation(receiverId,@ANIM_EXIT_OFF);
 			objectList[receiverId].onOff := @OFF;
-//			DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
 		end;	
 	end;
 end;
@@ -64,9 +60,7 @@ var
 begin 
 	receiverId := actorList[actorId].receiverId;
 	if(objectList[receiverId].component1 & @COMP_LASER_1 = @COMP_LASER_1) then begin
-		if(objectList[receiverId].onOff = @OFF) then begin
-			objectList[receiverId].onOff := @ON;
-		end;	
+		objectList[receiverId].onOff := @ON;
 	end;
 end;
 
@@ -76,9 +70,7 @@ var
 begin 
 	receiverId := actorList[actorId].receiverId;
 	if(objectList[receiverId].component1 & @COMP_LASER_1 = @COMP_LASER_1) then begin
-		if(objectList[receiverId].onOff = @ON) then begin
-			objectList[receiverId].onOff := @OFF;
-		end;	
+		objectList[receiverId].onOff := @OFF;
 	end;
 end;
 
@@ -88,9 +80,7 @@ var
 begin 
 	receiverId := actorList[actorId].receiverId;
 	if(objectList[receiverId].component2 & @COMP_FONTAINE_2 = @COMP_FONTAINE_2) then begin
-		if(objectList[receiverId].onOff = @OFF) then begin
-			objectList[receiverId].onOff := @ON;
-		end;	
+		objectList[receiverId].onOff := @ON;
 	end;
 end;
 
@@ -100,9 +90,7 @@ var
 begin 
 	receiverId := actorList[actorId].receiverId;
 	if(objectList[receiverId].component2 & @COMP_FONTAINE_2 = @COMP_FONTAINE_2) then begin
-		if(objectList[receiverId].onOff = @ON) then begin
-			objectList[receiverId].onOff := @OFF;
-		end;	
+		objectList[receiverId].onOff := @OFF;
 	end;
 end;
 
@@ -123,7 +111,44 @@ begin
 	receiverId := actorList[actorId].receiverId;
 	objectList[receiverId].physGravity := actorList[actorId].param0;
 end;	
+
+procedure ActionSwitchOn(actorId: byte);
+var
+	receiverId: byte;
+begin 
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component2 & @COMP_SWITCH_2 = @COMP_SWITCH_2) then begin
+		SwitchAnimation(receiverId, @ANIM_SWITCH_ON);
+		objectList[receiverId].onOff := @ON;
+//		DispatchEvent(@EVENT_SWITCH_ON, receiverId, $FF, $FF);
+	end;
+end;
+
+procedure ActionSwitchOff(actorId: byte);
+var
+	receiverId: byte;
+begin
 	
+	receiverId := actorList[actorId].receiverId;
+	if(objectList[receiverId].component2 & @COMP_SWITCH_2 = @COMP_SWITCH_2) then begin
+		SwitchAnimation(receiverId, @ANIM_SWITCH_OFF);
+		objectList[receiverId].onOff := @OFF;
+//		DispatchEvent(@EVENT_SWITCH_OFF, receiverId, $FF, $FF);
+	end;
+end;
+
+procedure ActionBulkGrav(actorId: byte);
+var
+	id,i : byte;
+begin 
+	for i:=0 to countDyn do	begin
+		id := dynObjectList[i];
+		if(objectList[id].component3 & @COMP_BULK_PHYS_3 = @COMP_BULK_PHYS_3) then begin
+			objectList[id].physGravity := actorList[actorId].param0;
+		end;
+	end;
+end;
+
 
 procedure DispatchEvent(event: byte, senderId: byte, p1,p2: byte);
 var
@@ -144,6 +169,9 @@ begin
 				@ACTION_FONTAINE_ON: ActionFontaineOn(i);
 				@ACTION_FONTAINE_OFF: ActionFontaineOff(i);
 				@ACTION_SET_GRAV: ActionSetGrav(i);
+				@ACTION_SWITCH_OFF: ActionSwitchOff(i);
+				@ACTION_SWITCH_ON: ActionSwitchOn(i);
+				@ACTION_SET_GRAV_BULK: ActionBulkGrav(i);
 		        @ACTION_CLEAR_TEXT: ClearText();
    			end;
 		end;

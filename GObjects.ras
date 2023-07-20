@@ -83,7 +83,7 @@ begin
 		objectList[id].component0 := $00 | @COMP_PHYSICS_0 | @COMP_COLLIDE_ABLE_0;
 		objectList[id].component1 := $00 | @COMP_PUSHPULL_1;
 		objectList[id].component2 := $00;
-		objectList[id].component3 := $00;
+		objectList[id].component3 := $00 | @COMP_BULK_PHYS_3;
 		objectList[id].transX := x;
 		objectList[id].transY := y;
 		objectList[id].transZ := @Z_MAIN;

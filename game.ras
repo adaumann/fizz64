@@ -190,6 +190,7 @@ var
 	@define COMP_DOOR_2             %10000000
 	@define COMP_EXIT_3             %00000001
 	@define COMP_WAYPOINT_3         %00000010
+	@define COMP_BULK_PHYS_3		   %00000100
  	// https://www.aivosto.com/articles/petscii.pdf
  	@define LEV_CHARACTER $40  //@
  	@define LEV_CHARACTER2 $25 //%
@@ -263,6 +264,9 @@ var
 	@define ACTION_FONTAINE_ON 9
 	@define ACTION_FONTAINE_OFF 10
 	@define ACTION_SET_GRAV 11
+	@define ACTION_SWITCH_ON 12
+	@define ACTION_SWITCH_OFF 13
+	@define ACTION_SET_GRAV_BULK 14
 	
 	
 	@define DO_ACTIVATE_SWITCH_START 17
@@ -273,8 +277,10 @@ var
 	txtDeactiveSwitch: string=("SWITCH DEACTIVATED");
 	@define EXIT_CLOSED_START 16
     txtExitClosed: string=("EXIT CLOSED");
-	@define CHAR_SWAP 12
-	txtCharSwap: string=("CHARACTER SWAPPED");
+	@define CHAR_SWAP_RED 12
+	txtCharSwapRed: string=("ACTIVE: RED");
+	@define CHAR_SWAP_GREEN 12
+	txtCharSwapGreen: string=("ACTIVE: GREEN");
 	
 	
 	countObjects: byte;
@@ -353,20 +359,7 @@ var
 @endblock
 
 @startblock $1c00 "level"
-lev: string = ( 
-                "                    " 
-                "a                   " 
-                "a        m      t  X" 
-                "a @%            aaaa" 
-                "a        n          " 
-                "aaaaa               " 
-                "                    " 
-                "                   a" 
-                "                    " 
-                "                    " 
-                "                    " 
-                "                    "); 
-//    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h a aaaaaaaaaaaaaaaaaaaaa");
+    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h a aaaaaaaaaaaaaaaaaaaaa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p48
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
@@ -973,7 +966,6 @@ begin
 		lastWaypointId := GetObjectByPosFilterComp(oldx, oldy, @Z_BACK1, @COMP_WAYPOINT_3, 3);
 		if(lastWaypointId = $FF) then
 			lastWaypointId := GetObjectByPosFilterComp(oldx, oldy, @Z_BACK2, @COMP_WAYPOINT_3, 3);
-		
 		controlList[controlId].waypointId := waypointId;
 		controlList[controlId].lastWaypointId := lastWaypointId;
 	end;
@@ -1411,9 +1403,16 @@ begin
 	if(gameMode = @MODE_SINGLE_2CHAR) then begin
 		//Key::Read();
 		if (i = KEY_SPACE) then begin
-			if(activeChar = 0) then activeChar := 1 else activeChar := 0;
 			textTimer := 20;
-			PrintText(@CHAR_SWAP,#txtCharSwap);
+			if(activeChar = 0) then begin 
+				activeChar := 1; 
+				PrintText(@CHAR_SWAP_GREEN,#txtCharSwapGreen);
+			end 
+			else begin 
+				activeChar := 0;
+				PrintText(@CHAR_SWAP_RED,#txtCharSwapRed);
+			end;				
+			
 		end;
 	end;
 	if (i = KEY_F7) then begin
@@ -1498,7 +1497,6 @@ begin
 		
 	RasterIRQ(RasterTopLevel(),20,@USE_KERNAL);
 	closeIrq();
-//	setcharsetandscreenlocation(@tilesetLoc1,$4400);
 end;
 
 procedure ColorLine(y: byte, col: byte);
@@ -1964,12 +1962,16 @@ var
 	i: byte;
 begin
 	preventirq();
+	ScreenOff();
 	SetBank(VIC_BANK0);
 	setcharsetlocation(@charsetLoc1);
 	screen := hi(screen_char_loc);
 	clearscreen($20,^$0400);
 	clearscreen($20,^$4400);
 	clearscreen(BLACK,^$D800);
+	SCREEN_FG_COL:=BLACK;
+	InitSprites();
+	
 	time := 0;
 	menuItem := 0;
 	if(state = @STATE_OPEN_SCENE) then begin 
@@ -1979,13 +1981,13 @@ begin
 	
 		Screen::PrintStringColor("PRESS 'DEL' TO RETRY",10,22,@DARK_GREY);
 		if(gameMode = @MODE_SINGLE_2CHAR) then Screen::PrintStringColor("PRESS 'SPACE' TO SWAP CHARACTER",4,23,@DARK_GREY);
-		if(gameMode = @MODE_COOP) then begin
+		if(gameMode <> @MODE_SINGLE) then begin
 			if(levBothMustComplete = true) then Screen::PrintStringColor("BOTH PLAYERS MUST EXIT",9,24,@DARK_GREY) 
 			else Screen::PrintStringColor("ONLY ONE PLAYER MUST EXIT",9,24,@DARK_GREY);
 		end;
 		state := @STATE_OPEN_SCENE_INPUT;
+		ScreenOn();
 		StartRasterChain(RasterMain(), 0,@USE_KERNAL); // Don't use kernal
-
 	end
 	else begin 
 		BlockMemCpy(^@logoLoc , ^@tilesetLoc1, 4);
@@ -2014,6 +2016,7 @@ begin
 		Screen::PrintStringColor("CO-OP START LEVEL:",11,16,@DARK_GREY);
 	
 		state := @STATE_MENU_INPUT;
+		ScreenOn();
 		StartRasterChain(RasterMainTop(), 0,@USE_KERNAL); // Don't use kernal
 	end;
 	enableirq();
@@ -2023,6 +2026,7 @@ end;
 procedure InitScene();
 begin
 	preventirq();
+	ScreenOff();
 	multicolor_char_col[1]:=brown;
 	multicolor_char_col[2]:=grey;
 	clearscreen($FF,^$0400);
@@ -2040,6 +2044,7 @@ begin
 	InitAnimations();
 	ClearText();
 	state := @STATE_PLAY;
+	ScreenOn();	
 	StartRasterChain(RasterTopLevel(), 0,@USE_KERNAL); // Don't use kernal
 	enableirq();
 	enablerasterirq();	

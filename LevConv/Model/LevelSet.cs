@@ -79,5 +79,9 @@ public enum ActionType
     LasercannonOn=7,
     LasercannonOff=8,
     FontaineOn=9,
-    FontaineOff=10
+    FontaineOff=10,
+	SetGrav=11,
+	SwitchOn=12,
+	SwitchOff=13,
+	SetGravBulk=14
 }
