@@ -17,7 +17,9 @@ begin
 	fall := @UNKNOWN;
 	doPhys := true;
 	controlId := objectList[id].controlId;
-	
+	if(controlId <> $FF) then begin
+		controlList[controlId].b_fallDown := false;
+	end;
 
 	if(objectList[id].b_physFallDown = true) then begin
 		colObj := GetObjArea(id, objectList[id].transZ, 7, @COMP_COLLIDE_ABLE_0,0, false);	
@@ -45,6 +47,9 @@ begin
 		if(fallDown = true) then begin
 			SwitchAnimation(id, @ANIM_STAND);
 			fall := @DOWN;
+			if(controlId <> $FF) then begin
+				controlList[controlId].b_fallDown := true;
+			end;
 		end
 		else if(fallLeftDown = true) then fall := @DOWN_LEFT
 		else if(fallRightDown = true) then fall := @DOWN_RIGHT;

@@ -277,10 +277,12 @@ var
 	txtDeactiveSwitch: string=("SWITCH DEACTIVATED");
 	@define EXIT_CLOSED_START 16
     txtExitClosed: string=("EXIT CLOSED");
-	@define CHAR_SWAP_RED 12
+	@define CHAR_SWAP_RED 15
 	txtCharSwapRed: string=("ACTIVE: RED");
 	@define CHAR_SWAP_GREEN 12
 	txtCharSwapGreen: string=("ACTIVE: GREEN");
+	@define PLAYER_EXIT 12
+	txtPlayerExit: string=("PLAYER EXITED");
 	
 	
 	countObjects: byte;
@@ -343,6 +345,7 @@ var
 		waypointId: byte;
 		lastWaypointId: byte;
 		controlCollideLaserTag: byte;
+		b_fallDown: byte;
 	end;
 	
 	laserObject = record
@@ -359,7 +362,7 @@ var
 @endblock
 
 @startblock $1c00 "level"
-    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h a aaaaaaaaaaaaaaaaaaaaa");
+    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p48
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
@@ -394,8 +397,7 @@ var
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF); 	
 
-//	levTwoPlayerAllowed: boolean = true;
-	levBothMustComplete: boolean = false;
+	levBothMustComplete: boolean = true;
 	levStrings: Array[@MAX_LEV_STRINGS] of string = ("WELCOME","aa","bb","cc","dd","ee","ff","gg");
 @endblock
 
@@ -462,6 +464,7 @@ end;
 procedure InitLevel();
 var 
 	i : integer;
+	levStr: string = "XFF";	
 	p : pointer of byte;
 begin
 	state := @STATE_PLAY;
@@ -479,22 +482,56 @@ begin
 	end;
 	
 	if(gameMode = @MODE_SINGLE) then begin
-		if(nextLevel <> levelSingle) then begin
+//		if(nextLevel <> levelSingle) then begin
 			levelSingle := nextLevel;
 			@ifdef IS_DEMO 
-			LoadLevel(true);
+			levStr[0] := 'S';
+			str::itoa(levelSingle, #levStr+1, 16);
+			asm(
+"
+	ldx #<localVariable_InitLevel_levStr
+	ldy #>localVariable_InitLevel_levStr
+	jsr $200
+");
 			@endif
-		end;
+//		end;
 	end
 	else begin
-		if(nextLevel <> levelCoop) then begin
+//		if(nextLevel <> levelCoop) then begin
 			levelCoop := nextLevel;
 			@ifdef IS_DEMO 
-			LoadLevel(false);
+			levStr[0] := 'M';
+			str::itoa(levelCoop, #levStr+1, 16);
+			asm(
+"
+	ldx #<localVariable_InitLevel_levStr
+	ldy #>localVariable_InitLevel_levStr
+	jsr $200
+");
+			
 			@endif
-		end;
+//		end;
 	end;
 end;
+
+/*
+procedure LoadLevel(isSingle: boolean);
+var
+	levStr: string = "LMFF";	
+begin
+	if(isSingle = true) then begin 
+		levStr[1] := "S";
+		str::itoa(levelSingle, #levStr+2, 16);
+	end
+	else str::itoa(levelCoop, #levStr+2, 16);
+	asm(
+"
+	ldx #<localVariable_LoadLevel_levStr
+	ldy #>localVariable_LoadLevel_levStr
+	jsr $200
+");
+end;
+*/
 
 procedure SetNextLevel();
 begin 
@@ -1319,13 +1356,28 @@ begin
 		end;
 	end;
 end;
+
+procedure Animate();
+var 
+	i: byte;
+	id: byte;
+begin
+	if(countAnim <> 0) then begin
+		for i:=0 to countAnim do	begin
+			id := animObjectList[i];
+			UpdateMapItem(id, objectList[id].transX, objectList[id].transY); 
+		end;
+	end;
+end;
+
+
 @include "Sounds.ras"
 
 @endblock
 @startblock $7a00 "Code1"
 
-@include "GObjects.ras"
 @include "Actions.ras"
+@include "GObjects.ras"
 @include "ControlComponent.ras"
 @include "PhysComponent.ras"
 @include "FloaterComponent.ras"
@@ -1352,23 +1404,25 @@ begin
 			UpdateFloater(id);
 			ProcessBackObj(id);
 		end;
-		if(objectList[id].moves > 0) then needExtraCycle := true;
 		
-		if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[id].moves = 0) then begin
+		if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin
 			controlId := objectList[id].controlId;
-			if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
-				soundId := @SOUND_DAMAGE;
-				soundTimer := 1;
-				Play(); 
-				objectList[id].b_physFallDown := false;
-				controlList[controlId].controlState := @CTRL_STATE_DESTROY;
-				controlList[controlId].controlJumpStep := 0;
-	//			retryPressed := $FF;
-	 		end;
-			//ProcessDestroyObj(id);
-			InputControl(id); 
-			UpdateControl(id);
-			ProcessBackObj(id);
+			if(objectList[id].moves > 0 and controlList[controlId].b_fallDown = false) then needExtraCycle := true
+			else begin
+				if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
+					soundId := @SOUND_DAMAGE;
+					soundTimer := 1;
+					Play(); 
+					objectList[id].b_physFallDown := false;
+					controlList[controlId].controlState := @CTRL_STATE_DESTROY;
+					controlList[controlId].controlJumpStep := 0;
+		//			retryPressed := $FF;
+		 		end;
+				//ProcessDestroyObj(id);
+				InputControl(id); 
+				UpdateControl(id);
+				ProcessBackObj(id);
+		 	end;
 		end;
 	end
 	else begin	
@@ -1427,19 +1481,6 @@ begin
 	
 	if(cycle = 1) then needExtraCycle := false;
 	
-end;
-
-procedure Animate();
-var 
-	i: byte;
-	id: byte;
-begin
-	if(countAnim <> 0) then begin
-		for i:=0 to countAnim do	begin
-			id := animObjectList[i];
-			UpdateMapItem(id, objectList[id].transX, objectList[id].transY); 
-		end;
-	end;
 end;
 
 interrupt RasterBottomText();
@@ -1570,9 +1611,9 @@ begin
 		
 		
 		if(mod(time,8) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
-			if(menuItem = 0) then InitGame(0,0,@MODE_SINGLE);
-			if(menuItem = 1) then InitGame(0,0,@MODE_SINGLE_2CHAR);
-			if(menuItem = 2) then InitGame(0,0,@MODE_COOP);
+			if(menuItem = 0) then InitGame(levelSingle, levelCoop, @MODE_SINGLE);
+			if(menuItem = 1) then InitGame(levelSingle, levelCoop, @MODE_SINGLE_2CHAR);
+			if(menuItem = 2) then InitGame(levelSingle, levelCoop, @MODE_COOP);
 			state := @STATE_OPEN_SCENE; //TODO
 		end;
 		if(mod(time,4) = 0 and (joy1 & JOY_LEFT = JOY_LEFT or joy2 & JOY_LEFT = JOY_LEFT)) then begin
@@ -1938,23 +1979,6 @@ begin
 		dec(textTimer);
 		if(textTimer = 0) then ClearText();
 	end; 
-end;
-
-procedure LoadLevel(isSingle:boolean);
-var
-	levStr: string = "LMFF";	
-begin
-	if(isSingle = true) then begin 
-		levStr[1] := "S";
-		str::itoa(levelSingle, #levStr+2, 16);
-	end
-	else str::itoa(levelCoop, #levStr+2, 16);
-	asm(
-"
-	ldx #<localVariable_LoadLevel_levStr
-	ldy #>localVariable_LoadLevel_levStr
-	jsr $200
-");
 end;
 
 procedure OpenMain();

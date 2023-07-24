@@ -169,12 +169,13 @@ begin
 						 	if(controlList[0].controlState = @CTRL_STATE_EXITED and controlList[1].controlState = @CTRL_STATE_EXITED) then begin
 								state := @STATE_OPEN_SCENE;
 								SetNextLevel();
-							end; 
+							end
+							else begin
+								DeletePos(id, true, true);
+								PrintText(@PLAYER_EXIT,#txtPlayerExit);
+							end;
 						end;		 	
 				 	end;
-					
-					SetNextLevel();
-					state := @STATE_OPEN_SCENE;
 				end
 				else begin
 					PrintText(@EXIT_CLOSED_START,#txtExitClosed);

@@ -1,13 +1,13 @@
 * Spalte 0 Problem, ok
 * Portal Wechsel funktiniert nicht, ok
-* Portal Swap nur auf letzten, kein Wechsel
+* Portal Swap nur auf letzten, kein Wechsel, ok
 * Laden von Levels,ok
 * Events/Obersables, ok
-* 2 Spieler Modus, Versus <-> Coop, Single Player two Chars
+* 2 Spieler Modus, Versus <-> Coop, Single Player two Chars, ok
     * Joy1 und Joy2 berücksichtigen, ok
     * Space Wechsel, ok
     * Was passiert wenn Spieler stirbt, ok
-    * Was passiert wenn Exit
+    * Was passiert wenn Exit, ok
 * Texte einblenden, ok
 * Retry Button, ok
 * Destroyable, ok
@@ -24,7 +24,7 @@
 * Laser auf gegner problem
 * 
 * Laser Component auslagern, erstmal nicht
-* Intro
+* Intro, ok
 * Musil
 * Sound
 

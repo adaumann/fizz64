@@ -7,7 +7,7 @@ namespace LevConv.Services
 {
     public static class ExportService
     {
-        public static void BuildTestExecutable(int index, bool isMulti, string folder, string basePrgFile)
+        public static void BuildTestExecutable(int index, bool isMulti, string folder, string basePrgFile, bool incHeader)
         {
             using BinaryWriter bwWriter = new BinaryWriter(File.Open(@folder + @"\tmp_test.prg", FileMode.Create), Encoding.ASCII, false);
             // Reading binary data from file, replacing binary data at 0x1c00 with exported binary level data file and writing it back to file
@@ -15,17 +15,20 @@ namespace LevConv.Services
             {
                 var bytes = brReader1.ReadBytes(0x1401);
                 bwWriter.Write(bytes);
-                var fileName = folder + "\\LS" + index.ToString("X") + ".inc";
+                var fileName = folder + "\\s" + index.ToString("X");
                 if (isMulti)
                 {
-                    fileName = folder + "\\LM" + index.ToString("X") + ".inc";
+                    fileName = folder + "\\m" + index.ToString("X");
                 }
                 var data = File.ReadAllBytes(fileName);
-                for (int i = 0; i < data.Length; i++)
+                var s = 0;
+                if(incHeader)
+                    s = 2;
+                for (int i = s; i < data.Length; i++)
                 {
                     bwWriter.Write((byte)data[i]);
                 }
-                var fill = 0x1801 - 0x1401 - data.Length;
+                var fill = 0x1801 - 0x1401 - data.Length + s;
                 for (int i = 0; i < fill; i++)
                 {
                     bwWriter.Write((byte)255);
@@ -42,22 +45,27 @@ namespace LevConv.Services
             bwWriter.Close();
         }
 
-        public static void ExportAsBinary(LevelSet levelSet, string folder)
+        public static void ExportAsBinary(LevelSet levelSet, string folder, bool incHeader)
         {
             foreach (var level in levelSet.Levels)
             {
                 string fileName;
                 if (level.IsAllowedTwoPlayers)
                 {
-                    fileName = folder + "\\LM" + level.Number.ToString("X") + ".inc";
+                    fileName = folder + "\\m" + level.Number.ToString("X");
                 }
                 else
                 {
-                    fileName = folder + "\\LS" + level.Number.ToString("X") + ".inc";
+                    fileName = folder + "\\s" + level.Number.ToString("X");
                 }
 
                 using BinaryWriter bwWriter = new BinaryWriter(File.Open(fileName, FileMode.Create), Encoding.ASCII, false);
                 {
+                    if(incHeader)
+                    {
+                        bwWriter.Write((byte)0x0);
+                        bwWriter.Write((byte)0x1c);
+                    }
                     // Level map
                     var i = 0;
                     foreach (var row in level.Rows)

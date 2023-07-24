@@ -53,10 +53,10 @@ namespace LevConv
                     Console.WriteLine("Error loading level set");
                     return;
                 }
-                ExportService.ExportAsBinary(levelSet, exportFolder);
+                ExportService.ExportAsBinary(levelSet, exportFolder, true);
                 if (doTest)
                 {
-                    ExportService.BuildTestExecutable(testLevelNumber, isMulti, exportFolder, gameFile);
+                    ExportService.BuildTestExecutable(testLevelNumber, isMulti, exportFolder, gameFile, true);
 
                 }
             }
