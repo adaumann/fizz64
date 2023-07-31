@@ -29,3 +29,17 @@
 * Sound
 
 	if(joy2 & joy_fire = joy_fire and (((joy2 & joy_left <> joy_left and joy2 & joy_right <> joy_right) and joy2 & joy_up <> joy_up) and  joy2 & joy_down <> joy_down) then 
+
+      " 01234567890123456789",
+      "0 8 tt a# tt#a tt 8 a",
+      "14 #   a    Xa   # 6a",
+      "2 #aggaaaaggaaagga# a",
+      "3t g m    n     mg ta",
+      "4  a             a  a",
+      "5  a             a  a",
+      "6aaa             aaaa",
+      "7t gm      m   n g ta",
+      "8  a             a  a",
+      "9 #aggaaaaggaaagga# a",
+      "04 #   a     a   # 6a",
+      "1 2 t @a# tt#a tt 2 a"
