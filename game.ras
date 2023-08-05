@@ -51,7 +51,7 @@ var
 	countSprite: byte=0;
 	cycle: byte;
 	needExtraCycle : boolean;
-	
+	pos: byte;
 	// Game	
 	@define SCENES_SIZE 1
 	@define DIMX 20
@@ -362,7 +362,21 @@ var
 @endblock
 
 @startblock $1c00 "level"
-    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaa");
+	lev: string = (
+                "%r r r r r r r r r r"
+                "                    "
+                "@x  x   a  x      fa"
+                "aaxaaaa x  aaaaaaaxa"
+                " a a  a aaxah       "
+                " a a  axa  ahaaaaa <"
+                " a abba a--aha     a"
+                " aaassa a  7hx   a a"
+                "8 r   a x  xha   a a"
+                "aaaaxaaaaaxaxa   a a"
+                "3          x     aaa"
+                "aaaaaaaaaaaaaaaaaaaa" );
+
+    //lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p48
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
@@ -1073,7 +1087,9 @@ function GetId() : byte;
 var
 	ret: byte;
 begin
-    if (countObjects = @MAX_OBJECTS) then	 ret := $FF
+    if (countObjects = @MAX_OBJECTS) then	 begin 
+		ret := $FF;
+	end
     	else begin	
 		inc(countObjects);
 		ret := deletedObjects[@MAX_OBJECTS - 1 - countObjects];
@@ -1374,6 +1390,7 @@ end;
 @include "Sounds.ras"
 
 @endblock
+
 @startblock $7a00 "Code1"
 
 @include "Actions.ras"
@@ -1633,24 +1650,7 @@ begin
 	end
 	
 	else if(state = @STATE_OPEN_SCENE or state = @STATE_OPEN_SCENE_INPUT) then begin
-	
-		if(gameMode = @MODE_SINGLE) then begin
-			if(levelSingle >= 9) then pos := 0 else pos := 1; 
-			str::itoa(levelSingle + 1, #levStr + pos, 10)
-		end
-		else begin
-			if(levelCoop >= 9) then pos := 0 else pos := 1; 
-			str::itoa(levelCoop + 1, #levStr + pos, 10)
-		end;
 		
-		Screen::PrintStringColor("LEVEL: ",16,8,5);
-		Screen::PrintStringColor(#levStr,23,8,5);
-		
-		len := str::strlen(levStrings[0]);
-		pos := 20 - (len / 2);
-	
-		Screen::PrintStringColor(levStrings[0],pos,10,5);
-	
 		if(mod(time,8) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
 			if(menuItem = 0) then state := @STATE_INIT
 			else if(menuItem = 1) then state := @STATE_MENU;
@@ -1876,25 +1876,6 @@ begin
 	Pos2ObjectId := c;
 end; 
 
-procedure InitActors();
-var
-	i,j,x,y,c : byte;
-begin
-	j := 0;
-	for i := 0 to @MAX_ACTORS * @ACTOR_LENGTH step @ACTOR_LENGTH do
-	begin
-		actorList[j].event := levActor[i];
-		actorList[j].action := levActor[i+1];
-		actorList[j].senderId := Pos2ObjectId(levActor[i+2]);   
-		actorList[j].receiverId := Pos2ObjectId(levActor[i+3]);
-		actorList[j].param0 := levActor[i+4];
-		actorList[j].param1 := levActor[i+5];
-		actorList[j].param2 := levActor[i+6];
-		actorList[j].param3 := levActor[i+7];
-		inc(j);
-	end;
-end;
-
 procedure InitMap();
 var 
 	i,x,y,c : byte;
@@ -1906,7 +1887,6 @@ begin
 	for i:= 0 to @MAX_OBJECTS do begin
 		deletedObjects[@MAX_OBJECTS - 1 - i] := i;
 	end;	
-	
 	for i := 0 to @DIMTILES do
 	begin
 		c := lev[i];
@@ -1984,6 +1964,11 @@ end;
 procedure OpenMain();
 var
 	i: byte;
+	levStr: string = "00";
+	levStr2: string = "00";
+	pos : byte;
+	len: byte;
+	
 begin
 	preventirq();
 	ScreenOff();
@@ -2000,6 +1985,23 @@ begin
 	menuItem := 0;
 	if(state = @STATE_OPEN_SCENE) then begin 
 		InitLevel();
+		if(gameMode = @MODE_SINGLE) then begin
+			if(levelSingle >= 9) then pos := 0 else pos := 1; 
+			str::itoa(levelSingle + 1, #levStr + pos, 10)
+		end
+		else begin
+			if(levelCoop >= 9) then pos := 0 else pos := 1; 
+			str::itoa(levelCoop + 1, #levStr + pos, 10)
+		end;
+		
+		Screen::PrintStringColor("LEVEL: ",16,8,5);
+		Screen::PrintStringColor(#levStr,23,8,5);
+		
+		len := str::strlen(levStrings[0]);
+		pos := 20 - (len / 2);
+	
+		Screen::PrintStringColor(levStrings[0],pos,10,5);
+
 		Screen::PrintStringColor("START LEVEL",15,12,@DARK_GREY);
 		Screen::PrintStringColor("MAIN MENU",16,13,@DARK_GREY);
 	
@@ -2047,6 +2049,27 @@ begin
 	enablerasterirq();
 end;
 
+procedure InitActors();
+var
+	i,j,x,y,c : byte;
+begin
+	j := 0;
+	for i := 0 to @MAX_ACTORS * @ACTOR_LENGTH step @ACTOR_LENGTH do
+	begin
+		actorList[j].event := levActor[i];
+		actorList[j].action := levActor[i+1];
+		actorList[j].senderId := Pos2ObjectId(levActor[i+2]);   
+		actorList[j].receiverId := Pos2ObjectId(levActor[i+3]);
+		actorList[j].param0 := levActor[i+4];
+		actorList[j].param1 := levActor[i+5];
+		actorList[j].param2 := levActor[i+6];
+		actorList[j].param3 := levActor[i+7];
+		inc(j);
+	end;
+end;
+
+
+
 procedure InitScene();
 begin
 	preventirq();
@@ -2059,7 +2082,9 @@ begin
 	BlockMemCpy(^@tilesetLoc2 , ^@tilesetLoc1, 8);
 
 	InitMap();
+	setmemoryconfig(0,0,0);
 	InitActors();	
+	setmemoryconfig(1,0,0);
 	SwitchBank();
 	PaintFull();
 	SwitchBank();
