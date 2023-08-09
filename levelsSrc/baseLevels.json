@@ -1619,6 +1619,488 @@
             "Texts": [
                 "FIX THE TRANSPORTER"
             ]
+        },
+        {
+            "Number": 30,
+            "Name": "inner room",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+               " 01234567890123456789",
+               "0aaaaaaaaaaaaaaaaaaaa",
+               "1r8  tt axxxXatt  8ra",
+               "24      axaaaa     6a",
+               "3       a tt a      a",
+               "4  aaggaaaggaaggaa  a",
+               "5t g  m   n    m g ta",
+               "6aaa             aaaa",
+               "7  a             a  a",
+               "8t g m     m  n  g ta",
+               "9  aaggaaaggaaggaa  a",
+               "04      a    a     6a",
+               "1r2  t @a tt att  2ra"
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 11, "ReceiverY": 1,
+                    "Param1": 1, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "DoorOpen",
+                    "SenderX": 0, "SenderY": 1,
+                    "ReceiverX": 8, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "DoorClose",
+                    "SenderX": 0, "SenderY": 1,
+                    "ReceiverX": 8, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "DoorOpen",
+                    "SenderX": 18, "SenderY": 1,
+                    "ReceiverX": 8, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "DoorClose",
+                    "SenderX": 18, "SenderY": 1,
+                    "ReceiverX": 8, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "DoorOpen",
+                    "SenderX": 0, "SenderY": 11,
+                    "ReceiverX": 9, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "DoorClose",
+                    "SenderX": 0, "SenderY": 11,
+                    "ReceiverX": 9, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "DoorOpen",
+                    "SenderX": 18, "SenderY": 11,
+                    "ReceiverX": 10, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "DoorClose",
+                    "SenderX": 18, "SenderY": 11,
+                    "ReceiverX": 10, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                }
+
+
+            ],
+            "Texts": [
+                "INNER ROOM"
+            ]
+        },
+        {
+            "Number": 31,
+            "Name": "portal tut",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0         aaa        ",
+                "1         1          ",
+                "2       .     e      ",
+                "3      aa            ",
+                "4      a             ",
+                "5@ . d a6        Xa  ",
+                "6aaaaa>a             ",
+                "7             e      ",
+                "8           9        ",
+                "9         aaa        ",
+                "0     8              ",
+                "1     aaaa           "
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 16, "ReceiverY": 5,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 2, "SenderY": 5,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 11, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 7, "SenderY": 2,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 11, "Param3": 10, "Param4": 255
+                }
+            ],
+            "Texts": [
+                "BOXES",
+                "PUSH THE BROWN BOX",
+                "PULL THE GREY BOY"
+            ]
+        },                    
+        {
+            "Number": 32,
+            "Name": "portal tut",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1         1      caa ",
+                "2  gggg            X ",
+                "3  g@.g      c .     ",
+                "4  ggsg      aga     ",
+                "5  c  t          n   ",
+                "6                    ",
+                "7    c         8     ",
+                "8            ccc     ",
+                "9   gg               ",
+                "0         a          ",
+                "1                    "
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 18, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 4, "SenderY": 3,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 7, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 14, "SenderY": 3,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 16, "Param3": 10, "Param4": 255
+                }
+
+            ],
+            "Texts": [
+                "FIRST PORTAL PASSAGE",
+                "USE THE OPPOSITE DIRECTION",
+                "SHOOT DOWN"
+            ]
+        },                    
+        {
+            "Number": 33,
+            "Name": "btl",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0  c      ccccccc    ",
+                "1 cccccc  2  1  c6   ",
+                "2  c   c    d  dg    ",
+                "3  cm           c    ",
+                "4  c      cg    c  @ ",
+                "5               cccg ",
+                "6                    ",
+                "7       8cc          ",
+                "8 ccc                ",
+                "9 g              X   ",
+                "0 c        ccccgcc   ",
+                "1 c                e "
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 16, "ReceiverY": 9,
+                    "Param1": 1, "Param2": 255, "Param3": 255, "Param4": 255
+                }
+            ],
+            "Texts": [
+                "BEAT THE LASER"
+            ]
+        },
+        {
+            "Number": 34,
+            "Name": "fizz hero",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0          xa        ",
+                "1           a        ",
+                "2    6   8   f rg    ",
+                "3    aa  g   aaa     ",
+                "4            a       ",
+                "5     ad     a       ",
+                "6     1              ",
+                "7   X  @             ",
+                "8   aaaga a 9aa      ",
+                "9     2   a f        ",
+                "0         a          ",
+                "1                    "
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "SetGrav",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 11, "ReceiverY": 9,
+                    "Param1": 1, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "InitLevel", "Action": "DoorOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 10, "ReceiverY": 0,
+                    "Param1": 1, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "DoorClose",
+                    "SenderX": 14, "SenderY": 2,
+                    "ReceiverX": 10, "ReceiverY": 0,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "DoorOpen",
+                    "SenderX": 14, "SenderY": 2,
+                    "ReceiverX": 10, "ReceiverY": 0,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "LaserCannonOff",
+                    "SenderX": 14, "SenderY": 2,
+                    "ReceiverX": 5, "ReceiverY": 6,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "LaserCannonOn",
+                    "SenderX": 14, "SenderY": 2,
+                    "ReceiverX": 5, "ReceiverY": 6,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "ExitOpen",
+                    "SenderX": 14, "SenderY": 2,
+                    "ReceiverX": 3, "ReceiverY": 7,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "ExitClose",
+                    "SenderX": 14, "SenderY": 2,
+                    "ReceiverX": 3, "ReceiverY": 7,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                }
+
+            ],
+            "Texts": [
+                "FIZZ HERO"
+            ]
+        },          
+        {
+            "Number": 35,
+            "Name": "ladder",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1    6X@ d     h 2   ",
+                "2    aaaag>aaaaha    ",
+                "3              h f   ",
+                "4   2 h    d   h 4   ",
+                "5    ahaaa<gaaaaa    ",
+                "6   f h              ",
+                "7   6 h  d     h 2   ",
+                "8    aaaag>aaaaha    ",
+                "9    f         h f   ",
+                "0    2r    d   h 4   ",
+                "1     aaaa<gaaaaa    "
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "SetGrav",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 11, "ReceiverY": 9,
+                    "Param1": 1, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "ExitOpen",
+                    "SenderX": 5, "SenderY": 10,
+                    "ReceiverX": 5, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "ExitClose",
+                    "SenderX": 5, "SenderY": 10,
+                    "ReceiverX": 5, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                }
+            ],
+            "Texts": [
+                "KONG'S DAY OFF"
+            ]
+        },          
+        {
+            "Number": 36,
+            "Name": "portal fly",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0 c        h        c",
+                "1         aha        ",
+                "2        a h a       ",
+                "3 m  n  a  h  a  m  n",
+                "4      a4  h  6a     ",
+                "5          8         ",
+                "6   3x           x7  ",
+                "7 cr m           n Xc",
+                "8 aaaa     c     aaaa",
+                "9 aees     g     seea",
+                "0 arac     g     cara",
+                "1     aaagg@ggaaa    "
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "DoorOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 4, "ReceiverY": 6,
+                    "Param1": 1, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "InitLevel", "Action": "DoorOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 16, "ReceiverY": 6,
+                    "Param1": 1, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "ExitOpen",
+                    "SenderX": 2, "SenderY": 7,
+                    "ReceiverX": 18, "ReceiverY": 7,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "ExitClose",
+                    "SenderX": 2, "SenderY": 7,
+                    "ReceiverX": 18, "ReceiverY": 7,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "DoorClose",
+                    "SenderX": 2, "SenderY": 10,
+                    "ReceiverX": 16, "ReceiverY": 6,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "DoorOpen",
+                    "SenderX": 2, "SenderY": 10,
+                    "ReceiverX": 16, "ReceiverY": 6,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "DoorClose",
+                    "SenderX": 18, "SenderY": 10,
+                    "ReceiverX": 4, "ReceiverY": 6,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "DoorOpen",
+                    "SenderX": 18, "SenderY": 10,
+                    "ReceiverX": 4, "ReceiverY": 6,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                }
+            ],
+            "Texts": [
+                "FLY-BY ACTIVATE"
+            ]
+        },          
+        {
+            "Number": 37,
+            "Name": "no need lasers",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1                    ",
+                "2    aaaaa           ",
+                "3     1X       t     ",
+                "4                    ",
+                "5   t     aae  @   t ",
+                "6   a8     aa aaa  a ",
+                "7   aa aa     aaa  a ",
+                "8      7a    9aaa    ",
+                "9            a       ",
+                "0    e               ",
+                "1                    "
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 6, "ReceiverY": 3,
+                    "Param1": 1, "Param2": 255, "Param3": 255, "Param4": 255
+                }
+            ],
+            "Texts": [
+                "NO NEED FOR LASERS"
+            ]
+        },
+        {
+            "Number": 38,
+            "Name": "noja",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1     @      r       ",
+                "2     aaa  d         ",
+                "3      X  ta     a   ",
+                "4        a   tg      ",
+                "5        1 ta 8      ",
+                "6         a 1 ax     ",
+                "7     aa             ",
+                "8  e                 ",
+                "9                    ",
+                "0                    ",
+                "1        >  <        "
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 6, "ReceiverY": 3,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "InitLevel", "Action": "DoorOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 14, "ReceiverY": 6,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "DoorClose",
+                    "SenderX": 12, "SenderY": 1,
+                    "ReceiverX": 14, "ReceiverY": 6,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "DoorOpen",
+                    "SenderX": 12, "SenderY": 1,
+                    "ReceiverX": 14, "ReceiverY": 6,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                }
+            ],
+            "Texts": [
+                "ARE YOU RIGHT"
+            ]
         },          
         {
             "Number": 0,
