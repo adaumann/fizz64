@@ -28,7 +28,6 @@ begin
 		controlList[controlId].controlFollowKeyLeft := false;
 		controlList[controlId].controlFollowKeyRight := false;
 		controlList[controlId].controlLastPortal := $FF;
-		controlList[controlId].b_controlPermanentSwim := false;
 		controlList[controlId].b_waitRelease := false;
 		controlList[controlId].b_release := false;
 		objectList[id].transX := x;

@@ -337,7 +337,6 @@ var
 	controlObject = record
 		controlJumpStep: byte;
 		controlState: byte;
-		b_controlPermanentSwim: byte;
 		controlFollowKeyRight, controlFollowKeyLeft: byte;
 		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown, b_controlPressAction: byte;
 		controlLastPortal: byte;
