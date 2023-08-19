@@ -125,14 +125,23 @@ begin
 	freq:=freq+4;
 	initSound:=0;
 end;
-
 procedure Play();
 begin
-
 	freq:=20;
 
 	initSound:=1;
 	UpdateSound();
+end;
+
+/*
+procedure PlaySfx(num: byte);
+begin
+	poke(^$d418,0,15);
+		asm("
+	lda #1
+	ldy #0
+	jsr $e04a
+		");
 end;
 /*
 begin

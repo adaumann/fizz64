@@ -12,13 +12,27 @@ var
 	@perlinnoise "title/per1.bin" 40 25 2 1 1  170 140
 	fadedata : incbin("title/per1.bin",$C000);
 	@export "title/title.flf" "title/title.bin" 256
-
+	i: byte;
+	exit: boolean;
 	img_data:incbin("title/title_data.bin", $6000);
 	img_col : incbin("title/title_color.bin");
+@ifndef IS_DEMO
+	music: incsid("music/fizz_intro_2000.sid",2);
+@endif
 
-
-@startblock $2000 "code"
+@startblock $3000 "code"
 procedure Init();
+/*asm(
+"
+	ldx #<tune 
+	ldy #>tune
+	jsr $200
+	bcc loadkrill
+loadkrillcrash
+	inc $D021
+	jmp loadkrillcrash
+loadkrill
+");*/
 begin
 
 @ifndef IS_DEMO 
@@ -28,6 +42,7 @@ begin
 	preventirq();
 	setmemoryconfig(1,0,0);
 @endif	
+
 	setmulticolormode();
 	setbitmapmode();
 	setcharsetandscreenlocation($6000,$4400);
@@ -38,19 +53,45 @@ begin
 	screen_fg_col:=black;
 	clearscreen(0,^$4400);	
 	clearscreen(0,^$D800);		
-	FadeInOut::InitCols(#Luminosities::fromBlue);
-	FadeInOut::DefaultFadeIn(#img_col,$4400,#fadedata,2);	
+	InitSid(^$2000);
 end;
+
+interrupt RasterMain();
+begin
+	startirq(0);
+	setmulticolormode();
+	setbitmapmode();
+	setcharsetandscreenlocation($6000,$4400);
+	setbank(VIC_BANK1);
+
+	if(exit = false) then call(^$2003);
+	ReadJoy2();
+	//i := getkey();	
+	//  and i <> KEY_SPACE
+	if(joy2 & JOY_FIRE = JOY_FIRE) then exit := true;
+	closeIrq();
+
+end;
+
 @endblock
 
-// This effect starts at $1000!	
+// This effect starts at $0900!	
 begin
 	Init();
 	// Loop();
-	ReadJoy2();
-	while(joy2 & JOY_FIRE <> JOY_FIRE) do begin
-		ReadJoy2();
-	end;
+	
+	StartRasterChain(RasterMain(), 0, 0); // Don't use kernal
+	FadeInOut::InitCols(#Luminosities::fromBlue);
+	FadeInOut::DefaultFadeIn(#img_col,$4400,#fadedata,2);	
+	
+	exit := false;
+	
+	while(exit = false) do begin end;
+	setmulticolormode();
+	setbitmapmode();
+	setcharsetandscreenlocation($6000,$4400);
+	setbank(VIC_BANK1);
+
 	FadeInOut::DefaultFadeOut(#img_col,$4400,#fadedata,2);	
 	@ifdef IS_DEMO 
 	asm("
@@ -61,7 +102,7 @@ begin
 /*
 asm(
 "
-	ldx #<lev0
+	ldx #<lev0 
 	ldy #>lev0
 	jsr $200
 	bcc loadkrill

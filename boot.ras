@@ -16,6 +16,7 @@ var
 
 	//@define DEBUG 1	
 	isInitialized: byte = 0;
+	
 	ldr: byte; // the current position in the order array	
 
 // Loader at $200
@@ -24,6 +25,15 @@ var
 interrupt NMI();
 begin
 end;
+
+interrupt RasterMain();
+begin
+	startirq(0);
+	call(^$e2a9);
+	closeIrq();
+
+end;
+
 
 begin
 	if (isInitialized<>0) offpage then 
@@ -66,8 +76,24 @@ begin
 	end;
 	inc(ldr);
 	if(ldr = 1) then begin 
-		KrillLoadCompressed(#a);
+//		KrillLoadCompressed(#a);
+//		KrillLoad(#t1);
+
+		KrillLoad(#f);
+		poke(^$d418,0,15);
+		asm("
+	lda #1
+	ldy #0
+	jsr $e04a
+		");
+		StartRasterChain(RasterMain(), 0, 0); // Don't use kernal
 	end
-	else if(ldr = 2) then KrillLoadCompressed(#b);
+	else if(ldr = 2) then begin
+		disableciainterrupts();
+		preventirq();
+
+		KrillLoad(#b);
+		KrillLoad(#t2);
+	end;
 	asm( " jmp @programStartAddress")
 end.

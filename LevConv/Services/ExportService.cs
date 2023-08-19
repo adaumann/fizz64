@@ -15,10 +15,10 @@ namespace LevConv.Services
             {
                 var bytes = brReader1.ReadBytes(0x1401);
                 bwWriter.Write(bytes);
-                var fileName = folder + "\\s" + index.ToString("X");
+                var fileName = folder + "\\s" + index.ToString("X").ToLowerInvariant();
                 if (isMulti)
                 {
-                    fileName = folder + "\\m" + index.ToString("X");
+                    fileName = folder + "\\m" + index.ToString("X").ToLowerInvariant();
                 }
                 var data = File.ReadAllBytes(fileName);
                 var s = 0;
@@ -52,11 +52,11 @@ namespace LevConv.Services
                 string fileName;
                 if (level.IsAllowedTwoPlayers)
                 {
-                    fileName = folder + "\\m" + level.Number.ToString("X");
+                    fileName = folder + "\\m" + level.Number.ToString("X").ToLowerInvariant();
                 }
                 else
                 {
-                    fileName = folder + "\\s" + level.Number.ToString("X");
+                    fileName = folder + "\\s" + level.Number.ToString("X").ToLowerInvariant();
                 }
 
                 using BinaryWriter bwWriter = new BinaryWriter(File.Open(fileName, FileMode.Create), Encoding.ASCII, false);

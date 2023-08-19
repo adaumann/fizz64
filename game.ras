@@ -21,6 +21,7 @@ var
 	@define spriteLoc2  $4800
 	@define tilesetCol  $3a00
 	@define logoLoc     $3e00
+	@define sfxLoc      $e000
 	// Automatically export charsets 
 	@export "charsets/charset.flf" "charsets/charset.bin" 60	
  	@export "charsets/tileset.flf" "charsets/tileset.bin" 256	
@@ -31,11 +32,13 @@ var
   	tileset1: incbin("charsets/tileset.bin", @tilesetLoc1);
   	tileset2: incbin("charsets/tileset.bin", @tilesetLoc2);
    	logo: incbin("charsets/logo.bin", @logoLoc);
-  	sprite1: incbin("sprites/spr.bin", @spriteLoc1);
+//  	sprite1: incbin("sprites/spr.bin", @spriteLoc1);
   	sprite2: incbin("sprites/spr.bin", @spriteLoc2);
 	tilesetColors :  incbin("charsets/tileset_color.bin", @tilesetCol);
 @ifndef IS_DEMO 
-	music: incsid("music/ingame.sid",2);
+	musicintro: incsid("music/fizz_intro_2000.sid",2);
+//	music: incsid("music/fizz_ingame_e000.sid",2);
+  	sfx: incbin("sounds/_sounds.prg", @sfxLoc);
 @endif
 	
 	
@@ -65,7 +68,7 @@ var
 	@define MAX_LEV_STRINGS 8
 	@define ACTOR_LENGTH 8
 	@define MAX_LEVELS_SINGLE 40
-	@define MAX_LEVELS_COOP 40
+	@define MAX_LEVELS_COOP 20
 
 	@define DIMTILES 240
 	@define DIMANIMS 14
@@ -283,6 +286,12 @@ var
 	txtCharSwapGreen: string=("ACTIVE: GREEN");
 	@define PLAYER_EXIT 12
 	txtPlayerExit: string=("PLAYER EXITED");
+    txtSelectGameMode: string=("SELECT GAME MODE:"); 
+    txtSinglePlayer: string=("SINGLE PLAYER");
+    txtSinglePlayer2Chars: string=("SINGLE PLAYER TWO CHARACTERS");
+    txtCoop: string=("TWO PLAYER CO-OP"); 
+    txtSingleStart: string=("SINGLE PLAYER START LEVEL:");
+    txtCoopStart: string=("CO-OP START LEVEL:");
 	
 	
 	countObjects: byte;
@@ -312,6 +321,7 @@ var
 	soundTimer: byte;
 	initSound: byte;
 	freq: byte;
+	musicStr: string = ("T1");
 	
 	@define ANIM_CONSIDER_GRAV_IGNORE 0
 	@define ANIM_CONSIDER_GRAV_FULL 1
@@ -1387,6 +1397,47 @@ end;
 
 
 @include "Sounds.ras"
+procedure DecreaseTextTimer();
+begin
+	if(textTimer > 0) then begin
+		dec(textTimer);
+		if(textTimer = 0) then ClearText();
+	end; 
+end;
+
+function Pos2ObjectId(pos: byte) : byte;
+var
+	c: byte;
+begin
+	c := $FF;
+	if(pos <> $FF) then begin
+		if(mapback2[pos] <> $FF) then c := mapback2[pos]
+		else if(mapback1[pos] <> $FF ) then c := mapback1[pos]
+		else if(mapmain[pos] <> $FF) then c := mapmain[pos]
+		else if(mapfront[pos] <> $FF) then c := mapfront[pos];
+	end;
+	Pos2ObjectId := c;
+end; 
+
+
+procedure InitActors();
+var
+	i,j,x,y,c : byte;
+begin
+	j := 0;
+	for i := 0 to @MAX_ACTORS * @ACTOR_LENGTH step @ACTOR_LENGTH do
+	begin
+		actorList[j].event := levActor[i];
+		actorList[j].action := levActor[i+1];
+		actorList[j].senderId := Pos2ObjectId(levActor[i+2]);   
+		actorList[j].receiverId := Pos2ObjectId(levActor[i+3]);
+		actorList[j].param0 := levActor[i+4];
+		actorList[j].param1 := levActor[i+5];
+		actorList[j].param2 := levActor[i+6];
+		actorList[j].param3 := levActor[i+7];
+		inc(j);
+	end;
+end;
 
 @endblock
 
@@ -1428,7 +1479,8 @@ begin
 				if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
 					soundId := @SOUND_DAMAGE;
 					soundTimer := 1;
-					Play(); 
+					Play();
+					PlaySfx(1); 
 					objectList[id].b_physFallDown := false;
 					controlList[controlId].controlState := @CTRL_STATE_DESTROY;
 					controlList[controlId].controlJumpStep := 0;
@@ -1504,9 +1556,8 @@ interrupt RasterBottomText();
 interrupt RasterTopLevel();
 begin
 	startirq(@USE_KERNAL);
-@ifndef IS_DEMO 
-	call(SIDFILE_1_PLAY);
-@endif
+	//call(^$E003);
+	call(^$e2a9);
 	setmulticolormode();
 	setcharsetlocation(@tilesetLoc1);
 	poke(^56320, 0, 127);
@@ -1624,12 +1675,14 @@ begin
 		str::itoa(levelSingle + 1, #levStr + pos, 10);
 		if(levelCoop >= 9) then pos := 0 else pos := 1; 
 		str::itoa(levelCoop + 1, #levStr2 + pos, 10);
-		
+		@ifdef IS_DEMO 
+		Call(^$2003);
+		@endif
 		
 		if(mod(time,8) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
-			if(menuItem = 0) then InitGame(levelSingle, levelCoop, @MODE_SINGLE);
+			if(menuItem = 0 or menuItem = 3) then InitGame(levelSingle, levelCoop, @MODE_SINGLE);
 			if(menuItem = 1) then InitGame(levelSingle, levelCoop, @MODE_SINGLE_2CHAR);
-			if(menuItem = 2) then InitGame(levelSingle, levelCoop, @MODE_COOP);
+			if(menuItem = 2 or menuItem = 4) then InitGame(levelSingle, levelCoop, @MODE_COOP);
 			state := @STATE_OPEN_SCENE; //TODO
 		end;
 		if(mod(time,4) = 0 and (joy1 & JOY_LEFT = JOY_LEFT or joy2 & JOY_LEFT = JOY_LEFT)) then begin
@@ -1861,20 +1914,6 @@ begin
 //	togglebit(sprite_bitmask,0,1);
 end;
 
-function Pos2ObjectId(pos: byte) : byte;
-var
-	c: byte;
-begin
-	c := $FF;
-	if(pos <> $FF) then begin
-		if(mapback2[pos] <> $FF) then c := mapback2[pos]
-		else if(mapback1[pos] <> $FF ) then c := mapback1[pos]
-		else if(mapmain[pos] <> $FF) then c := mapmain[pos]
-		else if(mapfront[pos] <> $FF) then c := mapfront[pos];
-	end;
-	Pos2ObjectId := c;
-end; 
-
 procedure InitMap();
 var 
 	i,x,y,c : byte;
@@ -1952,14 +1991,6 @@ begin
 	end;
 end;
 
-procedure DecreaseTextTimer();
-begin
-	if(textTimer > 0) then begin
-		dec(textTimer);
-		if(textTimer = 0) then ClearText();
-	end; 
-end;
-
 procedure OpenMain();
 var
 	i: byte;
@@ -2015,6 +2046,17 @@ begin
 		StartRasterChain(RasterMain(), 0,@USE_KERNAL); // Don't use kernal
 	end
 	else begin 
+		@ifdef IS_DEMO
+		asm( 
+	"
+		ldx #<musicStr
+		ldy #>musicStr
+		jsr $200
+	");
+		InitSid(^$2000);
+		@endif
+
+
 		BlockMemCpy(^@logoLoc , ^@tilesetLoc1, 4);
 		for i:=0 to 24 do begin
 			moveto(i+8,1,screen);
@@ -2031,14 +2073,14 @@ begin
 			screenmemory[120]:= $AE;
 			screenmemory[160]:= $AE;
 		end;	
-		Screen::PrintStringColor("SELECT GAME MODE:",12,9,5);
+		Screen::PrintStringColor(#txtSelectGameMode,12,9,5);
 
-		Screen::PrintStringColor("SINGLE PLAYER",14,12,@DARK_GREY);
-		Screen::PrintStringColor("SINGLE PLAYER TWO CHARACTERS",6,13,@DARK_GREY);
-		Screen::PrintStringColor("TWO PLAYER CO-OP",12,14,@DARK_GREY);
+		Screen::PrintStringColor(#txtSinglePlayer,14,12,@DARK_GREY);
+		Screen::PrintStringColor(#txtSinglePlayer2Chars,6,13,@DARK_GREY);
+		Screen::PrintStringColor(#txtCoop,12,14,@DARK_GREY);
 
-		Screen::PrintStringColor("SINGLE PLAYER START LEVEL:",6,15,@DARK_GREY);
-		Screen::PrintStringColor("CO-OP START LEVEL:",11,16,@DARK_GREY);
+		Screen::PrintStringColor(#txtSingleStart,6,15,@DARK_GREY);
+		Screen::PrintStringColor(#txtCoopStart,11,16,@DARK_GREY);
 	
 		state := @STATE_MENU_INPUT;
 		ScreenOn();
@@ -2047,26 +2089,6 @@ begin
 	enableirq();
 	enablerasterirq();
 end;
-
-procedure InitActors();
-var
-	i,j,x,y,c : byte;
-begin
-	j := 0;
-	for i := 0 to @MAX_ACTORS * @ACTOR_LENGTH step @ACTOR_LENGTH do
-	begin
-		actorList[j].event := levActor[i];
-		actorList[j].action := levActor[i+1];
-		actorList[j].senderId := Pos2ObjectId(levActor[i+2]);   
-		actorList[j].receiverId := Pos2ObjectId(levActor[i+3]);
-		actorList[j].param0 := levActor[i+4];
-		actorList[j].param1 := levActor[i+5];
-		actorList[j].param2 := levActor[i+6];
-		actorList[j].param3 := levActor[i+7];
-		inc(j);
-	end;
-end;
-
 
 
 procedure InitScene();
@@ -2079,11 +2101,11 @@ begin
 	clearscreen($FF,^$4400);
 	clearscreen(BLACK,^$D800);
 	BlockMemCpy(^@tilesetLoc2 , ^@tilesetLoc1, 8);
+	BlockMemCpy(^@spriteLoc2 , ^@spriteLoc1, 16);
+	InitSid(^$E000);
 
 	InitMap();
-	setmemoryconfig(0,0,0);
 	InitActors();	
-	setmemoryconfig(1,0,0);
 	SwitchBank();
 	PaintFull();
 	SwitchBank();
@@ -2138,9 +2160,6 @@ begin
 		
 	SCREEN_BG_COL:=BLACK;
 	SCREEN_FG_COL:=BLACK;
-@ifndef IS_DEMO 
-	InitSid(SIDFILE_1_INIT);
-@endif
 	clearscreen($FF,^$0400);
 	clearscreen($FF,^$4400);
 	clearscreen(BLACK,^$D800);
