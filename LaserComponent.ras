@@ -54,10 +54,8 @@ begin
 		laserx := CalcPositionX(xpos, xdir);
 		lasery := CalcPositionY(ypos, ydir);
 		countLaser := 0;
-		if(laserType = @LASER_TYPE_USER) then begin
-			soundId := @SOUND_LASER;
-			soundTimer := 1;
-			Play(); 
+		if(laserType = @LASER_TYPE_USER and laserList[laserEmitId].currentLaser = @LASER_STEP) then begin
+			PlaySfx(@SOUND_LASER); 
 		end;
 		collideId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
 		mirrorId := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_MIRROR_1, 1);
@@ -196,9 +194,7 @@ begin
 			if(laserType <> @LASER_TYPE_USER) then begin
 				collideControlId := objectList[collideId].controlId;
 				if(collideControlId <> $FF and controlList[collideControlId].controlState <> @CTRL_STATE_DESTROY) then begin
-					soundId := @SOUND_DAMAGE;
-					soundTimer := 1;
-					Play(); 
+					PlaySfx(@SOUND_DAMAGE); 
 					objectList[collideId].b_physFallDown := false;
 					controlList[collideControlId].controlState := @CTRL_STATE_DESTROY;
 					controlList[collideControlId].controlJumpStep := 0;
@@ -216,7 +212,8 @@ begin
 					laserx := CalcPositionX(laserx, xdir * objectList[collideId].onOff);
 					lasery := CalcPositionY(lasery, ydir * objectList[collideId].onOff);
 					collideId2 := GetObjectByPosFilterComp(laserx, lasery, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0);
-					if(collideId2 = $FF) then begin 
+					if(collideId2 = $FF) then begin
+						PlaySfx(@SOUND_SHIFT);  
 						objectList[collideId].transX := laserx;
 						objectList[collideId].transY := lasery;
 						SetPos(collideId, tempx, tempy, laserx, lasery, objectList[collideId].transZ);
@@ -242,9 +239,7 @@ begin
 	
 					SetPos(collideId, tempx2, tempy2, tempx, tempy, objectList[id].transZ);
 					
-					soundId := @SOUND_TRANSPORT;
-					soundTimer := 1;
-					Play(); 
+					PlaySfx(@SOUND_TRANSPORT); 
 					
 					if(controlId <> $FF) then begin
 						controlList[controlId].b_waitRelease := true;
@@ -269,9 +264,7 @@ begin
 						InitPortal(lastx, lasty, CalcFireExitDir(xdir, ydir));
 						PaintPos(lastx + ystart[lasty], false);
 					end;
-					soundId := @SOUND_GRAV_ACTIVATE;
-					soundTimer := 1;
-					Play(); 
+					PlaySfx(@SOUND_PORTAL_ACTIVATE); 
 					if(controlId <> $FF) then begin
 						controlList[controlId].b_waitRelease := true;
 						controlList[controlId].b_release := false;

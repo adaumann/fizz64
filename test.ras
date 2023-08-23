@@ -1,15 +1,49 @@
-program test;
-@setvalue "exomizer_toggle" 0
-@use "system/str"
+program boot;
 
-var  
-	levStr: string = "LFF";
-	level: byte;
+// Set disk output
+
+var	
+  	sfx: incbin("sounds/sounds.prg", $E000,2);
+
+interrupt NMI();
 begin
-	level := 2;
-	str::itoa(level, #levStr+1, 16);
-	moveto(24,5,hi(#screen_char_loc));
-    printstring(#levStr,0,3); // prints "HIS"
+end;
+
+interrupt RasterMain();
+begin
+	startirq(0);
+
+	SCREEN_FG_COL := WHITE;
+	asm("
+	jsr $e2a9");
+	closeIrq();
+
+end;
+
+
+begin
+	disableciainterrupts();
+	setmemoryconfig(1,0,0);
+
+	poke(^$d418,0,15);
+	
+	//wait(100);
+	//AddBreakpoint();
+	asm("
+	lda #$8    ; sfx number
+	ldy #$0    ; voice number
+	jsr $e04a
+	");	
+	
+/*	asm("
+	lda #$ff
+	jsr $e000
+	lda #$02
+	jsr $e000
+	//jsr $e003
+		");
+*/		
+	StartRasterChain(RasterMain(), 0, 0); // Don't use kernal
+		
 	Loop();
 end.
-

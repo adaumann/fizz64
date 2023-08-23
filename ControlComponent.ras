@@ -10,25 +10,6 @@ begin
 //	controlList[controlId].b_controlPressAction := false;
 end;
 
-/*
-procedure ProcessDestroyObj(id: byte);
-var
-	controlId, laserBeanId : byte;
-begin
-	controlId := objectList[id].controlId;
-
-	laserBeanId := GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_FRONT, @COMP_LASERBEAN_2, 2);
-	if(laserBeanId <> $FF and (controlList[controlId].controlState <> @CTRL_STATE_DESTROY and (objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0 and objectList[laserBeanId].component0 & @COMP_DESTROY_COLLIDE_0 = @COMP_DESTROY_COLLIDE_0))) then begin
-		soundId := @SOUND_DAMAGE;
-		soundTimer := 1;
-		Play(); 
-		objectList[id].b_physFallDown := false;
-		controlList[controlId].controlState := @CTRL_STATE_DESTROY;
-		controlList[controlId].controlJumpStep := 0;
-		controlList[controlId].controlCollideLaserTag := objectList[laserBeanId].laserTag; 
-	end;
-end;
-*/
 procedure ProcessBackObj(id: byte);
 var
 	controlId : byte;
@@ -78,9 +59,7 @@ begin
 					newy := objectList[portals[0]].transY;
 					controlList[controlId].controlLastPortal := portalId;
 				end;
-				soundId := @SOUND_TRANSPORT;
-				soundTimer := 1;
-				Play(); 
+				PlaySfx(@SOUND_PORTAL); 
 			end;
 			if(newx <> $FF) then SetPos(id, objectList[id].transX, objectList[id].transY, newx, newy, objectList[id].transZ);
 			defWalk := true;
@@ -96,10 +75,7 @@ begin
 			end
 		end
 		else if(gravPadId <> $FF) then begin
-			soundId := @SOUND_GRAV_ACTIVATE;
-			soundTimer := 1;
-			Play(); 
-
+			PlaySfx(@SOUND_GRAV_ACTIVATE); 
 			objectList[id].physGravity := objectList[gravPadId].physGravity;
 		end;
 		
@@ -138,6 +114,7 @@ begin
 					objectList[switchId].onOff := @OFF;
 					controlList[controlId].b_controlPressAction := false;
 					DispatchEvent(@EVENT_SWITCH_OFF, switchId, $FF, $FF);
+					soundId := @SOUND_SWITCH_ON
 				end
 				else begin
 					PrintText(@ACTIVATE_SWITCH_START,#txtActiveSwitch);
@@ -145,17 +122,16 @@ begin
 					objectList[switchId].onOff := @ON;
 					controlList[controlId].b_controlPressAction := false;
 					DispatchEvent(@EVENT_SWITCH_ON, switchId, $FF, $FF);
+					soundId := @SOUND_SWITCH_OFF
 				end;
-				soundId := @SOUND_SWITCH;
-				soundTimer := 2;
-				Play(); 
-				
+				PlaySfx(soundId); 
 			end
 		end
 		else if(exitId <> $FF and controlId <> $FF) then begin
 			if(controlList[controlId].b_controlPressAction = true) then begin
 				if(objectList[exitId].onOff = @ON) then begin
 				 	controlList[controlId].controlState := @CTRL_STATE_EXITED;
+				 	PlaySfx(@SOUND_EXIT);
 				 	if(gameMode = @MODE_SINGLE) then begin 
 						state := @STATE_OPEN_SCENE;
 						SetNextLevel();
@@ -178,6 +154,7 @@ begin
 				 	end;
 				end
 				else begin
+				 	PlaySfx(@SOUND_EXIT_CLOSE);
 					PrintText(@EXIT_CLOSED_START,#txtExitClosed);
 					controlList[controlId].b_controlPressAction := false;
 				end;
@@ -507,9 +484,9 @@ begin
 	if(moveDir <> $FF) then begin
 		if(controlList[controlId].controlState = @CTRL_STATE_SWIM) then soundId := @SOUND_SWIM
 		else if(controlList[controlId].controlState = @CTRL_STATE_JUMP) then soundId := @SOUND_JUMP
+		else if(controlList[controlId].controlState = @CTRL_STATE_ROBE or controlList[controlId].controlState = @CTRL_STATE_CLIMB) then soundId := @SOUND_LADDER
 		else  soundId := @SOUND_STEP;
-		soundTimer := 1;
-		Play();
+		PlaySfx(soundId);
 	end;
 
 	

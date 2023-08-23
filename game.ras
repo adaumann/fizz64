@@ -38,7 +38,7 @@ var
 @ifndef IS_DEMO 
 	musicintro: incsid("music/fizz_intro_2000.sid",2);
 //	music: incsid("music/fizz_ingame_e000.sid",2);
-  	sfx: incbin("sounds/_sounds.prg", @sfxLoc);
+  	sfx: incbin("sounds/sounds.prg", @sfxLoc, 2);
 @endif
 	
 	
@@ -127,14 +127,27 @@ var
 	@define ANIM_EXIT_ON 12
 	@define ANIM_EXIT_OFF 13
 	
-	@define SOUND_TRANSPORT 0
-	@define SOUND_DAMAGE 1
-	@define SOUND_LASER 2
-	@define SOUND_STEP 3 
-	@define SOUND_JUMP 4
-	@define SOUND_SWIM 5
-	@define SOUND_GRAV_ACTIVATE 6
-	@DEFINE SOUND_SWITCH 7	
+	@define SOUND_TRANSPORT 18	// ->19
+	@define SOUND_DAMAGE 7
+	@define SOUND_LASER 11
+	@define SOUND_JUMP 3
+	@define SOUND_STEP 8
+	@define SOUND_SWIM 9 // ->1
+	@define SOUND_GRAV_ACTIVATE 10 // ->15
+	@define SOUND_SWITCH_ON 4 // ->16
+	@define SOUND_SWITCH_OFF 5
+	@define SOUND_FALL_CRASH 17
+	@define SOUND_FALL 2
+	@define SOUND_SHIFT 13
+	@define SOUND_LADDER 0
+	@define SOUND_SCENE_START 6
+	@define SOUND_END 16
+	@define SOUND_PLAYER_CHANGE 12
+	@define SOUND_PORTAL_ACTIVATE 20 
+	@define SOUND_PORTAL 21 
+	@define SOUND_EXIT 22
+	@define SOUND_EXIT_CLOSE 23 
+	
 	
 	collAreaUp: array[9] of byte = (8,7,6,5,4,3,2,1,0);
 	collAreaLeft: array[9] of byte = (2,5,8,1,4,7,0,3,6);
@@ -371,21 +384,8 @@ var
 @endblock
 
 @startblock $1c00 "level"
-	lev: string = (
-                "%r r r r r r r r r r"
-                "                    "
-                "@x  x   a  x      fa"
-                "aaxaaaa x  aaaaaaaxa"
-                " a a  a aaxah       "
-                " a a  axa  ahaaaaa <"
-                " a abba a--aha     a"
-                " aaassa a  7hx   a a"
-                "8 r   a x  xha   a a"
-                "aaaaxaaaaaxaxa   a a"
-                "3          x     aaa"
-                "aaaaaaaaaaaaaaaaaaaa" );
 
-    //lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6   1[12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h o aaaaaaaaaaaaaaaaaaaaa");
+    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6    [12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h o aaaaaaaaaaaaaaa>>aaaa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p48
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
@@ -470,19 +470,6 @@ var
 @endblock
 
 @startblock $5800 "Code"
-
-/*
-procedure InitRand();
-var
-	i,m: byte;
-begin
-	for i:=0 to 0 do begin
-		rand(0,255,m);
-//		m:=perlin40[i]*109;
-		rands[i]:=m;		
-	end;
-end;
-*/
 
 procedure InitLevel();
 var 
@@ -1477,10 +1464,7 @@ begin
 			if(objectList[id].moves > 0 and controlList[controlId].b_fallDown = false) then needExtraCycle := true
 			else begin
 				if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
-					soundId := @SOUND_DAMAGE;
-					soundTimer := 1;
-					Play();
-					PlaySfx(1); 
+					PlaySfx(@SOUND_DAMAGE); 
 					objectList[id].b_physFallDown := false;
 					controlList[controlId].controlState := @CTRL_STATE_DESTROY;
 					controlList[controlId].controlJumpStep := 0;
@@ -1497,10 +1481,7 @@ begin
 		if(objectList[id].component0 & @COMP_CONTROL_0 = @COMP_CONTROL_0) then begin
 			controlId := objectList[id].controlId;
 			if(retryPressed = true and controlList[controlId].controlState <> @CTRL_STATE_DESTROY) then begin
-				
-				soundId := @SOUND_DAMAGE;
-				soundTimer := 1;
-				Play(); 
+				PlaySfx(@SOUND_DAMAGE); 
 				objectList[id].b_physFallDown := false;
 				controlList[controlId].controlState := @CTRL_STATE_DESTROY;
 				controlList[controlId].controlJumpStep := 0;
@@ -1526,6 +1507,7 @@ begin
 		//Key::Read();
 		if (i = KEY_SPACE) then begin
 			textTimer := 20;
+			PlaySfx(@SOUND_PLAYER_CHANGE);
 			if(activeChar = 0) then begin 
 				activeChar := 1; 
 				PrintText(@CHAR_SWAP_GREEN,#txtCharSwapGreen);
@@ -1557,7 +1539,8 @@ interrupt RasterTopLevel();
 begin
 	startirq(@USE_KERNAL);
 	//call(^$E003);
-	call(^$e2a9);
+	asm("
+	jsr $e2a9");
 	setmulticolormode();
 	setcharsetlocation(@tilesetLoc1);
 	poke(^56320, 0, 127);
@@ -1702,7 +1685,9 @@ begin
 	end
 	
 	else if(state = @STATE_OPEN_SCENE or state = @STATE_OPEN_SCENE_INPUT) then begin
-		
+
+		asm("
+		jsr $e2a9");
 		if(mod(time,8) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
 			if(menuItem = 0) then state := @STATE_INIT
 			else if(menuItem = 1) then state := @STATE_MENU;
@@ -2036,6 +2021,7 @@ begin
 		Screen::PrintStringColor("MAIN MENU",16,13,@DARK_GREY);
 	
 		Screen::PrintStringColor("PRESS 'DEL' TO RETRY",10,22,@DARK_GREY);
+		PlaySfx(@SOUND_END);	
 		if(gameMode = @MODE_SINGLE_2CHAR) then Screen::PrintStringColor("PRESS 'SPACE' TO SWAP CHARACTER",4,23,@DARK_GREY);
 		if(gameMode <> @MODE_SINGLE) then begin
 			if(levBothMustComplete = true) then Screen::PrintStringColor("BOTH PLAYERS MUST EXIT",9,24,@DARK_GREY) 
@@ -2102,7 +2088,6 @@ begin
 	clearscreen(BLACK,^$D800);
 	BlockMemCpy(^@tilesetLoc2 , ^@tilesetLoc1, 8);
 	BlockMemCpy(^@spriteLoc2 , ^@spriteLoc1, 16);
-	InitSid(^$E000);
 
 	InitMap();
 	InitActors();	
@@ -2114,7 +2099,8 @@ begin
 	InitAnimations();
 	ClearText();
 	state := @STATE_PLAY;
-	ScreenOn();	
+	ScreenOn();
+	PlaySfx(@SOUND_SCENE_START);	
 	StartRasterChain(RasterTopLevel(), 0,@USE_KERNAL); // Don't use kernal
 	enableirq();
 	enablerasterirq();	
@@ -2134,7 +2120,6 @@ begin
 				while(state = @STATE_PLAY) do begin
 					if(frameStatus = 0)	then begin
 						Update();
-						UpdateSound();
 						Animate();
 						CycleWater();
 						DecreaseTextTimer();
@@ -2166,7 +2151,8 @@ begin
 	setmemoryconfig(1,0,0);
 	InitGame(0, 0, @MODE_COOP);
 	state := @STATE_MENU;
-
+	poke(^$d418,0,15);
+	
 	GameLoop();
 	Loop();
 end.

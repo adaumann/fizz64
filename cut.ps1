@@ -14,6 +14,22 @@
   $ostream.close();
   $stream.close();
 
+  $stream = [System.IO.File]::OpenRead("sounds/s.prg")
+  $barr = New-Object byte[] 65535
+  $bytesRead = $stream.Read($barr,0, 839)
+  $ostream = [System.IO.File]::OpenWrite("sounds/_s.prg")
+  $ostream.Write($barr,2,$bytesRead);
+  $ostream.close();
+  $stream.close();
+
+  $stream = [System.IO.File]::OpenRead("sounds/a1.prg")
+  $barr = New-Object byte[] 65535
+  $bytesRead = $stream.Read($barr,0, 1026)
+  $ostream = [System.IO.File]::OpenWrite("sounds/_a1.prg")
+  $ostream.Write($barr,2,$bytesRead);
+  $ostream.close();
+  $stream.close();
+
 
   # $binaryData = [Byte[]] (0x00, 0xE0)
   # [IO.File]::WriteAllBytes("./music/fizz_ingame_e000.bin", $binaryData)
