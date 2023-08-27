@@ -7,9 +7,6 @@ begin
 	else if(peek(^58064,0) = 0) then voice := 2
 	else voice := $FF;
 	
-	moveto(1,24,screen);
-	printnumber(voice);
-
 	if(voice <> $FF) then begin
 		asm("
 	lda localVariable_PlaySfx_num

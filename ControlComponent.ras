@@ -74,7 +74,7 @@ begin
 				end;
 			end
 		end
-		else if(gravPadId <> $FF) then begin
+		else if(gravPadId <> $FF and objectList[id].physGravity <> objectList[gravPadId].physGravity) then begin
 			PlaySfx(@SOUND_GRAV_ACTIVATE); 
 			objectList[id].physGravity := objectList[gravPadId].physGravity;
 		end;

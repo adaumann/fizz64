@@ -68,7 +68,7 @@ var
 	@define MAX_LEV_STRINGS 8
 	@define ACTOR_LENGTH 8
 	@define MAX_LEVELS_SINGLE 40
-	@define MAX_LEVELS_COOP 20
+	@define MAX_LEVELS_COOP 30
 
 	@define DIMTILES 240
 	@define DIMANIMS 14
@@ -305,6 +305,8 @@ var
     txtCoop: string=("TWO PLAYER CO-OP"); 
     txtSingleStart: string=("SINGLE PLAYER START LEVEL:");
     txtCoopStart: string=("CO-OP START LEVEL:");
+    txtAuthor: string=("CODE: ANDY DAUMANN");
+    txtMusican: string=("MUSIC: PICRARD");
 	
 	
 	countObjects: byte;
@@ -1953,8 +1955,8 @@ begin
 			@LEV_LADDER: InitLadder(x,y);
 			@LEV_ROBE_UP: InitRobe(x,y,100,@DOWN);
 			@LEV_ROBE_DOWN: InitRobe(x,y,102,@UP);
-			@LEV_ROBE_LEFT: InitRobe(x,y,104,@LEFT);
-			@LEV_ROBE_RIGHT: InitRobe(x,y,106,@RIGHT);
+			@LEV_ROBE_LEFT: InitRobe(x,y,106,@LEFT);
+			@LEV_ROBE_RIGHT: InitRobe(x,y,104,@RIGHT);
 			@LEV_PORTAL: InitPortal(x,y,@UP);
 			@LEV_PORTAL_ACTIVATE: InitPortalActivate(x,y);
 			@LEV_GRAVPAD_UP: InitGravPad(x,y,38,@UP);
@@ -2067,6 +2069,10 @@ begin
 
 		Screen::PrintStringColor(#txtSingleStart,6,15,@DARK_GREY);
 		Screen::PrintStringColor(#txtCoopStart,11,16,@DARK_GREY);
+		
+		Screen::PrintStringColor(#txtAuthor,11,23,@WHITE);
+		Screen::PrintStringColor(#txtMusican,13,24,@WHITE);
+		
 	
 		state := @STATE_MENU_INPUT;
 		ScreenOn();

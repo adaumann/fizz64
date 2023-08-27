@@ -22,18 +22,13 @@ var
 // Loader at $200
 	@use KrillsLoader $0200 $2000 $4000
 
-interrupt NMI();
-begin
-end;
-
+//interrupt NMI();
+//begin
+//end;
 begin
 	if (isInitialized<>0) offpage then 
 	begin
-		// Black screen in between loading
-		//StartChain();
-		// Cleanup
-		
-		// Reset time counters
+		ScreenOff();		
 	end else 
 	begin
 		// First time the loader is run! 
@@ -62,7 +57,7 @@ begin
 	end
 	else if(ldr = 2) then begin
 		preventirq();
-		disableciainterrupts();		
+		disableciainterrupts();
 		KrillLoad(#b);
 		KrillLoad(#f);
 	end;
