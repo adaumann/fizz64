@@ -55,7 +55,6 @@ var
 	cycle: byte;
 	needExtraCycle : boolean;
 	pos: byte;
-	statusCol: byte;
 	// Game	
 	@define SCENES_SIZE 1
 	@define DIMX 20
@@ -337,7 +336,6 @@ var
 	soundTimer: byte;
 	initSound: byte;
 	freq: byte;
-	voice: byte;
 	musicStr: string = ("T1");
 	
 	@define ANIM_CONSIDER_GRAV_IGNORE 0
@@ -475,47 +473,6 @@ var
 
 @startblock $5800 "Code"
 
-procedure PrintText(x: byte, txt: pointer);
-begin
-	@IFDEF OVERFLOW_CHECK
-		if(x >= 40) then SCREEN_BG_COL:=BLUE;
-	@ENDIF
-	@IFNDEF DEBUG
-		moveto(0,24,screen);
-		fillfast(screenmemory,$20,40);
-		screenmemory[0]:=$1c;
-		screenmemory[39]:=$1d;
-		moveto(x,24,screen);
-		printstring(txt,0,40);
-		statusCol := @WHITE;
-	@ENDIF		
-end;
-
-procedure ClearText();
-begin
-	@IFNDEF DEBUG
-		moveto(0,24,screen);
-		fillfast(screenmemory,$20,40);
-		screenmemory[0]:=$1c;
-		screenmemory[39]:=$1d;
-		statusCol := @DARK_GREY;
-	@ENDIF
-end;
-
-procedure SwapActiveChar();
-begin
-	textTimer := 20;
-	if(activeChar = 0) then begin 
-		activeChar := 1; 
-		PrintText(@CHAR_SWAP_GREEN,#txtCharSwapGreen);
-	end 
-	else begin 
-		activeChar := 0;
-		PrintText(@CHAR_SWAP_RED,#txtCharSwapRed);
-	end;				
-end;
-
-
 procedure InitLevel();
 var 
 	i : integer;
@@ -530,22 +487,19 @@ begin
 	countSprite := 0;
 	countLasers := 0;
 	retryPressed := false;
-	activeChar := 1;
-	statusCol := @DARK_GREY;
-
-	levStr[2] := 0;
+	levStr[2] := 0;	
+	
 	for i:= $EA00 to $FFF0 do begin
 		p := int2ptr(i);
 		p[0] := $FF;
 	end;
 	
-	
 	if(gameMode = @MODE_SINGLE) then begin
 //		if(nextLevel <> levelSingle) then begin
 			levelSingle := nextLevel;
+			@ifdef IS_DEMO 
 			levStr[0] := 'S';
 			str::itoa(levelSingle, #levStr+1, 16);
-			@ifdef IS_DEMO 
 			asm(
 "
 	ldx #<localVariable_InitLevel_levStr
@@ -556,13 +510,11 @@ begin
 //		end;
 	end
 	else begin
-		if(gameMode = @MODE_SINGLE_2CHAR) then SwapActiveChar();
-
 //		if(nextLevel <> levelCoop) then begin
 			levelCoop := nextLevel;
+			@ifdef IS_DEMO 
 			levStr[0] := 'M';
 			str::itoa(levelCoop, #levStr+1, 16);
-			@ifdef IS_DEMO 
 			asm(
 "
 	ldx #<localVariable_InitLevel_levStr
@@ -575,6 +527,24 @@ begin
 	end;
 end;
 
+/*
+procedure LoadLevel(isSingle: boolean);
+var
+	levStr: string = "LMFF";	
+begin
+	if(isSingle = true) then begin 
+		levStr[1] := "S";
+		str::itoa(levelSingle, #levStr+2, 16);
+	end
+	else str::itoa(levelCoop, #levStr+2, 16);
+	asm(
+"
+	ldx #<localVariable_LoadLevel_levStr
+	ldy #>localVariable_LoadLevel_levStr
+	jsr $200
+");
+end;
+*/
 
 procedure SetNextLevel();
 begin 
@@ -619,6 +589,7 @@ begin
 	levelCoop := levCoop;
 	gameMode := mode;
 	if(gameMode = @MODE_SINGLE) then nextLevel := levSingle else nextLevel := levCoop;
+	activeChar := 0;
 	menuItem := 0;
 	cycle := 0;
 	needExtraCycle := false;
@@ -699,6 +670,32 @@ begin
 	MemCpyFast(sp, 0, dp,8);
 end;
 
+procedure PrintText(x: byte, txt: pointer);
+begin
+	@IFDEF OVERFLOW_CHECK
+		if(x >= 40) then SCREEN_BG_COL:=BLUE;
+	@ENDIF
+	@IFNDEF DEBUG
+		moveto(0,24,screen);
+		fillfast(screenmemory,$20,40);
+		screenmemory[0]:=$1c;
+		screenmemory[39]:=$1d;
+		moveto(x,24,screen);
+		printstring(txt,0,40);
+	@ENDIF		
+end;
+
+procedure ClearText();
+begin
+	@IFNDEF DEBUG
+		moveto(0,24,screen);
+		fillfast(screenmemory,$20,40);
+		screenmemory[0]:=$1c;
+		screenmemory[39]:=$1d;
+	@ENDIF
+end;
+
+
 procedure PrintSprite(x: byte, y: byte, spriteLoc: byte, num: byte);
 var
 	xs: integer;
@@ -772,8 +769,7 @@ begin
 		end;*/
 		currentTile := pa.animSeq[objectList[t].animPos];
 		currentTile := currentTile + shiftAnim;
-	
-	if(pa.mode = @ANIM_MODE_FIX) then objectList[t].animPos := 0
+		if(pa.mode = @ANIM_MODE_FIX) then objectList[t].animPos := 0
 		else if(pa.mode = @ANIM_MODE_LR and objectList[t].animFinish = false) then begin
 			if(objectList[t].animPos = pa.size - 1) then begin
 				objectList[t].animPos := pa.size - 1;
@@ -1085,6 +1081,7 @@ begin
 	animObjectList[countAnim] := i;
 	inc(countAnim);
 end;
+
 function GetId() : byte;
 var
 	ret: byte;
@@ -1432,29 +1429,6 @@ begin
 	end;
 end;
 
-procedure ColorLine(y: byte, col: byte);
-var
-	i: byte;
-begin
-	moveto(0,y,hi(SCREEN_COL_LOC));
-	for i:=0 to 40 do screenmemory[i]:= col;
-end;
-
-
-procedure MenuMove(len: byte, oldMenuItem: byte);
-begin
-	if(mod(time,4) = 0) then begin
-		if(joy1 & JOY_UP = JOY_UP or joy2 & JOY_UP = JOY_UP) then begin
-			if(menuItem > 0) then dec(menuItem);
-		end
-		else if(joy1 & JOY_DOWN = JOY_DOWN or joy2 & JOY_DOWN = JOY_DOWN) then begin
-			if(menuItem < len-1 ) then inc(menuItem); 
-		end;
-	end;
-	ColorLine(12 + oldMenuItem, @DARK_GREY);
-	ColorLine(12 + menuItem, @WHITE);
-end;
-
 @endblock
 
 @startblock $7a00 "Code1"
@@ -1535,8 +1509,17 @@ begin
 	if(gameMode = @MODE_SINGLE_2CHAR) then begin
 		//Key::Read();
 		if (i = KEY_SPACE) then begin
+			textTimer := 20;
 			PlaySfx(@SOUND_PLAYER_CHANGE);
-			SwapActiveChar();
+			if(activeChar = 0) then begin 
+				activeChar := 1; 
+				PrintText(@CHAR_SWAP_GREEN,#txtCharSwapGreen);
+			end 
+			else begin 
+				activeChar := 0;
+				PrintText(@CHAR_SWAP_RED,#txtCharSwapRed);
+			end;				
+			
 		end;
 	end;
 	if (i = KEY_F7) then begin
@@ -1596,7 +1579,8 @@ begin
 	startirq(@USE_KERNAL);
 	setregularcolormode();
 	setcharsetlocation(@charsetLoc1);
-	SCREEN_FG_COL:=statusCol;
+	
+	SCREEN_FG_COL:=WHITE;
 
 	@IFDEF DEBUG
 	if(time = 2) then begin
@@ -1605,10 +1589,32 @@ begin
 	end;
 	@ENDIF
 		
-	RasterIRQ(RasterTopLevel(),10,@USE_KERNAL);
+	RasterIRQ(RasterTopLevel(),20,@USE_KERNAL);
 	closeIrq();
 end;
 
+procedure ColorLine(y: byte, col: byte);
+var
+	i: byte;
+begin
+	moveto(0,y,hi(SCREEN_COL_LOC));
+	for i:=0 to 40 do screenmemory[i]:= col;
+end;
+
+
+procedure MenuMove(len: byte, oldMenuItem: byte);
+begin
+	if(mod(time,4) = 0) then begin
+		if(joy1 & JOY_UP = JOY_UP or joy2 & JOY_UP = JOY_UP) then begin
+			if(menuItem > 0) then dec(menuItem);
+		end
+		else if(joy1 & JOY_DOWN = JOY_DOWN or joy2 & JOY_DOWN = JOY_DOWN) then begin
+			if(menuItem < len-1 ) then inc(menuItem); 
+		end;
+	end;
+	ColorLine(12 + oldMenuItem, @DARK_GREY);
+	ColorLine(12 + menuItem, @WHITE);
+end;
 
 interrupt RasterMain();
 
@@ -1977,6 +1983,7 @@ procedure OpenMain();
 var
 	i: byte;
 	levStr: string = "00";
+	levStr2: string = "00";
 	pos : byte;
 	len: byte;
 	
@@ -1994,7 +2001,6 @@ begin
 	
 	time := 0;
 	menuItem := 0;
-	levStr[0] := '0';
 	if(state = @STATE_OPEN_SCENE) then begin 
 		InitLevel();
 		if(gameMode = @MODE_SINGLE) then begin

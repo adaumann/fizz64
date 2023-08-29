@@ -147,6 +147,8 @@ begin
 								SetNextLevel();
 							end
 							else begin
+								activeChar := controlId;
+								SwapActiveChar();
 								DeletePos(id, true, true);
 								PrintText(@PLAYER_EXIT,#txtPlayerExit);
 							end;
