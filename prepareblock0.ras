@@ -1,0 +1,58 @@
+program PrepareBlock0;
+
+
+// Set disk output
+@use "compression/compression"
+
+var	
+//@requirefile "singlev_packed_resources1.ras" "Please compile the corresponding paw before attempting to compile this program." 
+//@include "singlev_packed_resources1.ras"
+
+s0 : IncBin("levels/s0", $8000) compressed;
+s1 : IncBin("levels/s1", $8100) compressed;
+s2 : IncBin("levels/s2", $8200) compressed;
+s3 : IncBin("levels/s3", $8300) compressed;
+s4 : IncBin("levels/s4", $8400) compressed;
+s5 : IncBin("levels/s5", $8500) compressed;
+s6 : IncBin("levels/s6", $8600) compressed;
+s7 : IncBin("levels/s7", $8700) compressed;
+s8 : IncBin("levels/s8", $8800) compressed;
+s9 : IncBin("levels/s9", $8900) compressed;
+sa : IncBin("levels/sa", $8a00) compressed;
+sb : IncBin("levels/sb", $8b00) compressed;
+sc : IncBin("levels/sc", $8c00) compressed;
+sd : IncBin("levels/sd", $8d00) compressed;
+se : IncBin("levels/se", $8e00) compressed;
+sf : IncBin("levels/sf", $8f00) compressed;
+s10 : IncBin("levels/s10", $9000) compressed;
+s11 : IncBin("levels/s11", $9100) compressed;
+s12 : IncBin("levels/s12", $9200) compressed;
+s13 : IncBin("levels/s13", $9300) compressed;
+s14 : IncBin("levels/s14", $9400) compressed;
+s15 : IncBin("levels/s15", $9500) compressed;
+s16 : IncBin("levels/s16", $9600) compressed;
+s17 : IncBin("levels/s17", $9700) compressed;
+s18 : IncBin("levels/s18", $9800) compressed;
+s19 : IncBin("levels/s19", $9900) compressed;
+s1a : IncBin("levels/s1a", $9a00) compressed;
+s1b : IncBin("levels/s1b", $9b00) compressed;
+s1c : IncBin("levels/s1c", $9c00) compressed;
+s1d : IncBin("levels/s1d", $9d00) compressed;
+s1e : IncBin("levels/s1e", $9e00) compressed;
+s1f : IncBin("levels/s1f", $9f00) compressed;
+s20 : IncBin("levels/s20", $a000) compressed;
+s21 : IncBin("levels/s21", $a100) compressed;
+s22 : IncBin("levels/s22", $a200) compressed;
+s23 : IncBin("levels/s23", $a300) compressed;
+s24 : IncBin("levels/s24", $a400) compressed;
+s25 : IncBin("levels/s25", $a500) compressed;
+s26 : IncBin("levels/s26", $a600) compressed;
+s27 : IncBin("levels/s27", $a700) compressed;
+t1 : IncBin("music/_fizz_intro_2000.dat", $a800) compressed;
+
+begin
+	// VICE: bs "c:/temp/block01.bin" 0 8000 9FFF
+	// VICE: bs "c:/temp/block02.bin" 0 A000 BFFF
+	
+	Loop();
+end.

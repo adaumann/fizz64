@@ -1,49 +1,58 @@
-program boot;
+program test;
+
 
 // Set disk output
+@use "compression/compression"
 
 var	
-  	sfx: incbin("sounds/sounds.prg", $E000,2);
+//@requirefile "singlev_packed_resources1.ras" "Please compile the corresponding paw before attempting to compile this program." 
+//@include "singlev_packed_resources1.ras"
+
+
+p : pointer;
+i : byte;
 
 interrupt NMI();
 begin
 end;
 
-interrupt RasterMain();
+procedure LoadLevelFromCrt(lev: byte, isSingle: byte);
+var
+	bank: byte;
+	p : pointer;
 begin
-	startirq(0);
-
-	SCREEN_FG_COL := WHITE;
-	asm("
-	jsr $e2a9");
-	closeIrq();
-
+	p := CreatePointer($80, 00);
+	if(isSingle = true) then begin
+		if(lev <= $1f) then 
+			bank := $0c
+		else begin 
+			bank := 5;
+			lev := lev - $20;
+		end;
+		for i := 0 to lev do
+		begin
+			p := p + $100;
+		end;		
+	end
+	else begin 
+		if(lev <= $13) then 
+			bank := $0d
+		else begin 
+			bank := $0e;
+			lev := lev - $14;
+		end;
+		for i := 0 to lev do
+		begin
+			p := p + $180;
+		end;		
+	end;
+	setmemoryconfig(1,1,1);
+	Poke(^$DE00,0,bank);
+    Compression::Decompress(p, $1bfe);	
 end;
 
 
 begin
-	disableciainterrupts();
-	setmemoryconfig(1,0,0);
-
-	poke(^$d418,0,15);
-	
-	//wait(100);
-	//AddBreakpoint();
-	asm("
-	lda #$8    ; sfx number
-	ldy #$0    ; voice number
-	jsr $e04a
-	");	
-	
-/*	asm("
-	lda #$ff
-	jsr $e000
-	lda #$02
-	jsr $e000
-	//jsr $e003
-		");
-*/		
-	StartRasterChain(RasterMain(), 0, 0); // Don't use kernal
-		
+	LoadLevelFromCrt(29, false);
 	Loop();
 end.

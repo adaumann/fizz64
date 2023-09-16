@@ -101,7 +101,8 @@ begin
 	textId := actorList[actorId].param0;
 	x := actorList[actorId].param1;
 	textTimer := actorList[actorId].param2;
-	PrintText(x, levStrings[textId]);
+	sp := levStrings[textId];
+	PrintText(x);
 end;
 
 procedure ActionSetGrav(actorId: byte);

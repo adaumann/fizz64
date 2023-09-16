@@ -7,7 +7,7 @@ begin
 	controlList[controlId].b_controlPressRight := false;
 	controlList[controlId].b_controlPressDown := false;			
 	controlList[controlId].b_controlPressUp := false;
-//	controlList[controlId].b_controlPressAction := false;
+	controlList[controlId].b_controlPressAction := false;
 end;
 
 procedure ProcessBackObj(id: byte);
@@ -16,6 +16,7 @@ var
 	defWalk: boolean;
 	gravity: byte;
 	backObj, backObj2: byte;
+	portalHitObj: byte;
 	pos,v: byte;
 	robeAbleId, portalId, gravPadId, switchId, laserBeanId, exitId:  byte;
 	newx, newy: byte;
@@ -59,9 +60,18 @@ begin
 					newy := objectList[portals[0]].transY;
 					controlList[controlId].controlLastPortal := portalId;
 				end;
-				PlaySfx(@SOUND_PORTAL); 
 			end;
-			if(newx <> $FF) then SetPos(id, objectList[id].transX, objectList[id].transY, newx, newy, objectList[id].transZ);
+			if(newx <> $FF) then begin
+				portalHitObj := GetObjectByPosFilterComp(newx, newy, @Z_MAIN, @COMP_COLLIDE_ABLE_0,0);
+				if(portalHitObj = $FF) then begin
+					PlaySfx(@SOUND_PORTAL); 
+					GetObjArea(id, @Z_MAIN, 5, @COMP_COLLIDE_ABLE_0,0, false);
+					SetPos(id, objectList[id].transX, objectList[id].transY, newx, newy, objectList[id].transZ);
+				end
+				else begin
+					PlaySfx(@SOUND_EXIT_CLOSE);
+				end;
+			end;
 			defWalk := true;
 		end
 		else if(GetObjectByPosFilterComp(objectList[id].transX, objectList[id].transY, @Z_BACK2, @COMP_WATER_0, 0) <> $FF) then begin	
@@ -109,7 +119,8 @@ begin
 			if(controlList[controlId].b_controlPressAction = true) then begin
 				textTimer := 20;
 				if(objectList[switchId].onOff = @ON) then begin
-					PrintText(@DEACTIVATE_SWITCH_START,#txtDeactiveSwitch);
+					sp := #txtDeactiveSwitch;
+					PrintText(@DEACTIVATE_SWITCH_START);
 					SwitchAnimation(switchId,@ANIM_SWITCH_OFF);
 					objectList[switchId].onOff := @OFF;
 					controlList[controlId].b_controlPressAction := false;
@@ -117,7 +128,8 @@ begin
 					soundId := @SOUND_SWITCH_ON
 				end
 				else begin
-					PrintText(@ACTIVATE_SWITCH_START,#txtActiveSwitch);
+					sp := #txtActiveSwitch;
+					PrintText(@ACTIVATE_SWITCH_START);
 					SwitchAnimation(switchId,@ANIM_SWITCH_ON);
 					objectList[switchId].onOff := @ON;
 					controlList[controlId].b_controlPressAction := false;
@@ -150,14 +162,16 @@ begin
 								activeChar := controlId;
 								SwapActiveChar();
 								DeletePos(id, true, true);
-								PrintText(@PLAYER_EXIT,#txtPlayerExit);
+								sp := #txtPlayerExit;
+								PrintText(@PLAYER_EXIT);
 							end;
 						end;		 	
 				 	end;
 				end
 				else begin
 				 	PlaySfx(@SOUND_EXIT_CLOSE);
-					PrintText(@EXIT_CLOSED_START,#txtExitClosed);
+				 	sp := #txtExitClosed;
+					PrintText(@EXIT_CLOSED_START);
 					controlList[controlId].b_controlPressAction := false;
 				end;
 				
@@ -188,12 +202,20 @@ begin
 			joyShift := 1;
 		end;
 		if(objectList[id].component0 & @COMP_PHYSICS_0 = @COMP_PHYSICS_0) then gravity := objectList[id].physGravity else gravity := @DOWN;
-		if(joy = (joyShift shl 7) and controlList[controlId].b_controlPressAction = true) then begin 
-			controlList[controlId].b_controlPressAction := false;
+		if(joy = (joyShift shl 7)) then begin
+			if(controlList[controlId].b_firePressed > 0) then
+				controlList[controlId].b_controlPressAction := true; 
+			controlList[controlId].b_firePressed := 0;
 		end;
-			
-		if(joy = ((joyShift shl 7) | $10) and controlList[controlId].b_controlPressAction = false) then begin
-			controlList[controlId].b_controlPressAction := true;
+		
+		if(joy = ((joyShift shl 7) | $10)) then begin
+			if(controlList[controlId].b_firePressed = 0) then
+				controlList[controlId].b_controlPressAction := false; 
+			inc(controlList[controlId].b_firePressed);
+			if(controlList[controlId].b_firePressed > 6) then begin
+				controlList[controlId].b_controlPressAction := true;
+				controlList[controlId].b_firePressed := 1;
+			end;
 		end;
 		
 		if(joy & joy_fire = joy_fire) then

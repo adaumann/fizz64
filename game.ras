@@ -1,7 +1,16 @@
 program game;
+@define CRT_VERSION 1
+
+@ifdef CRT_VERSION
+@projectsettings "exomize" "1"
+@endif
+
+@ifndef CRT_VERSION
 @projectsettings "exomize" "0"
+@endif 
 @use "system/str"
 @use "screen/screen"
+@use "compression/compression"
 
 // @use "input/key"
 
@@ -309,7 +318,6 @@ var
     txtAuthor: string=("CODE: ANDY DAUMANN");
     txtMusican: string=("MUSIC: PICRARD");
 	
-	
 	countObjects: byte;
 	deletedObjects: Array[@MAX_OBJECTS] of byte;
 	dynObjectList : Array[@MAX_OBJECTS] of byte;
@@ -324,7 +332,8 @@ var
 	portals: Array [2] of byte;
 	lastPortal: byte;
 	state: byte;
-	pa: pointer of byte;
+	sp: pointer;
+	dp: pointer;
 	textTimer: byte;
 	levelSingle: byte;
 	levelCoop: byte;
@@ -366,6 +375,7 @@ var
 		controlState: byte;
 		controlFollowKeyRight, controlFollowKeyLeft: byte;
 		b_controlPressLeft, b_controlPressRight, b_controlPressUp, b_controlPressDown, b_controlPressAction: byte;
+		b_firePressed: byte;
 		controlLastPortal: byte;
 		b_waitRelease, b_release: byte;
 		waypointId: byte;
@@ -473,9 +483,63 @@ var
 	objectList : Array[@MAX_OBJECTS] of gobject;
 @endblock
 
+@ifdef CRT_VERSION
+@startblock $1000 "CodeCrt"
+
+procedure LoadMusicFromCrt();
+begin
+	setmemoryconfig(1,1,1);
+	Poke(^$DE00,0,$0F);
+    Compression::Decompress($8000, $2000);	
+	setmemoryconfig(1,0,0);
+end;
+
+procedure LoadLevelFromCrt(lev: byte, isSingle: boolean);
+var
+	bank, i : byte;
+begin
+	sp := CreatePointer($80, 00);
+	if(isSingle = true) then begin
+		if(lev <= $1f) then 
+			bank := $0B
+		else begin 
+			bank := $0C;
+			lev := lev - $20;
+		end;
+		if(lev <> 0) then begin
+			
+			for i := 0 to lev do
+			begin
+				sp := sp + $100;
+			end;		
+		end;
+	end
+	else begin 
+		if(lev <= $13) then 
+			bank := $0D 
+		else begin 
+			bank := $0E;
+			lev := lev - $14;
+		end;
+		if(lev <> 0) then begin
+			for i := 0 to lev do
+			begin
+				sp := sp + $80;
+				sp := sp + $100;
+			end;		
+		end;
+	end;
+	setmemoryconfig(1,1,1);
+	Poke(^$DE00,0,bank);
+    Compression::Decompress(sp, $1bfe);	
+	setmemoryconfig(1,0,0);
+end;
+@endblock
+@endif
+
 @startblock $5800 "Code"
 
-procedure PrintText(x: byte, txt: pointer);
+procedure PrintText(x: byte);
 begin
 	@IFDEF OVERFLOW_CHECK
 		if(x >= 40) then SCREEN_BG_COL:=BLUE;
@@ -486,7 +550,7 @@ begin
 		screenmemory[0]:=$1c;
 		screenmemory[39]:=$1d;
 		moveto(x,24,screen);
-		printstring(txt,0,40);
+		printstring(sp,0,40);
 		statusCol := @WHITE;
 	@ENDIF		
 end;
@@ -501,26 +565,28 @@ begin
 		statusCol := @DARK_GREY;
 	@ENDIF
 end;
+@startblock $5800 "Code"
 
 procedure SwapActiveChar();
 begin
 	textTimer := 20;
-	if(activeChar = 0) then begin 
-		activeChar := 1; 
-		PrintText(@CHAR_SWAP_GREEN,#txtCharSwapGreen);
+	if(activeChar = 0 and controlList[1].controlState <> @CTRL_STATE_EXITED) then begin 
+		activeChar := 1;
+		sp :=  #txtCharSwapGreen;
+		PrintText(@CHAR_SWAP_GREEN);
 	end 
-	else begin 
+	else if(activeChar = 1 and controlList[0].controlState <> @CTRL_STATE_EXITED) then begin 
 		activeChar := 0;
-		PrintText(@CHAR_SWAP_RED,#txtCharSwapRed);
+		sp :=  #txtCharSwapRed;
+		PrintText(@CHAR_SWAP_RED);
 	end;				
 end;
 
-
+	
 procedure InitLevel();
 var 
 	i : integer;
 	levStr: string = "XFF";	
-	p : pointer of byte;
 begin
 	state := @STATE_PLAY;
 	countObjects := 0;
@@ -535,8 +601,8 @@ begin
 
 	levStr[2] := 0;
 	for i:= $EA00 to $FFF0 do begin
-		p := int2ptr(i);
-		p[0] := $FF;
+		sp := int2ptr(i);
+		sp[0] := $FF;
 	end;
 	
 	
@@ -545,6 +611,11 @@ begin
 			levelSingle := nextLevel;
 			levStr[0] := 'S';
 			str::itoa(levelSingle, #levStr+1, 16);
+			
+			@ifdef CRT_VERSION 
+			LoadLevelFromCrt(levelSingle, true);
+			@endif
+			
 			@ifdef IS_DEMO 
 			asm(
 "
@@ -562,6 +633,9 @@ begin
 			levelCoop := nextLevel;
 			levStr[0] := 'M';
 			str::itoa(levelCoop, #levStr+1, 16);
+			@ifdef CRT_VERSION 
+			LoadLevelFromCrt(levelCoop, false);
+			@endif
 			@ifdef IS_DEMO 
 			asm(
 "
@@ -668,8 +742,6 @@ end;
 
 procedure CycleWater();
 var
-	sp: pointer;
-	dp: pointer;
 	waterStep : byte;
 begin	
 	waterStep := mod(globaltime,4);
@@ -1126,7 +1198,6 @@ end;
 procedure DeleteMapItem(id: byte, x: byte, y: byte, z:byte);
 var	
 	pos: byte;
-	pm: pointer of byte;
 begin
 	pos := x + ystart[y];	
 	GetZLayerPointer(z); 
@@ -1271,7 +1342,7 @@ begin
 		
 		c := mapfront[i];
 		if(c <> $FF and objectList[c].laserTag <> $FF) then begin
-			if(objectList[c].component2 & @COMP_LASERBEAN_2 = @COMP_LASERBEAN_2 or objectList[c].component0 & @COMP_WATER_0) then begin 
+			if(objectList[c].component2 & @COMP_LASERBEAN_2 = @COMP_LASERBEAN_2 or objectList[c].component0 & @COMP_WATER_0 = @COMP_WATER_0) then begin 
 				DeletePos(c, false, false);
 			end;
 		end;
@@ -1638,7 +1709,6 @@ var
 	levStr2: string = "00";
 	pos : byte;
 	len: byte;
-	ps: pointer of byte;
 begin
 	startirq(@USE_KERNAL);
 	setregularcolormode();
@@ -1656,6 +1726,9 @@ begin
 		if(levelCoop >= 9) then pos := 0 else pos := 1; 
 		str::itoa(levelCoop + 1, #levStr2 + pos, 10);
 		@ifdef IS_DEMO 
+		Call(^$2003);
+		@endif
+		@ifdef CRT_VERSION 
 		Call(^$2003);
 		@endif
 		
@@ -2028,7 +2101,11 @@ begin
 		ScreenOn();
 		StartRasterChain(RasterMain(), 0,@USE_KERNAL); // Don't use kernal
 	end
-	else begin 
+	else begin
+		@ifdef CRT_VERSION
+		LoadMusicFromCrt();
+		InitSid(^$2000);
+		@endif  
 		@ifdef IS_DEMO
 		asm( 
 	"

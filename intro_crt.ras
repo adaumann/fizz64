@@ -1,0 +1,135 @@
+program intro;
+@setvalue "exomizer_toggle" 0
+@setvalue "output_type" "prg"
+// setvale "start 0900
+
+// @use "demounit"
+@use "tables/luminosities"
+@use "screen/fadeinout"
+
+var  
+	@perlinnoise "title/per1.bin" 40 25 2 1 1  170 140
+	fadedata : incbin("title/per1.bin",$1580);
+	@export "title/title.flf" "title/title.bin" 256
+	i: byte;
+	exit: boolean;
+	ready: boolean;
+	img_data:incbin("title/title_data.bin", $2000);
+	img_col : incbin("title/title_color.bin");
+	music: incsid("music/fizz_intro_4000.sid",2);
+
+procedure Init();
+begin
+// Executed in stand-alone
+	disableciainterrupts();
+	preventirq();
+	setmemoryconfig(1,0,0);
+	setmulticolormode();
+	setbitmapmode();
+	setcharsetandscreenlocation($2000,$4400);
+	setbank(VIC_BANK0);
+	//copyimagecolordata(#img_col,1);	
+
+	screen_bg_col:=black;
+	screen_fg_col:=black;
+	clearscreen(0,^$0400);	
+	clearscreen(0,^$D800);		
+	InitSid(^$4000);
+end;
+
+interrupt RasterOff();
+begin
+	startirq(0);
+	closeIrq();
+end;
+	
+
+interrupt RasterMain();
+begin
+	startirq(0);
+	setmulticolormode();
+	setbitmapmode();
+	setcharsetandscreenlocation($2000,$0400);
+	setbank(VIC_BANK0);
+	ReadJoy2();
+	if(joy2 & JOY_FIRE = JOY_FIRE and ready = true) then exit := true;
+
+	call(^$4003);
+	closeIrq();
+
+end;
+
+procedure Transfer();
+begin	
+	asm("	
+	;--- write your code to switch off interrupts and sid here ---
+	lda #$ea
+	sta $0315
+	lda #$31
+	sta $0314
+	lda #$81
+	sta $dc0d
+	lda #0
+	sta $d01a
+	inc $d019
+	lda $dc0d
+	;Copy relocator code to memory $0200
+	ldx #$00
+reloccodecopy:
+	lda reloccode,x
+	sta $0100,x
+	inx
+	bne reloccodecopy
+	lda #0
+	sta $0800
+	;cli
+	jmp $0100 ;Jump to self-modified relocator code
+	
+reloccode:
+	sei
+	lda #$34 ;If your program goes over $d000, else use '#$35 instead
+	sta $01
+relocate1:  
+	ldx #$00
+relocate2: 
+	lda $4800,x ;Target address to read from
+	sta $0801,x ;Transfer to BASIC load address $0801 - ALWAYS!
+	inx
+	bne relocate2
+	inc $0109 ;Self-mode changing in relocated transfer code
+	inc $010c ;
+	lda $0109 ;Check if hi-byte of target address has expired $ffff
+	bne relocate1
+	lda #$37 ;Restore kernal-
+	sta $01
+	jmp $080d ;Run Exomizer decruncher from BASIC load address
+	cli");
+end;
+
+begin
+	Init();
+	ready := false;
+	exit := false;
+	StartRasterChain(RasterMain(), 0, 0); // Don't use kernal
+	FadeInOut::InitCols(#Luminosities::fromBlue);
+    FadeInOut::DefaultFadeIn(#img_col,$0400,#fadedata,2);	
+	
+	ready := true;
+	
+	while(exit = false) do begin end; 
+	
+	setmulticolormode();
+	setbitmapmode();
+	setcharsetandscreenlocation($2000,$0400);
+	setbank(VIC_BANK0);
+
+	FadeInOut::DefaultFadeOut(#img_col,$0400,#fadedata,2);
+	preventirq();
+	disableciainterrupts();
+	setmemoryconfig(1,1,1);
+	//StartRasterChain(RasterOff(), 0, 0); // Don't use kernal
+
+	Transfer();
+	
+	Loop();
+end.

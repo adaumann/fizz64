@@ -1,0 +1,47 @@
+program PrepareBlock0;
+
+
+// Set disk output
+@use "compression/compression"
+
+var	
+//@requirefile "singlev_packed_resources1.ras" "Please compile the corresponding paw before attempting to compile this program." 
+//@include "singlev_packed_resources1.ras"
+
+
+m0 : IncBin("levels/m0", $8000) compressed;
+m1 : IncBin("levels/m1", $8180) compressed;
+m2 : IncBin("levels/m2", $8300) compressed;
+m3 : IncBin("levels/m3", $8480) compressed;
+m4 : IncBin("levels/m4", $8600) compressed;
+m5 : IncBin("levels/m5", $8780) compressed;
+m6 : IncBin("levels/m6", $8900) compressed;
+m7 : IncBin("levels/m7", $8a80) compressed;
+m8 : IncBin("levels/m8", $8c00) compressed;
+m9 : IncBin("levels/m9", $8d80) compressed;
+ma : IncBin("levels/ma", $8f00) compressed;
+mb : IncBin("levels/mb", $9080) compressed;
+mc : IncBin("levels/mc", $9200) compressed;
+md : IncBin("levels/md", $9380) compressed;
+me : IncBin("levels/me", $9500) compressed;
+mf : IncBin("levels/mf", $9680) compressed;
+m10 : IncBin("levels/m10", $9800) compressed;
+m11 : IncBin("levels/m11", $9980) compressed;
+m12 : IncBin("levels/m12", $9b00) compressed;
+m13 : IncBin("levels/m13", $9c80) compressed;
+m14 : IncBin("levels/m14", $9e00) compressed;
+m15 : IncBin("levels/m15", $9f80) compressed;
+m16 : IncBin("levels/m16", $a100) compressed;
+m17 : IncBin("levels/m17", $a280) compressed;
+m18 : IncBin("levels/m18", $a400) compressed;
+m19 : IncBin("levels/m19", $a580) compressed;
+m1a : IncBin("levels/m1a", $a700) compressed;
+m1b : IncBin("levels/m1b", $a880) compressed;
+m1c : IncBin("levels/m1c", $aa00) compressed;
+m1d : IncBin("levels/m1d", $ab80) compressed;
+
+begin
+	// VICE: bs "c:/temp/block11.bin" 0 8000 9FFF
+	// VICE: bs "c:/temp/block12.bin" 0 9E00 BDFF
+	Loop();
+end.

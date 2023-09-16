@@ -1,0 +1,1 @@
+exomizer.exe sfx $0900 intro_crt.prg game.prg,$4800 -o fizz.prg -n 

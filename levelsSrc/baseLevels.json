@@ -191,7 +191,7 @@
         },
         {
             "Number": 3,
-            "Name": "portal tut",
+            "Name": "boxes",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
             "Rows": [
@@ -232,58 +232,11 @@
             "Texts": [
                 "BOXES",
                 "PUSH THE BROWN BOX",
-                "PULL THE GREY BOY"
+                "PULL THE GREY BOX"
             ]
         },                    
         {
             "Number": 4,
-            "Name": "portal tut",
-            "IsAllowedTwoPlayers": false,
-            "BothPlayersMustExit": true,
-            "Rows": [
-                " 01234567890123456789",
-                "0                    ",
-                "1         1      caa ",
-                "2  gggg            X ",
-                "3  g@.g      c .     ",
-                "4  ggsg      aga     ",
-                "5  c  t          n   ",
-                "6                    ",
-                "7    c         8     ",
-                "8            ccc     ",
-                "9   gg               ",
-                "0         a          ",
-                "1                    "
-             ],
-            "ActionEvents": [
-                {
-                    "Event": "InitLevel", "Action": "ExitOpen",
-                    "SenderX": 255, "SenderY": 255,
-                    "ReceiverX": 18, "ReceiverY": 2,
-                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
-                },
-                {
-                    "Event": "WaypointEnter", "Action": "PrintText",
-                    "SenderX": 4, "SenderY": 3,
-                    "ReceiverX": 255, "ReceiverY": 255,
-                    "Param1": 1, "Param2": 7, "Param3": 10, "Param4": 255
-                },
-                {
-                    "Event": "WaypointEnter", "Action": "PrintText",
-                    "SenderX": 14, "SenderY": 3,
-                    "ReceiverX": 255, "ReceiverY": 255,
-                    "Param1": 2, "Param2": 16, "Param3": 10, "Param4": 255
-                }
-
-            ],
-            "Texts": [
-                "FIRST PORTAL PASSAGE",
-                "USE THE OPPOSITE DIRECTION",
-                "SHOOT DOWN"
-            ]
-        },                    
-        {
-            "Number": 5,
             "Name": "Next Level",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -335,7 +288,7 @@
             ]
         },
         {
-            "Number": 6,
+            "Number": 5,
             "Name": "walk",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -420,7 +373,7 @@
         },        
 		
         {
-            "Number": 7,
+            "Number": 6,
             "Name": "Flip",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -471,7 +424,7 @@
             ]
         },
         {
-            "Number": 8,
+            "Number": 7,
             "Name": "Edge",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -542,7 +495,7 @@
             ]
         },
         {
-            "Number": 9,
+            "Number": 8,
             "Name": "Direction",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -574,7 +527,7 @@
             ]
         },
         {
-            "Number": 10,
+            "Number": 9,
             "Name": "Trap",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -619,7 +572,7 @@
             ]
         },
         {
-            "Number": 11,
+            "Number": 10,
             "Name": "GLAS CAGES",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -657,7 +610,7 @@
             ]
         },
         {
-            "Number": 12,
+            "Number": 11,
             "Name": "quick",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -689,6 +642,53 @@
                 "QUICK WIN"
             ]
         },        
+        {
+            "Number": 12,
+            "Name": "portal tut",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1         1      caa ",
+                "2  gggg            X ",
+                "3  g@.g      c .     ",
+                "4  ggsg      aga     ",
+                "5  c  t          n   ",
+                "6                    ",
+                "7    c         8     ",
+                "8            ccc     ",
+                "9   gg               ",
+                "0         a          ",
+                "1                    "
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 18, "ReceiverY": 2,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 4, "SenderY": 3,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 7, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 14, "SenderY": 3,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 16, "Param3": 10, "Param4": 255
+                }
+
+            ],
+            "Texts": [
+                "FIRST PORTAL PASSAGE",
+                "USE THE OPPOSITE DIRECTION",
+                "SHOOT DOWN"
+            ]
+        },                    
         {
             "Number": 13,
             "Name": "edges",
@@ -1098,8 +1098,8 @@
                 "0           6        ",
                 "1           axgaa    ",
                 "2           a   8    ",
-                "3       aaa a        ",
-                "4xe   @      >r     X",
+                "3       aaa a r      ",
+                "4xe   @      >      X",
                 "5     a         caa1a",
                 "6     aa  8       r  ",
                 "7     2   a          ",
@@ -1129,13 +1129,13 @@
                 },
                 {
                     "Event": "SwitchOn", "Action": "DoorOpen",
-                    "SenderX": 13, "SenderY": 4,
+                    "SenderX": 13, "SenderY": 3,
                     "ReceiverX": 0, "ReceiverY": 4,
                     "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
                 },
                 {
                     "Event": "SwitchOff", "Action": "DoorClose",
-                    "SenderX": 13, "SenderY": 4,
+                    "SenderX": 13, "SenderY": 3,
                     "ReceiverX": 0, "ReceiverY": 4,
                     "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
                 }
@@ -1566,18 +1566,11 @@
                     "SenderX": 1, "SenderY": 5,
                     "ReceiverX": 10, "ReceiverY": 5,
                     "Param1": 255, "Param2": 255, "Param3": 10, "Param4": 255
-                },
-                {
-                    "Event": "WaypointEnter", "Action": "PrintText",
-                    "SenderX": 12, "SenderY": 7,
-                    "ReceiverX": 255, "ReceiverY": 255,
-                    "Param1": 2, "Param2": 18, "Param3": 10, "Param4": 255
                 }
             ],
             "Texts": [
                 "THE LOOP",
-                "ANOTHER LOOP",
-                "EXIT"
+                "ANOTHER LOOP"
             ]
         },
         {
@@ -2356,7 +2349,7 @@
             "Texts": [
                 "BOXES FOR YOU",
                 "PUSH THE BROWN BOX",
-                "PULL THE GREY BOY"
+                "PULL THE GREY BOX"
             ]
         },                    
         {
@@ -2432,22 +2425,10 @@
             ],
             "ActionEvents": [
                 {
-                    "Event": "InitLevel", "Action": "ExitOpen",
-                    "SenderX": 0, "SenderY": 0,
-                    "ReceiverX": 7, "ReceiverY": 10,
-                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
-                },
-                {
                     "Event": "WaypointEnter", "Action": "PrintText",
                     "SenderX": 3, "SenderY": 2,
                     "ReceiverX": 255, "ReceiverY": 255,
                     "Param1": 1, "Param2": 16, "Param3": 10, "Param4": 255
-                },
-                {
-                    "Event": "WaypointEnter", "Action": "ExitClose",
-                    "SenderX": 3, "SenderY": 2,
-                    "ReceiverX": 7, "ReceiverY": 10,
-                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
                 },
                 {
                     "Event": "SwitchOn", "Action": "ExitOpen",
