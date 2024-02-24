@@ -1,18 +1,201 @@
 {
-    "Levels": [
+    "HeaderTexts" : [
+        "DEFAULT",
+        "ANDY DAUMANN",
+        "TO DESIGN YOUR OWN LEVELS",
+        "AND EXPORT AS DISK GO TO:",
+        "HTTPS://FLEISCHGEMUESE.ITCH.IO/FIZZ"
+    ],
+    "MaxSingleLevels": 48,
+    "MaxMultiLevels": 30,
+    "Levels": 
+    [
         {
             "Number": 0,
+            "Name": "exit",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": false,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1 .                  ",
+                "2>aa                 ",
+                "3 @ >>>              ",
+                "4      >>>           ",
+                "5         >>>        ",
+                "6           a        ",
+                "7           a      X ",
+                "8           aaaaaaaaa",
+                "9                    ",
+                "0                    ",
+                "1                    "
+            ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 18, "ReceiverY": 7,
+                    "Param1": 255, "Param2": 255, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 1, "SenderY": 1,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 12, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 18, "SenderY": 7,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 11, "Param3": 10, "Param4": 255
+                }
+
+            ],
+            "Texts": [
+                "SLIDE INTO FIZZ",
+                "SLIDE TO THE EXIT",
+                "EXIT, FIRE TO ENTER"
+            ]
+        },
+        {
+            "Number": 1,
+            "Name": "exit",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": false,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1                    ",
+                "2                    ",
+                "3                    ",
+                "4       h    X       ",
+                "5      ahaaaaaaaaaaaa",
+                "6       h            ",
+                "7       h            ",
+                "8@  .a  .            ",
+                "9aaaaaaaa            ",
+                "0                    ",
+                "1                    "
+            ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 12, "ReceiverY": 4,
+                    "Param1": 255, "Param2": 255, "Param3": 255,"Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 3, "SenderY": 8,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 11, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 7, "SenderY": 8,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 11, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 12, "SenderY": 4,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 18, "Param3": 10, "Param4": 255
+                }
+
+            ],
+            "Texts": [
+                "JUMP ONE UP",
+                "STEP OVER EASILY",
+                "GRAP THE LADDER",
+                "EXIT"
+            ]
+        },
+        {
+            "Number": 2,
+            "Name": "exit",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": false,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1                    ",
+                "2                    ",
+                "3                    ",
+                "4g        .   r   X  ",
+                "5g    aaaaaa aaaaaaaa",
+                "6g@  .a              ",
+                "7gaaaaa              ",
+                "8           >>       ",
+                "9                    ",
+                "0                    ",
+                "1                    "
+            ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitClose",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 17, "ReceiverY": 4,
+                    "Param1": 255, "Param2": 255, "Param3": 255,"Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 4, "SenderY": 6,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 7, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 9, "SenderY": 4,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 8, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 17, "SenderY": 4,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 18, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 13, "SenderY": 4,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 4, "Param2": 18, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "ExitOpen",
+                    "SenderX": 13, "SenderY": 4,
+                    "ReceiverX": 17, "ReceiverY": 4,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "ExitClose",
+                    "SenderX": 13, "SenderY": 4,
+                    "ReceiverX": 17, "ReceiverY": 4,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                }
+            ],
+            "Texts": [
+                "CLIMB ONE UP",
+                "JUMP AND CLIMB UP",
+                "DOWN AND COME BACK",
+                "EXIT",
+                "SWITCH, PRESS FIRE"
+            ]
+        },
+        {
+            "Number": 3,
             "Name": "Obstacles",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
             "Rows": [
                 " 01234567890123456789",
-                "0                 @  ",
-                "1                 g  ",
-                "2      e             ",
-                "3      a     e       ",
-                "4      a.    a   .   ",
-                "5 a aaaaaaaaaaaaaaa  ",
+                "0                 @ g",
+                "1                   g",
+                "2      e          ggg",
+                "3      a     e      g",
+                "4      a.    a   .  g",
+                "5aa aaaaaaaaaaaaaaaaa",
                 "6      1     1       ",
                 "7  X                 ",
                 "8  a                 ",
@@ -37,7 +220,7 @@
                     "Event": "WaypointEnter", "Action": "PrintText",
                     "SenderX": 7, "SenderY": 4,
                     "ReceiverX": 255, "ReceiverY": 255,
-                    "Param1": 2, "Param2": 14, "Param3": 10, "Param4": 255
+                    "Param1": 2, "Param2": 13, "Param3": 10, "Param4": 255
                 },
                 {
                     "Event": "WaypointEnter", "Action": "ExitOpen",
@@ -55,12 +238,120 @@
             "Texts": [
                 "FIRST OBSTACLES",
                 "JUST WALK",
-                "LITTLE JUMPER",
+                "JUMP AND CLIMB",
                 "EXIT"
             ]
         },
         {
-            "Number": 1,
+            "Number": 4,
+            "Name": "exit",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": false,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1                    ",
+                "2    aaaaaaaaaaa     ",
+                "3g   8        .2     ",
+                "4g                   ",
+                "5g@ .8         2    X",
+                "6aaaaa         aaaaaa",
+                "7                    ",
+                "8                    ",
+                "9                    ",
+                "0                    ",
+                "1                    "
+            ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 19, "ReceiverY": 5,
+                    "Param1": 255, "Param2": 255, "Param3": 255,"Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 3, "SenderY": 5,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 16, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 13, "SenderY": 3,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 15, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 19, "SenderY": 5,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 18, "Param3": 10, "Param4": 255
+                }
+
+            ],
+            "Texts": [
+                "SWAP GRAV",
+                "GO UP",
+                "AND DOWN",
+                "EXIT"
+            ]
+        },
+        {
+            "Number": 5,
+            "Name": "exit",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": false,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1    aaaaaaaaaaaa    ",
+                "2g       .  2       g",
+                "3g       6          g",
+                "4g    8             g",
+                "5g@  .             Xg",
+                "6aaaaaa3       aaaaaa",
+                "7                    ",
+                "8                    ",
+                "9                    ",
+                "0                    ",
+                "1                    "
+            ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 18, "ReceiverY": 5,
+                    "Param1": 255, "Param2": 255, "Param3": 255,"Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 4, "SenderY": 5,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 11, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 8, "SenderY": 2,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 16, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 18, "SenderY": 5,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 18, "Param3": 10, "Param4": 255
+                }
+
+            ],
+            "Texts": [
+                "GRAB THE GRAV PAD",
+                "AWARE OF THE LASER",
+                "DANGER",
+                "EXIT"
+            ]
+        },
+        {
+            "Number": 6,
             "Name": "Retry",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -70,7 +361,7 @@
                 "1                    ",
                 "2                    ",
                 "3                X   ",
-                "4 @  . aa          d.",
+                "4 @  . aa        a  .",
                 "5aaaaa   a        ]aa",
                 "6a===a               ",
                 "7a===a               ",
@@ -108,12 +399,72 @@
             "Texts": [
                 "NEED TO RETRY",
                 "PRESS 'DEL' TO RETRY",
-                "I NEED TO STAND SOMEWHERE",
+                "I NEED TO STAND HERE",
                 "EXIT"
             ]
         },
         {
-            "Number": 2,
+            "Number": 7,
+            "Name": "exit",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": false,
+            "Rows": [
+                " 01234567890123456789",
+                "0         b          ",
+                "1        bbb         ",
+                "2  m    eaaae    n   ",
+                "3         t          ",
+                "4        ggg         ",
+                "5  m    g.@.g    n   ",
+                "6    a  aagaa  a     ",
+                "7     a   X   a      ",
+                "8                d.  ",
+                "9aaaaaa3     aaaaaaaa",
+                "0       aaaaa        ",
+                "1                    "
+            ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 9, "ReceiverY": 7,
+                    "Param1": 255, "Param2": 255, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 8, "SenderY": 5,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 10, "Param3": 20, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 10, "SenderY": 5,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 10, "Param3": 20, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 17, "SenderY": 8,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 14, "Param3": 20, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 9, "SenderY": 7,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 4, "Param2": 18, "Param3": 20, "Param4": 255
+                }
+            ],
+            "Texts": [
+                "LASER ACTION",
+                "PRESS FIRE AND MOVE",
+                "...TO ACTIVATE LASER",
+                "SHOOT THE BOX",
+                "EXIT"
+            ]
+        },
+        {
+            "Number": 8,
             "Name": "Transporter",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -190,7 +541,7 @@
             ]
         },
         {
-            "Number": 3,
+            "Number": 9,
             "Name": "boxes",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -236,7 +587,7 @@
             ]
         },                    
         {
-            "Number": 4,
+            "Number": 10,
             "Name": "Next Level",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -288,7 +639,80 @@
             ]
         },
         {
-            "Number": 5,
+            "Number": 11,
+            "Name": "justportal",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": true,
+            "Rows": [
+                " 01234567890123456789",
+                "0   cccccc  cggggc   ", 
+                "1   c2  8c  c   Xc   ", 
+                "2   c @. c  c    c   ", 
+                "3   cggggc  cccccc   ", 
+                "4                    ", 
+                "5                    ",
+                "6   ccccc1cc1ccccc   ",
+                "7   c .        . c   ",
+                "8   c            c   ", 
+                "9   gg gggggggg gg   ", 
+                "0  ______   _______  ", 
+                "1                    " 
+             ],
+            "ActionEvents": [
+                {
+                    "Event": "InitLevel", "Action": "ExitOpen",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 15, "ReceiverY": 1,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "InitLevel", "Action": "PrintText",
+                    "SenderX": 255, "SenderY": 255,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 4, "Param2": 10, "Param3": 90, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 6, "SenderY": 2,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 10, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointLeave", "Action": "PrintText",
+                    "SenderX": 6, "SenderY": 2,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 4, "Param2": 10, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 5, "SenderY": 7,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 10, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 14, "SenderY": 7,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 10, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 15, "SenderY": 1,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 5, "Param2": 18, "Param3": 10, "Param4": 255
+                }
+            ],
+            "Texts": [
+                "JUST PORTAL",
+                "WANNA GO UP OR DOWN",
+                "A PORTAL MIGHT HELP",
+                "THE OPPOSITE DIR",
+                "SHOT THE GREEN WALL",
+                "EXIT"
+            ]
+        },        
+        {
+            "Number": 12,
             "Name": "walk",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -298,7 +722,7 @@
                 "1                    ", 
                 "2                    ", 
                 "3                    ", 
-                "4   @   8        X   ", 
+                "4   @   8    .   X   ", 
                 "5   aaaaaaaaaaaaaaaa ",
                 "6       . r   2 1    ",
                 "7               d    ",
@@ -360,7 +784,13 @@
                     "Event": "WaypointLeave", "Action": "PrintText",
                     "SenderX": 9, "SenderY": 6,
                     "ReceiverX": 255, "ReceiverY": 255,
-                    "Param1": 3, "Param2": 17, "Param3": 10, "Param4": 255
+                    "Param1": 3, "Param2": 19, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 12, "SenderY": 4,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 4, "Param2": 12, "Param3": 10, "Param4": 255
                 }
 
             ],
@@ -368,12 +798,79 @@
                 "READY SET GO",
                 "READY",
                 "SET",
-                "GO"
+                "GO",
+                "TIMING WRONG"
             ]
         },        
-		
         {
-            "Number": 6,
+            "Number": 13,
+            "Name": "exit",
+            "IsAllowedTwoPlayers": false,
+            "BothPlayersMustExit": false,
+            "Rows": [
+                " 01234567890123456789",
+                "0                    ",
+                "1      aaaaaaa       ",
+                "2g     2     r      g",
+                "3g                  g",
+                "4g     .      c     g",
+                "5g@.   c     8c    Xg",
+                "6aaaaaaa3     aaaaaaa",
+                "7c                   ",
+                "8                    ",
+                "9                    ",
+                "0                    ",
+                "1                    "
+            ],
+            "ActionEvents": [
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 2, "SenderY": 5,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 1, "Param2": 13, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 6, "SenderY": 4,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 2, "Param2": 10, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 18, "SenderY": 5,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 3, "Param2": 18, "Param3": 10, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOn", "Action": "ExitOpen",
+                    "SenderX": 12, "SenderY": 2,
+                    "ReceiverX": 18, "ReceiverY": 5,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "SwitchOff", "Action": "ExitClose",
+                    "SenderX": 12, "SenderY": 2,
+                    "ReceiverX": 18, "ReceiverY": 5,
+                    "Param1": 255, "Param2": 255, "Param3": 255, "Param4": 255
+                },
+                {
+                    "Event": "WaypointEnter", "Action": "PrintText",
+                    "SenderX": 12, "SenderY": 2,
+                    "ReceiverX": 255, "ReceiverY": 255,
+                    "Param1": 4, "Param2": 10, "Param3": 10, "Param4": 255
+                }
+
+            ],
+            "Texts": [
+                "PORTALS",
+                "ACTIVATE PORTAL",
+                "AND A SECOND PORTAL",
+                "EXIT",
+                "SWITCH, PRESS FIRE"
+            ]
+        },
+        {
+            "Number": 14,
             "Name": "Flip",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -424,7 +921,7 @@
             ]
         },
         {
-            "Number": 7,
+            "Number": 15,
             "Name": "Edge",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -495,7 +992,7 @@
             ]
         },
         {
-            "Number": 8,
+            "Number": 16,
             "Name": "Direction",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -527,7 +1024,7 @@
             ]
         },
         {
-            "Number": 9,
+            "Number": 17,
             "Name": "Trap",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -572,7 +1069,7 @@
             ]
         },
         {
-            "Number": 10,
+            "Number": 18,
             "Name": "GLAS CAGES",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -610,7 +1107,7 @@
             ]
         },
         {
-            "Number": 11,
+            "Number": 19,
             "Name": "quick",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -643,7 +1140,7 @@
             ]
         },        
         {
-            "Number": 12,
+            "Number": 20,
             "Name": "portal tut",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -690,7 +1187,7 @@
             ]
         },                    
         {
-            "Number": 13,
+            "Number": 21,
             "Name": "edges",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -722,7 +1219,7 @@
             ]
         },        
         {
-            "Number": 14,
+            "Number": 22,
             "Name": "ladder",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -766,7 +1263,7 @@
             ]
         },          
         {
-            "Number": 15,
+            "Number": 23,
             "Name": "Mirrors",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -804,7 +1301,7 @@
             ]
         },
         {
-            "Number": 16,
+            "Number": 24,
             "Name": "btl",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -836,7 +1333,7 @@
             ]
         },
         {
-            "Number": 17,
+            "Number": 25,
             "Name": "fizz hero",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -911,7 +1408,7 @@
             ]
         },          
         {
-            "Number": 18,
+            "Number": 26,
             "Name": "Return",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -968,7 +1465,7 @@
             ]
         },
         {
-            "Number": 19,
+            "Number": 27,
             "Name": "JakobLadder",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -1007,7 +1504,7 @@
             ]
         },
         {
-            "Number": 20,
+            "Number": 28,
             "Name": "PortalRoom",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1039,7 +1536,7 @@
             ]
     	},
         {
-            "Number": 21,
+            "Number": 29,
             "Name": "block",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1089,7 +1586,7 @@
             ]
         },        
         {
-            "Number": 22,
+            "Number": 30,
             "Name": "jas",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1145,7 +1642,7 @@
             ]
         },
         {
-            "Number": 23,
+            "Number": 31,
             "Name": "fix the transporter",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1189,7 +1686,7 @@
             ]
         },
         {
-            "Number": 24,
+            "Number": 32,
             "Name": "inner room",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1272,7 +1769,7 @@
 
 		},
         {
-            "Number": 25,
+            "Number": 33,
             "Name": "noja",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1322,7 +1819,7 @@
             ]
         },
         {
-            "Number": 26,
+            "Number": 34,
             "Name": "noja",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1397,7 +1894,7 @@
             ]
         },        
         {
-            "Number": 27,
+            "Number": 35,
             "Name": "LaserLight",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -1442,7 +1939,7 @@
             ]
         },
         {
-            "Number": 28,
+            "Number": 36,
             "Name": "LevelUp",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -1487,7 +1984,7 @@
             ]
         },
         {
-            "Number": 29,
+            "Number": 37,
             "Name": "Loop",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -1574,7 +2071,7 @@
             ]
         },
         {
-            "Number": 30,
+            "Number": 38,
             "Name": "Be Save",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -1637,7 +2134,7 @@
             ]
         },
         {
-            "Number": 31,
+            "Number": 39,
             "Name": "Controlroom",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -1714,7 +2211,7 @@
             ]
         },
         {
-            "Number": 32,
+            "Number": 40,
             "Name": "Planet",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1770,7 +2267,7 @@
             ]
         },
         {
-            "Number": 33,
+            "Number": 41,
             "Name": "Pit",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1819,7 +2316,7 @@
             ]
         },
         {
-            "Number": 34,
+            "Number": 42,
             "Name": "river",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1851,7 +2348,7 @@
             ]
         },
         {
-            "Number": 35,
+            "Number": 43,
             "Name": "pyramide pump",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -1938,7 +2435,7 @@
             ]
         },        
         {
-            "Number": 36,
+            "Number": 44,
             "Name": "race",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -2001,7 +2498,7 @@
             ]
         },        
         {
-            "Number": 37,
+            "Number": 45,
             "Name": "portal fly",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -2075,7 +2572,7 @@
             ]
         },          
         {
-            "Number": 38,
+            "Number": 46,
             "Name": "no need lasers",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": true,
@@ -2107,7 +2604,7 @@
             ]
         },
         {
-            "Number": 39,
+            "Number": 47,
             "Name": "Built it",
             "IsAllowedTwoPlayers": false,
             "BothPlayersMustExit": false,
@@ -2171,7 +2668,6 @@
                 "EXIT"
             ]
         },
-		
         {
             "Number": 0,
             "Name": "TwoHaveStarted",

@@ -62,13 +62,28 @@ namespace LevConv
             }
             else
             {
-                Console.WriteLine("Usage: LevConv -i <import file> -e <export folder> [-t <level> <2player>]  [-g <game file>]");
+                Console.WriteLine("Usage: LevConv -i <import file> -e <export folder> [-t <level> <2player>] [-l]  [-g <game file>]");
+                Console.WriteLine(" -i : Import File as Json");
+                Console.WriteLine(" -e : Export folder containing binary levels to be transferred on disk");
+                Console.WriteLine(" -t : Build a test PRG file with level and single/multi flag, output in test.prg");
+                Console.WriteLine(" -g : Base game file for testing, with -t flag");
             }
+
         }
 
         static LevelSet SampleData() 
         {
             var set = new LevelSet();
+            set.HeaderTexts = new List<string>()
+            {
+                "Sample",
+                "username",
+                "notes1",
+                "notes2",
+                "notes3"
+            };
+            set.MaxSingleLevels = 1;
+            set.MaxMultiLevels = 0;
             set.Levels = new List<Level>()
             {
                 new Level()

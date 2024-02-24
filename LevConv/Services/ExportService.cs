@@ -47,6 +47,37 @@ namespace LevConv.Services
 
         public static void ExportAsBinary(LevelSet levelSet, string folder, bool incHeader)
         {
+            string levHead = folder + "\\l";
+            using BinaryWriter bwHeadWriter = new BinaryWriter(File.Open(levHead, FileMode.Create), Encoding.ASCII, false);
+            if(incHeader)
+            {
+                bwHeadWriter.Write((byte)0x0);
+                bwHeadWriter.Write((byte)0x50);
+            }            
+
+            // LevelInfo
+            bwHeadWriter.Write((byte)levelSet.MaxSingleLevels);
+            bwHeadWriter.Write((byte)levelSet.MaxMultiLevels);            
+
+            // Strings
+            var pos = 0x5002;
+            pos += (levelSet.HeaderTexts.Count * 2);
+            foreach (var str in levelSet.HeaderTexts)
+            {
+                var bytes = BitConverter.GetBytes(pos);
+                bwHeadWriter.Write((byte)bytes[0]);
+                bwHeadWriter.Write((byte)bytes[1]);
+                pos = pos + str.Length + 1;
+            }
+            foreach (var str in levelSet.HeaderTexts)
+            {
+                foreach (var field in str.ToCharArray())
+                {
+                    bwHeadWriter.Write((byte)field);
+                }
+                bwHeadWriter.Write((byte)0x0);
+            }
+
             foreach (var level in levelSet.Levels)
             {
                 string fileName;
@@ -117,7 +148,7 @@ namespace LevConv.Services
                     // Flags
                     bwWriter.Write(level.BothPlayersMustExit);
                     // Strings
-                    var pos = 0x1df2;
+                    pos = 0x1df2;
                     pos += (level.Texts.Count * 2);
                     foreach (var str in level.Texts)
                     {

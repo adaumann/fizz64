@@ -1,8 +1,8 @@
 program boot;
 
 // Set disk output
-
 var	
+	
 	@define useKernal 0
 
 
@@ -18,8 +18,7 @@ var
 	isInitialized: byte = 0;
 	
 	ldr: byte; // the current position in the order array	
-
-// Loader at $200
+	// Loader at $200
 	@use KrillsLoader $0200 $2000 $4000
 
 //interrupt NMI();

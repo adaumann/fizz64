@@ -1,26 +1,28 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\mail\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj": {}
+    "C:\\Users\\adaumann\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj": {}
   },
   "projects": {
-    "C:\\Users\\mail\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj": {
+    "C:\\Users\\adaumann\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\mail\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj",
+        "projectUniqueName": "C:\\Users\\adaumann\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj",
         "projectName": "LevConv",
-        "projectPath": "C:\\Users\\mail\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj",
-        "packagesPath": "C:\\Users\\mail\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\mail\\OneDrive\\Source\\pool64\\LevConv\\obj\\",
+        "projectPath": "C:\\Users\\adaumann\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj",
+        "packagesPath": "C:\\Users\\adaumann\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\adaumann\\OneDrive\\Source\\pool64\\LevConv\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\mail\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\adaumann\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
         ],
         "sources": {
-          "https://api.nuget.org/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {},
+          "https://hcvservicedockerserver1:8889/hc-VISION-Collection/_packaging/hcv-packages/nuget/v3/index.json": {}
         },
         "frameworks": {
           "net7.0": {

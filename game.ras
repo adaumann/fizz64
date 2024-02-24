@@ -1,5 +1,5 @@
 program game;
-@define CRT_VERSION 1
+//@define CRT_VERSION 1
 
 @ifdef CRT_VERSION
 @projectsettings "exomize" "1"
@@ -65,6 +65,8 @@ var
 	needExtraCycle : boolean;
 	pos: byte;
 	statusCol: byte;
+	maxSingleLevels: byte;
+	maxMultiLevels: byte;
 	// Game	
 	@define SCENES_SIZE 1
 	@define DIMX 20
@@ -77,8 +79,6 @@ var
 	@define MAX_ACTORS 32
 	@define MAX_LEV_STRINGS 8
 	@define ACTOR_LENGTH 8
-	@define MAX_LEVELS_SINGLE 40
-	@define MAX_LEVELS_COOP 30
 
 	@define DIMTILES 240
 	@define DIMANIMS 14
@@ -397,6 +397,14 @@ var
 
 @endblock
 
+/*
+@ifdef IS_DEMO
+	@startblock "$08FD" "Global"
+	maxSingle, maxMulti: byte;
+	@endblock
+@endif
+*/
+
 @startblock $1c00 "level"
 
     lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6    [12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h o aaaaaaaaaaaaaaa>>aaaa");
@@ -539,6 +547,27 @@ end;
 
 @startblock $5800 "Code"
 
+
+procedure InitSprites();
+var
+	i:byte;
+begin
+	// Set all sprites to be multicolor
+	sprite_multicolor:=$ff;
+	// Set common sprite multicolor #1 
+	sprite_multicolor_reg1:=dark_grey;
+	// Set  common sprite multicolor #2 
+	sprite_multicolor_reg2:=white;
+	for i := 0 to 8 do begin 
+		sprite_color[i]:=light_red;
+		SpritePos(0,0,i);
+	end;
+	sprite_color[1]:=green;
+	// Turn on sprite 0 (or @useSprite)
+	sprite_bitmask := $FF;
+//	togglebit(sprite_bitmask,0,1);
+end;
+
 procedure PrintText(x: byte);
 begin
 	@IFDEF OVERFLOW_CHECK
@@ -565,7 +594,6 @@ begin
 		statusCol := @DARK_GREY;
 	@ENDIF
 end;
-@startblock $5800 "Code"
 
 procedure SwapActiveChar();
 begin
@@ -607,6 +635,7 @@ begin
 	
 	
 	if(gameMode = @MODE_SINGLE) then begin
+		AddBreakpoint();		
 //		if(nextLevel <> levelSingle) then begin
 			levelSingle := nextLevel;
 			levStr[0] := 'S';
@@ -653,13 +682,13 @@ end;
 procedure SetNextLevel();
 begin 
 	if(gameMode = @MODE_SINGLE) then begin
-		if(levelSingle + 1 > @MAX_LEVELS_SINGLE) then nextLevel := 0
+		if(levelSingle + 1 >= maxSingleLevels) then nextLevel := 0
 		else begin
 			nextLevel := levelSingle + 1;
 		end;
 	end
 	else begin
-		if(levelCoop + 1 > @MAX_LEVELS_COOP) then nextLevel := 0
+		if(levelCoop +1 >= maxMultiLevels) then nextLevel := 0
 		else begin
 			nextLevel := levelCoop + 1;
 		end;
@@ -669,10 +698,10 @@ end;
 procedure IncLevel(mode: byte);
 begin 
 	if(mode = @MODE_SINGLE) then begin
-		if(levelSingle < @MAX_LEVELS_SINGLE - 1) then inc(levelSingle);
+		if(levelSingle < maxSingleLevels - 1) then inc(levelSingle);
 	end
 	else begin
-		if(levelCoop < @MAX_LEVELS_COOP - 1) then inc(levelCoop);
+		if(levelCoop < maxMultiLevels - 1) then inc(levelCoop);
 	end;
 end;
 
@@ -919,6 +948,12 @@ begin
 	end
 	else print2x2blockEmpty(x,y);
 end;
+
+procedure HideSprite(controlId : byte);
+begin
+	PrintSprite(0,@DIMY+1,0,controlId)
+end;
+
 
 function ConvertShift(gravity: byte, pos: byte) : integer;
 var 
@@ -1515,15 +1550,15 @@ end;
 procedure MenuMove(len: byte, oldMenuItem: byte);
 begin
 	if(mod(time,4) = 0) then begin
-		if(joy1 & JOY_UP = JOY_UP or joy2 & JOY_UP = JOY_UP) then begin
+		if(joy2 & JOY_UP = JOY_UP) then begin
 			if(menuItem > 0) then dec(menuItem);
 		end
-		else if(joy1 & JOY_DOWN = JOY_DOWN or joy2 & JOY_DOWN = JOY_DOWN) then begin
+		else if(joy2 & JOY_DOWN = JOY_DOWN) then begin
 			if(menuItem < len-1 ) then inc(menuItem); 
 		end;
 	end;
 	ColorLine(12 + oldMenuItem, @DARK_GREY);
-	ColorLine(12 + menuItem, @WHITE);
+	ColorLine(12 + menuItem, @WHITE)
 end;
 
 @endblock
@@ -1714,7 +1749,6 @@ begin
 	setregularcolormode();
 	setcharsetlocation(@charsetLoc1);
 	
-	ReadJoy1();
 	ReadJoy2();
 	inc(time);
 	levStr := "00";
@@ -1732,17 +1766,17 @@ begin
 		Call(^$2003);
 		@endif
 		
-		if(mod(time,8) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
+		if(mod(time,8) = 0 and (joy2 & JOY_FIRE = JOY_FIRE)) then begin
 			if(menuItem = 0 or menuItem = 3) then InitGame(levelSingle, levelCoop, @MODE_SINGLE);
 			if(menuItem = 1) then InitGame(levelSingle, levelCoop, @MODE_SINGLE_2CHAR);
 			if(menuItem = 2 or menuItem = 4) then InitGame(levelSingle, levelCoop, @MODE_COOP);
 			state := @STATE_OPEN_SCENE; //TODO
 		end;
-		if(mod(time,4) = 0 and (joy1 & JOY_LEFT = JOY_LEFT or joy2 & JOY_LEFT = JOY_LEFT)) then begin
+		if(mod(time,4) = 0 and (joy2 & JOY_LEFT = JOY_LEFT)) then begin
 			if(menuItem = 3) then DecLevel(@MODE_SINGLE);
 			if(menuItem = 4) then DecLevel(@MODE_COOP);
 		end;
-		if(mod(time,4) = 0 and (joy1 & JOY_RIGHT = JOY_RIGHT or joy2 & JOY_RIGHT = JOY_RIGHT)) then begin
+		if(mod(time,4) = 0 and (joy2 & JOY_RIGHT = JOY_RIGHT)) then begin
 			if(menuItem = 3) then IncLevel(@MODE_SINGLE);
 			if(menuItem = 4) then IncLevel(@MODE_COOP);
 		end;
@@ -1758,7 +1792,7 @@ begin
 
 		asm("
 		jsr $e2a9");
-		if(mod(time,8) = 0 and (joy1 & JOY_FIRE = JOY_FIRE or joy2 & JOY_FIRE = JOY_FIRE)) then begin
+		if(mod(time,8) = 0 and (joy2 & JOY_FIRE = JOY_FIRE)) then begin
 			if(menuItem = 0) then state := @STATE_INIT
 			else if(menuItem = 1) then state := @STATE_MENU;
 		end;
@@ -1947,26 +1981,6 @@ begin
 	pa.speed := 4;
 	pa.mode := @ANIM_MODE_LR;	
 
-end;
-
-procedure InitSprites();
-var
-	i:byte;
-begin
-	// Set all sprites to be multicolor
-	sprite_multicolor:=$ff;
-	// Set common sprite multicolor #1 
-	sprite_multicolor_reg1:=dark_grey;
-	// Set  common sprite multicolor #2 
-	sprite_multicolor_reg2:=white;
-	for i := 0 to 8 do begin 
-		sprite_color[i]:=light_red;
-		SpritePos(0,0,i);
-	end;
-	sprite_color[1]:=green;
-	// Turn on sprite 0 (or @useSprite)
-	sprite_bitmask := $FF;
-//	togglebit(sprite_bitmask,0,1);
 end;
 
 procedure InitMap();
@@ -2227,6 +2241,14 @@ begin
 	clearscreen($FF,^$4400);
 	clearscreen(BLACK,^$D800);
 	setmemoryconfig(1,0,0);
+@ifdef IS_DEMO
+	maxSingleLevels := Peek(^$08fd, 0);
+	maxMultiLevels := Peek(^$08fe, 0);
+@endif
+@ifndef IS_DEMO
+	maxSingleLevels := 48;
+	maxMultiLevels := 30;
+@endif
 	InitGame(0, 0, @MODE_COOP);
 	state := @STATE_MENU;
 	poke(^$d418,0,15);

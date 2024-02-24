@@ -5,6 +5,12 @@ namespace LevConv.Model;
 
 public class LevelSet
 {
+    public ICollection<string> HeaderTexts { get; set; } = new List<string>();
+
+    public int MaxSingleLevels { get; set; }
+
+    public int MaxMultiLevels { get; set; }
+
     public ICollection<Level> Levels { get; set; }
 }
 

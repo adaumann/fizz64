@@ -1,3 +1,5 @@
+cc1541.exe -n fizz -d 19 -w ".\levels\l" -f "l" boot_disk1.d64 
+
 Get-ChildItem -Path ".\levels\s*" |
 
 Foreach-Object {
@@ -6,6 +8,7 @@ Foreach-Object {
     Write-Host $_.BaseName
 
 }
+
 
 Get-ChildItem -Path ".\levels\m*" |
 

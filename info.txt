@@ -1,0 +1,34 @@
+FIZZ V1.0.3 - C64 Version
+-------------------------
+
+https://fleischgemuese.itch.io
+
+Code: Andy Daumann
+Graphics: Andy Daumann
+Level Design: Andy Daumann
+Musik: picrard
+
+Tools
+-----
+* Programming Language/IDE: Turbo Rascal Syntax Error: Great Pascal like compiler for 8-bit machines (www.turborascal.com)
+* Fastloader: Krill's Loader (https://csdb.dk/release/?id=220685)
+* SID Music: Goattracker (https://sourceforge.net/projects/goattracker2/)
+* Sid Sound Effects: SID SFX (https://agpx.itch.io/sid-sfx-editor)
+* Exomizer (part of TRSE)
+* Tinycrunch (https://csdb.dk/release/?id=168629)
+* SID Reloc (https://www.linusakesson.net/software/sidreloc/index.php) 
+* cc1541 (https://csdb.dk/release/?id=220661)
+
+ChangeLog
+---------
+
+V1.0.1: 
+* fixed bug with jump glitches, jumping in opposite direction of shift platform no longer possible
+* CRT version prepared
+V1.0.2:
+* add Levelbuilder tools (for PC) to generate own levelsets and export to disk .D64
+* support for custom levelsets
+* Note for "crackers": No need to "crack" this version, you have to amend the windows binaries too (or could you?)
+
+V1.0.3
+* added some more entry levels to learn all elements

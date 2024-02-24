@@ -1,0 +1,4 @@
+s0 : IncBin("data_packed/s0_c.bin", $8200);
+ : array [2] of byte = (
+	180, 130
+);

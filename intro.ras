@@ -1,5 +1,6 @@
 program intro;
 @setvalue "exomizer_toggle" 0
+@setvalue "remove_unused_symbols" "0"
 @ifndef IS_DEMO
 	@setvalue "output_type" "prg"
 @endif
@@ -7,32 +8,72 @@ program intro;
 // @use "demounit"
 @use "tables/luminosities"
 @use "screen/fadeinout"
+@use "screen/screen"
 
 var  
 	@perlinnoise "title/per1.bin" 40 25 2 1 1  170 140
 	fadedata : incbin("title/per1.bin",$C000);
 	@export "title/title.flf" "title/title.bin" 256
-	i: byte;
+	i,j: byte;
 	exit: boolean;
 	ready: boolean;
 	img_data:incbin("title/title_data.bin", $6000);
 	img_col : incbin("title/title_color.bin");
+	levStringsHead: Array[3] of string = ("LEVELSET:","AUTHOR:","NOTES:");
 @ifndef IS_DEMO
 	music: incsid("music/fizz_intro_2000.sid",2);
 @endif
 
+@startblock $5000 "levelset"
+	maxSingleLevels: byte = 40;
+	maxMultiLevels: byte = 30;
+	levStrings: Array[5] of string = ("<TITLE>","<AUTHOR>","<N1>","<N2>","<N3>");
+@endblock
 @startblock $3000 "code"
 
-
-procedure Init();
+procedure InitLevelSetInfo();
+var 
+	levStr: string;
 begin
-// Executed in stand-alone
-@ifndef IS_DEMO 
-	disableciainterrupts();
-	preventirq();
-	setmemoryconfig(1,0,0);
-@endif	
+	levStr := "L";
+	screen_bg_col:=black;
+	screen_fg_col:=black;
+	clearscreen(0,^$0400);	
+	clearscreen(0,^$D800);
+@ifdef IS_DEMO 
+			asm(
+"
+	ldx #<localVariable_InitLevelSetInfo_levStr
+	ldy #>localVariable_InitLevelSetInfo_levStr
+	jsr $200
+");
+@endif
+	//poke(^53272,0,23);
+	Screen::PrintStringColor(levStringsHead[0],0,0,@WHITE);
+	Screen::PrintStringColor(levStringsHead[1],0,1,@WHITE);
+	Screen::PrintStringColor(levStringsHead[2],0,3,@WHITE);
+	Screen::PrintStringColor(levStrings[0],11,0,@WHITE);
+	Screen::PrintStringColor(levStrings[1],11,1,@WHITE);
+	Screen::PrintStringColor(levStrings[2],0,3,@WHITE);
+	Screen::PrintStringColor(levStrings[3],0,4,@WHITE);
+	Screen::PrintStringColor(levStrings[4],0,5,@WHITE);
+	exit := false;
+	i := 0;
+	j := 0;
+	while(exit = false and j < 255) do begin
+		inc(i);
+		if(i = 255) then inc(j);
+		ReadJoy2();
+		if(joy2 & JOY_FIRE = JOY_FIRE) then exit := true;
+	end;
+	
+	poke(^$08FD,0,maxSingleLevels);
+	poke(^$08FE,0,maxMultiLevels);
+end;
 
+
+procedure InitTitle();
+begin
 	setmulticolormode();
 	setbitmapmode();
 	setcharsetandscreenlocation($6000,$4400);
@@ -57,6 +98,7 @@ begin
 	call(^$2003);
 	ReadJoy2();
 	if(joy2 & JOY_FIRE = JOY_FIRE and ready = true) then exit := true;
+	if(getkey() = KEY_SPACE and ready = true) then exit := true;
 	closeIrq();
 
 end;
@@ -65,7 +107,17 @@ end;
 
 // This effect starts at $0900!	
 begin
-	Init();
+	// Executed in stand-alone
+	@ifndef IS_DEMO 
+		disableciainterrupts();
+		preventirq();
+		setmemoryconfig(1,0,0);
+		maxSingleLevels := 48;
+		maxMultiLevels := 30;
+	@endif
+	InitLevelSetInfo();
+	
+	InitTitle();
 	// Loop();
 	ready := false;
 	exit := false;

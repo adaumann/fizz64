@@ -161,7 +161,12 @@ begin
 							else begin
 								activeChar := controlId;
 								SwapActiveChar();
-								DeletePos(id, true, true);
+								objectList[id].component0 := $00;
+								objectList[id].component1 := $00;
+								objectList[id].component2 := $00;
+								SetZLayer(id, @Z_MAIN, @Z_BACK2);
+								HideSprite(controlId);
+								//DeletePos(id, true, true);
 								sp := #txtPlayerExit;
 								PrintText(@PLAYER_EXIT);
 							end;
@@ -284,7 +289,7 @@ var
 	shift: integer;
 	laserEmitId: byte;
 
-	colObj, eraseObj, colObj2, eraseObj2, laserId: byte;
+	colObj, eraseObj, colObj2, eraseObj2, colObj3, laserId: byte;
 	shiftDir: byte;
 begin
 	controlId := objectList[id].controlId;
@@ -384,21 +389,23 @@ begin
     else if(controlList[controlId].controlState = @CTRL_STATE_JUMP) then begin
 	    if(controlList[controlId].controlJumpStep = 0) then moveDir := @UP			// TODO: check for collideable?
 	    else if(controlList[controlId].controlJumpStep = 1 or controlList[controlId].controlJumpStep = 2) then begin
-		    colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
+			colObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
+			colObj2 := GetObjArea(id, objectList[id].transZ, 6, @COMP_COLLIDE_ABLE_0,0, false);
 			eraseObj := GetObjArea(id, objectList[id].transZ, 3, @COMP_ERASE_ABLE_0,0, false);
-			if((colObj = $FF or eraseObj <> $FF) and (controlList[controlId].b_controlPressLeft = true)) then moveDir := @LEFT;  //TODO: AnimationWalkL
+			if((colObj2 <> $FF and (colObj = $FF or eraseObj <> $FF)) and (controlList[controlId].b_controlPressLeft = true)) then moveDir := @LEFT;  //TODO: AnimationWalkL
 		
 			colObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_COLLIDE_ABLE_0,0, false);
+			colObj2 := GetObjArea(id, objectList[id].transZ, 8, @COMP_COLLIDE_ABLE_0,0, false);
 			eraseObj := GetObjArea(id, objectList[id].transZ, 5, @COMP_ERASE_ABLE_0,0, false);
-			if((colObj = $FF or eraseObj <> $FF) and (controlList[controlId].b_controlPressRight = true)) then moveDir := @RIGHT;  //TODO: AnimationWalkR
-
+			if((colObj2 <> $FF and (colObj = $FF or eraseObj <> $FF)) and (controlList[controlId].b_controlPressRight = true)) then moveDir := @RIGHT;  //TODO: AnimationWalkR
 
 			if(moveDir = $FF) then begin
 				colObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_COLLIDE_ABLE_0,0, false);
 				eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
 				colObj2 := GetObjArea(id, objectList[id].transZ, 0, @COMP_COLLIDE_ABLE_0,0, false);
 				eraseObj2 := GetObjArea(id, objectList[id].transZ, 0, @COMP_ERASE_ABLE_0,0, false);
-				if((colObj = $FF or eraseObj <> $FF) and (colObj2 = $FF or eraseObj2 <> $FF)) then begin
+				colObj3 := GetObjArea(id, objectList[id].transZ, 3, @COMP_COLLIDE_ABLE_0,0, false);
+				if((colObj = $FF or eraseObj <> $FF) and ((colObj2 = $FF or eraseObj2 <> $FF) and colObj3 <> $FF)) then begin
 					if(controlList[controlId].b_controlPressLeft = true) then begin
 						moveDir := @UP_LEFT;
 					end;
@@ -407,7 +414,8 @@ begin
 				eraseObj := GetObjArea(id, objectList[id].transZ, 1, @COMP_ERASE_ABLE_0,0, false);
 				colObj2 := GetObjArea(id, objectList[id].transZ, 2, @COMP_COLLIDE_ABLE_0,0, false);
 				eraseObj2 := GetObjArea(id, objectList[id].transZ, 2, @COMP_ERASE_ABLE_0,0, false);
-				if((colObj = $FF or eraseObj <> $FF) and (colObj2 = $FF or eraseObj2 <> $FF)) then begin
+				colObj3 := GetObjArea(id, objectList[id].transZ, 5, @COMP_COLLIDE_ABLE_0,0, false);
+				if((colObj = $FF or eraseObj <> $FF) and ((colObj2 = $FF or eraseObj2 <> $FF) and colObj3 <> $FF)) then begin
 					if(controlList[controlId].b_controlPressRight = true) then begin
 						moveDir := @UP_RIGHT;
 					end;
