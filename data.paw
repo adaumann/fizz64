@@ -1,7 +1,0 @@
-ras_include_file = packed_resources1.ras
-packed_address = $8200
-output_dir = data_packed
-use_exomizer3 = 0
-address_field = 0
-data = ,s0, levels/s0, $1c00, s1, levels/s1, $1c00, s2, levels/s2, $1c00, s3, levels/s3, $1c00, s4, levels/s4, $1c00, s5, levels/s5, $1c00, s6, levels/s6, $1c00, s7, levels/s7, $1c00, s8, levels/s8, $1c00, s9, levels/s9, $1c00, sa, levels/sa, $1c00, sb, levels/sb, $1c00, sc, levels/sc, $1c00, sd, levels/sd, $1c00, se, levels/se, $1c00, sf, levels/sf, $1c00, s10, levels/s10, $1c00, s11, levels/s11, $1c00, s12, levels/s12, $1c00, s13, levels/s13, $1c00, s14, levels/s14, $1c00, s15, levels/s15, $1c00, s16, levels/s16, $1c00, s17, levels/s17, $1c00, s18, levels/s18, $1c00, s19, levels/s19, $1c00, s1a, levels/s1a, $1c00, s1b, levels/s1b, $1c00, s1c, levels/s1c, $1c00, s1d, levels/s1d, $1c00, s1e, levels/s1e, $1c00, s1f, levels/s1f, $1c00, s20, levels/s20, $1c00, s21, levels/s21, $1c00, s22, levels/s22, $1c00, s23, levels/s23, $1c00, s24, levels/s24, $1c00, s25, levels/s25, $1c00, s26, levels/s26, $1c00, s27, levels/s27, $1c00
-data_tinycrunch = ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
