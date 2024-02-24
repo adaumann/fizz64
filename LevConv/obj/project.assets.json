@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\adaumann\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj",
+      "projectUniqueName": "C:\\Users\\adaumann\\OneDrive\\Source\\fizz64\\LevConv\\LevConv.csproj",
       "projectName": "LevConv",
-      "projectPath": "C:\\Users\\adaumann\\OneDrive\\Source\\pool64\\LevConv\\LevConv.csproj",
+      "projectPath": "C:\\Users\\adaumann\\OneDrive\\Source\\fizz64\\LevConv\\LevConv.csproj",
       "packagesPath": "C:\\Users\\adaumann\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\adaumann\\OneDrive\\Source\\pool64\\LevConv\\obj\\",
+      "outputPath": "C:\\Users\\adaumann\\OneDrive\\Source\\fizz64\\LevConv\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\adaumann\\AppData\\Roaming\\NuGet\\NuGet.Config",
