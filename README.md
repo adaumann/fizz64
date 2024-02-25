@@ -49,5 +49,3 @@ For release  open Fizz project and Project Settings:
 * Build disk with command: disk.ps1
 
 -> The D64 should now be ready
-
-NOTE: With version 0.17.110 it is not running, use older version https://github.com/leuat/TRSE/commits/nightly/
