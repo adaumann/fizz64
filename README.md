@@ -1,4 +1,12 @@
-How to run FiZZ (C64)
+# FiZZ - A platform puzzle game for C64
+
+Release: https://fleischgemuese.itch.io/fizz
+
+# Development
+
+The game was developed with the cross-plattform IDE/Compiler Turbo Rascal (www.turborascal.com) 
+
+# Installation
 
 * Download TRSE: https://github.com/leuat/TRSE 
 * Download VICE: https://vice-emu.sourceforge.io/
@@ -14,6 +22,7 @@ C64 Emulator: Path to x64sc.exe
 Exomizer: Path to exomizer.exe
 Tinycrunch: Path to tinycrunch tc_encode.py
 
+# Running game without loading levels (only one demo level is available)
 
 a) Development version without level loading
 For development open Fizz project and Project Settings:
@@ -22,9 +31,13 @@ For development open Fizz project and Project Settings:
 
 Start with Run (c-r) 
 
+## Run a test level via commandline
+
+You can edit the levelsSrc/baseLevels.json file and run test TestLevel command to test one level. See [LevelBuilder Help](FiZZ Levelbuilder Manual.md)
+
 * Build levels, you can use TestLevel.ps1 command to test levels: i.e. Testlevel 1 false (c64 emulator should show up)
 
-b) Development disk version
+# Development disk version
 For release  open Fizz project and Project Settings:
 * Project output type: d64
 * Target file: boot.ras
@@ -37,4 +50,4 @@ For release  open Fizz project and Project Settings:
 
 -> The D64 should now be ready
 
-NOTE: With version 0.17.110 it is running, use older version https://github.com/leuat/TRSE/commits/nightly/
+NOTE: With version 0.17.110 it is not running, use older version https://github.com/leuat/TRSE/commits/nightly/
