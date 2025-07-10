@@ -569,7 +569,7 @@ begin
 		newy := CalcPositionY(oldy, Lo(shift));
 	end;
 	if(newx <> $FF) then begin 
-		CycleAnimation(id);
+		CycleAnimation(id);		
 		SetPos(id,oldx, oldy, newx, newy, objectList[id].transZ);
 	end;	
 end;

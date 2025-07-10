@@ -3,5 +3,5 @@ packed_address = $00
 output_dir = d64_auto/
 use_exomizer3 = 0
 address_field = 0
-data = ,a, intro.prg, $900, b, game_s.prg, $900, t1, music/_fizz_intro_2000.dat, $2000, f, sounds/sounds_split1.bin, $e000
-data_tinycrunch = ,1, 0, 0, 0
+data = ,a, intro.prg, $900, b, game_s.prg, $900, t1, music/_fizz_intro_2000.dat, $2000, f, sounds/sounds_split1.bin, $e000, t2, music/_fizz_background2_20.dat, $2000
+data_tinycrunch = ,1, 0, 0, 0, 0

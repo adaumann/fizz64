@@ -13,12 +13,15 @@ program intro;
 var  
 	@perlinnoise "title/per1.bin" 40 25 2 1 1  170 140
 	fadedata : incbin("title/per1.bin",$C000);
-	@export "title/title.flf" "title/title.bin" 256
+	@export "title/title2.flf" "title/title2.bin" 256
+	@export "title/kalogo.flf" "title/kalogo.bin" 256
 	i,j: byte;
 	exit: boolean;
 	ready: boolean;
-	img_data:incbin("title/title_data.bin", $6000);
-	img_col : incbin("title/title_color.bin");
+	img_data:incbin("title/title2_data.bin", $a000);
+	img_col : incbin("title/title2_color.bin");
+	img_data2:incbin("title/kalogo_data.bin", $6000);
+	img_col2 : incbin("title/kalogo_color.bin");
 	levStringsHead: Array[3] of string = ("LEVELSET:","AUTHOR:","NOTES:");
 @ifndef IS_DEMO
 	music: incsid("music/fizz_intro_2000.sid",2);
@@ -64,6 +67,7 @@ begin
 		inc(i);
 		if(i = 255) then inc(j);
 		ReadJoy2();
+		if(getkey() = KEY_SPACE) then exit := true;
 		if(joy2 & JOY_FIRE = JOY_FIRE) then exit := true;
 	end;
 	
@@ -76,28 +80,42 @@ procedure InitTitle();
 begin
 	setmulticolormode();
 	setbitmapmode();
+	setcharsetandscreenlocation($a000,$8400);
+	setbank(VIC_BANK2);
+	copyimagecolordata(#img_col,2);	
+
+	screen_bg_col:=black;
+	screen_fg_col:=black;
+	clearscreen(0,^$8400);	
+	clearscreen(0,^$D800);		
+end;
+
+procedure InitLogo();
+begin
+	setmulticolormode();
+	setbitmapmode();
 	setcharsetandscreenlocation($6000,$4400);
 	setbank(VIC_BANK1);
-	//copyimagecolordata(#img_col,1);	
+	copyimagecolordata(#img_col2,1);	
 
 	screen_bg_col:=black;
 	screen_fg_col:=black;
 	clearscreen(0,^$4400);	
 	clearscreen(0,^$D800);		
-	InitSid(^$2000);
 end;
+
 
 interrupt RasterMain();
 begin
 	startirq(0);
-	setmulticolormode();
-	setbitmapmode();
-	setcharsetandscreenlocation($6000,$4400);
-	setbank(VIC_BANK1);
+//	setmulticolormode();
+//	setbitmapmode();
+//	setcharsetandscreenlocation($a000,$8400);
+//	setbank(VIC_BANK1);
 
 	call(^$2003);
 	ReadJoy2();
-	if(joy2 & JOY_FIRE = JOY_FIRE and ready = true) then exit := true;
+	//if(joy2 & JOY_FIRE = JOY_FIRE and ready = true) then exit := true;
 	if(getkey() = KEY_SPACE and ready = true) then exit := true;
 	closeIrq();
 
@@ -115,15 +133,16 @@ begin
 		maxSingleLevels := 48;
 		maxMultiLevels := 30;
 	@endif
+	InitSid(^$2000);
 	InitLevelSetInfo();
+	StartRasterChain(RasterMain(), 0, 0); // Don't use kernal
 	
-	InitTitle();
+	InitLogo();
 	// Loop();
 	ready := false;
 	exit := false;
-	StartRasterChain(RasterMain(), 0, 0); // Don't use kernal
 	FadeInOut::InitCols(#Luminosities::fromBlue);
-	FadeInOut::DefaultFadeIn(#img_col,$4400,#fadedata,2);	
+	FadeInOut::DefaultFadeIn(#img_col2,$4400,#fadedata,2);	
 	
 	ready := true;
 	
@@ -132,8 +151,26 @@ begin
 	setbitmapmode();
 	setcharsetandscreenlocation($6000,$4400);
 	setbank(VIC_BANK1);
+	
+	FadeInOut::DefaultFadeOut(#img_col2,$4400,#fadedata,2);	
 
-	FadeInOut::DefaultFadeOut(#img_col,$4400,#fadedata,2);	
+	
+	InitTitle();
+	// Loop();
+	ready := false;
+	exit := false;
+	FadeInOut::InitCols(#Luminosities::fromBlue);
+	FadeInOut::DefaultFadeIn(#img_col,$8400,#fadedata,2);	
+	
+	ready := true;
+	
+	while(exit = false) do begin end;
+	setmulticolormode();
+	setbitmapmode();
+	setcharsetandscreenlocation($a000,$8400);
+	setbank(VIC_BANK2);
+
+	FadeInOut::DefaultFadeOut(#img_col,$8400,#fadedata,2);	
 	@ifdef IS_DEMO 
 	asm("
 		jmp @bootStartAddress

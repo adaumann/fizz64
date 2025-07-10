@@ -1,3 +1,6 @@
 {
-    "dotnet.defaultSolution": "disable"
+    "dotnet.defaultSolution": "disable",
+    "[m68k]": {
+        "editor.rulers": []
+    }
 }

@@ -1,5 +1,6 @@
 program game;
 //@define CRT_VERSION 1
+//@exportprg2bin "game.prg" "game_s.prg" $0900 $E000
 
 @ifdef CRT_VERSION
 @projectsettings "exomize" "1"
@@ -7,6 +8,9 @@ program game;
 
 @ifndef CRT_VERSION
 @projectsettings "exomize" "0"
+@projectsettings "ignorebasicsysstart" 1
+@projectsettings "startaddress" $0900
+
 @endif 
 @use "system/str"
 @use "screen/screen"
@@ -17,35 +21,40 @@ program game;
 
 @startblock $1200 "Variables"
 var	
-	//@define DEBUG 1
+//	@define DEBUG  1
 	//@define OVERFLOW_CHECK 1
 	@define USE_KERNAL 0
 
 	// Charsets
-	@define charsetLoc1 $3800
-	@define charsetLoc2 $7800
-	@define tilesetLoc1 $3000
+	// @define charsetLoc1 $3800
+	@define screenLoc1  $4000
+	@define screenLoc2  $4400
+	
+	@define charsetLoc2 $5800
 	@define tilesetLoc2 $7000
-	@define spriteLoc1  $2000
-	@define spriteLoc2  $4800
-	@define tilesetCol  $3a00
-	@define logoLoc     $3e00
+	//@define spriteLoc1  $2000
+	@define spriteLoc2  $6000
+	//@define tilesetCol  $3a00
+	@define tilesetCol  $5400
+	//@define logoLoc     $7e00
+	@define logoLoc     $5000
 	@define sfxLoc      $e000
 	// Automatically export charsets 
 	@export "charsets/charset.flf" "charsets/charset.bin" 60	
  	@export "charsets/tileset.flf" "charsets/tileset.bin" 256	
  	@export "charsets/logo.flf" "charsets/logo.bin" 120
 	@export "sprites/spr.flf" "sprites/spr.bin" 4096	
-  	charset1: incbin("charsets/charset.bin", @charsetLoc1);
+  	//charset1: incbin("charsets/charset.bin", @charsetLoc1);
   	charset2: incbin("charsets/charset.bin", @charsetLoc2);
-  	tileset1: incbin("charsets/tileset.bin", @tilesetLoc1);
+  	//tileset1: incbin("charsets/tileset.bin", @tilesetLoc1);
   	tileset2: incbin("charsets/tileset.bin", @tilesetLoc2);
    	logo: incbin("charsets/logo.bin", @logoLoc);
 //  	sprite1: incbin("sprites/spr.bin", @spriteLoc1);
   	sprite2: incbin("sprites/spr.bin", @spriteLoc2);
 	tilesetColors :  incbin("charsets/tileset_color.bin", @tilesetCol);
 @ifndef IS_DEMO 
-	musicintro: incsid("music/fizz_intro_2000.sid",2);
+	//musicintro: incsid("music/fizz_intro_2000.sid",2);
+	musicintro: incsid("music/fizz_background2_20.sid",2);
 //	music: incsid("music/fizz_ingame_e000.sid",2);
   	sfx: incbin("sounds/sounds.prg", @sfxLoc, 2);
 @endif
@@ -58,21 +67,29 @@ var
 	currentBank: byte=0;
 	time: byte=0;
 	globaltime: byte=0;
+	watertime: byte = 0;
 	frameStatus: byte;
 	screen: byte;
 	countSprite: byte=0;
 	cycle: byte;
 	needExtraCycle : boolean;
+	spriteAnim: boolean=false;
 	pos: byte;
 	statusCol: byte;
 	maxSingleLevels: byte;
+	pathCounter: byte;
+	spr: array[2] of byte;
+
 	maxMultiLevels: byte;
+	screenmem: pointer;
+	
 	// Game	
 	@define SCENES_SIZE 1
 	@define DIMX 20
 	@define DIMY 12
 	@define DIMZ 4
 	@define MAX_OBJECTS 240
+	@define MAX_ANIMSTEP 7
 	@define MAX_CONTROLS 2
 	@define MAX_LASERS 12
 	@define MAX_LASER_SIZE 30
@@ -294,6 +311,9 @@ var
 	@define ACTION_SWITCH_OFF 13
 	@define ACTION_SET_GRAV_BULK 14
 	
+	@define MUSIC0 $0f
+	@define MUSIC1_20 $0f
+	
 	
 	@define DO_ACTIVATE_SWITCH_START 17
 	txtDoActiveSwitch: string=("SWITCH");
@@ -348,6 +368,10 @@ var
 	freq: byte;
 	voice: byte;
 	musicStr: string = ("T1");
+	ingameMusicStr: string = ("T2");
+	hasAnimPath1: boolean = false;
+	hasAnimPath2: boolean = false;
+	anx,any, anoldx, anoldy: integer;
 	
 	@define ANIM_CONSIDER_GRAV_IGNORE 0
 	@define ANIM_CONSIDER_GRAV_FULL 1
@@ -384,6 +408,11 @@ var
 		b_fallDown: byte;
 	end;
 	
+	animPathObject = record
+		x: integer;
+		y: byte;
+	end;	
+	
 	laserObject = record
 		laserDir: byte;
 		lastLaserDir: byte;
@@ -391,10 +420,14 @@ var
  		laserType : byte;
 		currentLaser: byte; 		
 	end;
+@endblock
+
+@startblock $e600 "control"
 	controlList : Array[@MAX_CONTROLS] of controlObject;
+	animPathList1: Array[@MAX_ANIMSTEP] of animPathObject;
+	animPathList2: Array[@MAX_ANIMSTEP] of animPathObject;
 	actorList : Array[@MAX_ACTORS] of actorObject;
 	laserList : Array[@MAX_LASERS] of laserObject;
-
 @endblock
 
 /*
@@ -407,7 +440,7 @@ var
 
 @startblock $1c00 "level"
 
-    lev: string = ("x {aaaaaa  a  a  aaa  ^a aa  a  aa    aa6 e  aaa  aa   d  aaa a6    [12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Yaa&            h     a& 4------====hh   aa&m   n   b@   = f aaX  x===ss rs8 h o aaaaaaaaaaaaaaa>>aaaa");
+    lev: string = ("x {aaa                ^a aa  a  aa      6 e       aa   d  aaa a6    [12    ^ ^Yaa  %  o   ^      ^Yaa&     ^         ^Yaa&    ^          ^Y  &            h      & 4------====hh   aa&m   n   b@   = f  aX  x===ss rs8 h o aaa           a >aaaa");
 										  //event, action, senderpos, receiverpos, p1, p2, p3, p48
 	levActor: Array[@MAX_ACTORS * @ACTOR_LENGTH] of byte = (1, 1 ,211 , 204, $FF, $FF, $FF, $FF,
 												            2, 2 ,211 , 204, $FF, $FF, $FF, $FF,	 
@@ -419,7 +452,7 @@ var
 												 			4, 6, 211, $FF, $FF, $FF, $FF, $FF,
 												 			0, 5, $FF, $FF, $00, 17, 10, $FF,
 												 			3, 5, 70, $FF, $00, 17, 10, $FF,
-												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
+	        										 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
 												 			$FF, $FF, $FF, $FF,$FF, $FF, $FF, $FF,
@@ -491,13 +524,15 @@ var
 	objectList : Array[@MAX_OBJECTS] of gobject;
 @endblock
 
+
 @ifdef CRT_VERSION
 @startblock $1000 "CodeCrt"
 
-procedure LoadMusicFromCrt();
+procedure LoadMusicFromCrt(i: byte);
 begin
+	
 	setmemoryconfig(1,1,1);
-	Poke(^$DE00,0,$0F);
+	Poke(^$DE00,0,i);
     Compression::Decompress($8000, $2000);	
 	setmemoryconfig(1,0,0);
 end;
@@ -545,7 +580,7 @@ end;
 @endblock
 @endif
 
-@startblock $5800 "Code"
+@startblock $2830 "Code"
 
 
 procedure InitSprites();
@@ -566,6 +601,14 @@ begin
 	// Turn on sprite 0 (or @useSprite)
 	sprite_bitmask := $FF;
 //	togglebit(sprite_bitmask,0,1);
+end;
+
+procedure PrintStringColor(s: pointer, x:byte, y:byte, c:byte);
+begin
+	moveto(x, y, screen);
+	printstring(s, 0, str::strlen(s));
+	moveto(x, y, hi(SCREEN_COL_LOC));
+	fillfast(screenmemory, c, str::strlen(s));
 end;
 
 procedure PrintText(x: byte);
@@ -635,7 +678,7 @@ begin
 	
 	
 	if(gameMode = @MODE_SINGLE) then begin
-		AddBreakpoint();		
+//		AddBreakpoint();		
 //		if(nextLevel <> levelSingle) then begin
 			levelSingle := nextLevel;
 			levStr[0] := 'S';
@@ -736,6 +779,9 @@ begin
 		if(x = @DIMX or y = @DIMY) then SCREEN_BG_COL:=YELLOW;
 	@ENDIF
 	
+	//AddBreakpoint();
+	
+	
 	moveto(x*2,y*2,screen);
 	screenmemory[0]:=c;
 	screenmemory[1]:=c+1;
@@ -773,50 +819,51 @@ procedure CycleWater();
 var
 	waterStep : byte;
 begin	
-	waterStep := mod(globaltime,4);
+	inc(watertime);
+	waterStep := mod(watertime,4);
 		 
-	sp := @tilesetLoc1 + (240 + waterStep) * 8;
-	dp := @tilesetLoc1 + 22*8;
-	MemCpyFast(sp, 0, dp,8);
+	sp := @tilesetLoc2 + (240 + waterStep) * 8;
 	dp := @tilesetLoc2 + 22*8;
 	MemCpyFast(sp, 0, dp,8);
+//	dp := @tilesetLoc2 + 22*8;
+//	MemCpyFast(sp, 0, dp,8);
 	
-	sp := @tilesetLoc1 + (243 - waterStep) * 8;
-	dp := @tilesetLoc1 + 23*8;
-	MemCpyFast(sp, 0, dp,8);
+	sp := @tilesetLoc2 + (243 - waterStep) * 8;
 	dp := @tilesetLoc2 + 23*8;
 	MemCpyFast(sp, 0, dp,8);
+//	dp := @tilesetLoc2 + 23*8;
+//	MemCpyFast(sp, 0, dp,8);
 	
-	sp := @tilesetLoc1 + (244 + waterStep) * 8;
-	dp := @tilesetLoc1 + 62*8;
-	MemCpyFast(sp, 0, dp,8);
+	sp := @tilesetLoc2 + (244 + waterStep) * 8;
 	dp := @tilesetLoc2 + 62*8;
 	MemCpyFast(sp, 0, dp,8);
+//	dp := @tilesetLoc2 + 62*8;
+//	MemCpyFast(sp, 0, dp,8);
 	
-	sp := @tilesetLoc1 + (247 - waterStep) * 8;
-	dp := @tilesetLoc1 + 63*8;
-	MemCpyFast(sp, 0, dp,8);
+	sp := @tilesetLoc2 + (247 - waterStep) * 8;
 	dp := @tilesetLoc2 + 63*8;
 	MemCpyFast(sp, 0, dp,8);
+//	dp := @tilesetLoc2 + 63*8;
+//	MemCpyFast(sp, 0, dp,8);
 end;
 
 procedure PrintSprite(x: byte, y: byte, spriteLoc: byte, num: byte);
 var
 	xs: integer;
 	ys: byte;
-	ns: byte;
+	addr: integer;
 begin
 	xs := 24 + (x shl 4);
 	ys := 50 + (y shl 4);
-	if(currentBank = 0) then begin
-		ns := spriteLoc + $80;
-		SetSpriteLoc(num, ns, 0);
-	end
-	else begin
-		ns := spriteLoc + $20;
-		SetSpriteLoc(num, ns, 1);
-	end;
-	SpritePos(xs,ys,num);
+	
+//	setspriteloc(0, $80, 1);
+	
+	//poke(^$43f8, num, $80 + spriteLoc);
+	//poke(^$47f8, num, $80 + spriteLoc);
+//	poke(^$43f8, num + 2, $80 + spriteLoc);
+//	poke(^$47f8, num + 2, $80 + spriteLoc);
+
+	SpritePos(xs, ys, num);
 end;
 
 procedure print2x2blockEmpty(x,y:byte);
@@ -932,21 +979,36 @@ begin
 	 	t := mapback2[pos];
 	 	currentTile := PaintPosAnim(t, considerAnimation);
  	end;
-	
+
 	if(t <> $FF) then begin
 		if(hideSprite = true) then begin
 			tHide := mapmain[pos];
-			if(tHide <> $FF and objectList[tHide].rendType = @REND_TYPE_SPRITE) then
-			 	PrintSprite(0,@DIMY+1,0,objectList[tHide].controlId)
+			if(tHide <> $FF and objectList[tHide].rendType = @REND_TYPE_SPRITE) then begin
+			 	PrintSprite(0,@DIMY+1,0,objectList[tHide].controlId);
+			 end
 		end;
-	 	if(objectList[t].rendType = @REND_TYPE_SPRITE and hideSprite = false) then
-		 	PrintSprite(x,y,currentTile,objectList[t].controlId)
-	 	else if(objectList[t].rendType = @REND_TYPE_TILE) then 
-	 		print2x2block(x,y,currentTile)
-	 	else 
-	 		print1x1block(x,y,currentTile);
+		if(objectList[t].rendType = @REND_TYPE_SPRITE) then begin
+			if(hasAnimPath1 = false and hasAnimPath2 = false) then begin
+				PrintSprite(x,y,currentTile,objectList[t].controlId);
+			end
+			else begin
+				spr[objectList[t].controlId] := $80 + currentTile;
+				// poke(^$43f8, objectList[t].controlId, $80 + currentTile);
+				//poke(^$43f8, objectList[t].controlId + 2, $80 + currentTile);
+				//poke(^$47f8, objectList[t].controlId, $80 + currentTile);
+				//poke(^$47f8, objectList[t].controlId + 2, $80 + currentTile);
+			end
+		end
+		else if(objectList[t].rendType = @REND_TYPE_TILE) then begin
+			print2x2block(x,y,currentTile);
+		end
+		else begin
+			print1x1block(x,y,currentTile);
+		end;
 	end
-	else print2x2blockEmpty(x,y);
+	else begin
+		print2x2blockEmpty(x,y);
+	end;
 end;
 
 procedure HideSprite(controlId : byte);
@@ -1105,6 +1167,8 @@ begin
 	PaintPos(pos, true);
 end;
 
+procedure SetAnimPath();
+
 procedure SetPos(i: byte,oldx:byte, oldy:byte, x: byte, y: byte, z: byte);
 var
 	pos: byte;
@@ -1129,7 +1193,13 @@ begin
 			lastWaypointId := GetObjectByPosFilterComp(oldx, oldy, @Z_BACK2, @COMP_WAYPOINT_3, 3);
 		controlList[controlId].waypointId := waypointId;
 		controlList[controlId].lastWaypointId := lastWaypointId;
-	end;
+	end;	
+	anx := x;
+	any := y;
+	anoldx := oldx;
+	anoldy := oldy;
+
+	SetAnimPath();
 	
 	ChangeMapItem(i, oldx, oldy, x, y, z);
 	objectList[i].transX := x;
@@ -1307,16 +1377,21 @@ procedure SwitchBank();
 begin
 	if (currentBank = 0) then 
 	begin
-		SetBank(VIC_BANK1);
-		setcharsetlocation(@tilesetLoc2);
-		screen := hi(screen_char_loc);
+		// SetBank(VIC_BANK1);
+		SetCharsetAndScreenLocation(@tilesetLoc2,@screenLoc2);
+		//setcharsetlocation(@tilesetLoc2);
+		screen := $40; //hi(@screenLoc1);
+
+		screenmem := $4000;
 		currentBank := 1;
 	end
 	else 
 	begin
-		SetBank(VIC_BANK0);
-		setcharsetlocation(@tilesetLoc1);
-		screen := hi(screen_char_loc2);
+		// SetBank(VIC_BANK0);
+		SetCharsetAndScreenLocation(@tilesetLoc2,@screenLoc1);
+		//setcharsetlocation(@tilesetLoc1);
+		screen := $44; //hi(@screenLoc2);
+		screenmem := $4400;
 		currentBank := 0;
 	end;
 
@@ -1543,6 +1618,7 @@ var
 	i: byte;
 begin
 	moveto(0,y,hi(SCREEN_COL_LOC));
+
 	for i:=0 to 40 do screenmemory[i]:= col;
 end;
 
@@ -1561,9 +1637,213 @@ begin
 	ColorLine(12 + menuItem, @WHITE)
 end;
 
+
+
 @endblock
 
-@startblock $7a00 "Code1"
+@startblock $4800 "Code3"
+
+procedure SetAnimPath();
+var
+	dx, dy: signed byte; 
+	i: byte;
+	stepx, stepy: byte;
+	path1Blocked, path2Blocked: boolean;
+	testx, testy: byte;
+	tmpx, tmpy: integer;
+	indx: byte;
+	controlId: byte;
+	wrap: boolean;
+begin
+	controlId := 0;
+	@IFDEF OVERFLOW_CHECK
+		if(countAnim >= @MAX_ANIMSTEP) then SCREEN_BG_COL:=LIGHT_RED;
+	@ENDIF
+
+	if(controlId = 0) then hasAnimPath1 := false;
+	if(controlId = 1) then hasAnimPath2 := false;
+
+	// Calculate deltas in raster units
+	
+//	dx := abs(anx - anoldx);
+//	dy := abs(any - anoldy);	
+	
+//	if(dx = 0 and dy = 0) then begin
+//		return;
+//	end;
+
+	stepx := @UNKNOWN;
+	stepy := @UNKNOWN;
+	// Calculate step increments (+1, -1, or 0)
+	if(anx = anoldx + 1) then stepx := @RIGHT else if(anx = anoldx - 1) then stepx := @LEFT;
+	if(any = anoldy + 1 ) then stepy := @DOWN else if(any = anoldy - 1) then stepy := @UP;
+	wrap := false;
+	if(anoldx = 19 and anx = 0 ) then begin stepx := @RIGHT; wrap := true; end;
+	if(anoldx = 0 and anx = 19 ) then begin stepx := @LEFT; wrap := true; end;
+	if(anoldy = 11 and any = 0 ) then begin stepy := @DOWN; wrap := true; end;
+	if(anoldy = 0 and any = 11 ) then begin stepy := @UP; wrap := true; end;
+	
+	if(stepx = @UNKNOWN and stepy = @UNKNOWN) then return;
+
+	// If diagonal movement, check both possible paths for collision
+	if(stepx <> @UNKNOWN and stepy <> @UNKNOWN) then begin
+		// Path 1: X first, then Y (horizontal then vertical)
+		path1Blocked := false;
+		if(stepx = @RIGHT) then begin 
+			if(wrap = true) then 
+				testx := 0 
+			else	
+				testx := anoldx + 1; 
+		end
+		else if(stepx = @LEFT) then begin 
+			if(wrap = true) then 
+				testx := 19 
+			else 
+				testx := anoldx - 1; 
+		end;
+		testy := anoldy;
+		if(GetObjectByPosFilterComp(testx, testy, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0) <> $FF) then path1Blocked := true;
+		// Path 2: Y first, then X (vertical then horizontal)
+
+		path2Blocked := false;
+		if(stepy = @DOWN) then begin 
+			if(wrap = true) then 
+				testy := 0 
+			else 
+				testy := anoldy + 1; 
+		end
+		else if(stepy = @UP) then begin 
+			if(wrap = true) then 
+				testy := 11 
+			else 
+				testy := anoldy - 1; 
+		end;		
+		testx := anoldx;
+		if(GetObjectByPosFilterComp(testx, testy, @Z_MAIN, @COMP_COLLIDE_ABLE_0, 0) <> $FF) then path2Blocked := true;
+
+		if(path1Blocked = false) then begin
+			tmpx := anoldx * 16;
+			tmpy := anoldy * 16;
+			indx := 0;
+			// Move along X
+			fori i := 1 to 4 do begin
+				if(stepx = @RIGHT) then tmpx := tmpx + 4 else if(stepx = @LEFT) then tmpx := tmpx - 4;
+				if(controlId = 0) then begin 
+					animPathList1[indx].x := tmpx;
+					animPathList1[indx].y := tmpy;
+				end
+				else begin
+					animPathList2[indx].x := tmpx;
+					animPathList2[indx].y := tmpy;
+				end;
+				inc(indx);
+			end;
+			// Move along Y
+//			if(stepy = @DOWN) then tmpy := (anoldy + 1) * 16 else if(stepx = @UP) then tmpy := (anoldy - 1) * 16;
+			fori i := 1 to 3 do begin
+				if(stepy = @DOWN) then tmpy := tmpy + 4 else if(stepy = @UP) then tmpy := tmpy - 4;
+				if(controlId = 0) then begin 
+					animPathList1[indx].x := tmpx;
+					animPathList1[indx].y := tmpy;
+				end
+				else begin
+					animPathList2[indx].x := tmpx;
+					animPathList2[indx].y := tmpy;
+				end;
+				inc(indx);
+			end;
+			if(controlId = 0) then hasAnimPath1 := true;
+			if(controlId = 1) then hasAnimPath2 := true;
+		end
+		else begin
+			tmpx := anoldx * 16;
+			tmpy := anoldy * 16;
+			indx := 0;
+			// Move along Y
+			fori i := 1 to 4 do begin
+				if(stepy = @DOWN) then tmpy := tmpy + 4 else if(stepy = @UP) then tmpy := tmpy - 4;
+				if(controlId = 0) then begin 
+					animPathList1[indx].x := tmpx;
+					animPathList1[indx].y := tmpy;
+				end
+				else begin
+					animPathList2[indx].x := tmpx;
+					animPathList2[indx].y := tmpy;
+				end;
+				inc(indx);
+			end;
+			// Move along X
+//			if(stepx = @RIGHT) then tmpx := (anoldx + 1) * 16 else if(stepx = @LEFT) then tmpx := (anoldx - 1) * 16;
+			
+			fori i := 1 to 3 do begin
+				if(stepx = @RIGHT) then tmpx := tmpx + 4 else if(stepx = @LEFT) then tmpx := tmpx - 4;
+				if(controlId = 0) then begin 
+					animPathList1[indx].x := tmpx;
+					animPathList1[indx].y := tmpy;
+				end
+				else begin
+					animPathList2[indx].x := tmpx;
+					animPathList2[indx].y := tmpy;
+				end;
+				inc(indx);
+			end;
+			if(controlId = 0) then hasAnimPath1 := true;
+			if(controlId = 1) then hasAnimPath2 := true;
+		end;
+	end
+	else begin
+		// Not diagonal, just do straight path
+		tmpx := anoldx * 16;
+		tmpy := anoldy * 16;
+		for i := 0 to 7 do begin
+			if(stepx = @RIGHT) then tmpx := tmpx + 2 else if(stepx = @LEFT) then tmpx := tmpx - 2;
+			if(stepy = @DOWN) then tmpy := tmpy + 2 else if(stepy = @UP) then tmpy := tmpy - 2;
+			if(controlId = 0) then begin 
+				animPathList1[i].x := tmpx;
+				animPathList1[i].y := tmpy;
+			end
+			else begin
+				animPathList2[i].x := tmpx;
+				animPathList2[i].y := tmpy;
+			end;
+		end;
+	end;
+	if(controlId = 0) then hasAnimPath1 := true;
+	if(controlId = 1) then hasAnimPath2 := true;
+end;
+
+@endblock
+
+@startblock $5a00 "Code4"
+
+procedure WrapSprite(x: integer, y: byte, num : byte);
+var
+	hasOverlap : boolean;
+begin
+	hasOverlap := false;
+	if(x > 328) then begin
+		hasOverlap := true;
+		SpritePos(x - 328, y, num);
+	end;  
+	if(x < 24) then begin
+		hasOverlap := true;
+		SpritePos(328 + x, y, num);
+	end;  
+	if(y > 242) then begin
+		hasOverlap := true;
+		SpritePos(x, y - 242, num);
+	end;  
+	if(y < 50) then begin
+		hasOverlap := true;
+		SpritePos(x, 242 + y, num);
+	end;
+	if(hasOverlap = false) then 	SpritePos(0, 0, num);
+
+end;
+
+@endblock
+
+@startblock $7800 "Code1"
 
 @include "Actions.ras"
 @include "GObjects.ras"
@@ -1572,6 +1852,8 @@ end;
 @include "FloaterComponent.ras"
 @include "FontaineComponent.ras"
 @include "LaserComponent.ras"
+
+
 
 procedure UpdateObject(id: byte);
 var
@@ -1664,27 +1946,31 @@ interrupt RasterBottomText();
 interrupt RasterTopLevel();
 begin
 	startirq(@USE_KERNAL);
-	//call(^$E003);
+	call(^$2003);
 	asm("
 	jsr $e2a9");
+	poke(^$43f8, 0, spr[0]);
+	poke(^$47f8, 0, spr[0]);
+	poke(^$43f8, 1, spr[1]);
+	poke(^$47f8, 1, spr[1]);	
 	setmulticolormode();
-	setcharsetlocation(@tilesetLoc1);
+	setcharsetlocation(@tilesetLoc2);
 	poke(^56320, 0, 127);
 	poke(^56322, 0, 224);
 	ReadJoy1();
 	ReadJoy2();
 	poke(^56322, 0, 255);
+	Poke(^$D015,0,255);
 	SCREEN_FG_COL:=BLACK;
 	if(frameStatus = 1) then begin
 		if(time = 0) then begin
 			SwitchBank();
-			if(state = @STATE_OPEN_SCENE_REQUEST) then state := @STATE_OPEN_SCENE;
-
+//			if(state = @STATE_OPEN_SCENE_REQUEST) then state := @STATE_OPEN_SCENE;
 		end
 		else if(time = 1 and currentBank = 0) then begin 
-			copyFullScreen(^$0400, ^$4400);
+			copyFullScreen(^$4000, ^$4400);
 		end
-		else if(time = 1 and currentBank = 1) then copyFullScreen(^$4400, ^$0400)
+		else if(time = 1 and currentBank = 1) then copyFullScreen(^$4400, ^$4000)
 	end;
 	if(time = 2) then begin
       	frameStatus := 0;
@@ -1701,17 +1987,21 @@ interrupt RasterBottomText();
 begin
 	startirq(@USE_KERNAL);
 	setregularcolormode();
-	setcharsetlocation(@charsetLoc1);
+	setcharsetlocation(@charsetLoc2);
 	SCREEN_FG_COL:=statusCol;
 
-	@IFDEF DEBUG
+		
+	poke(^$43f8, 0, $BF);
+	poke(^$43f8, 1, $BF);
+	poke(^$47f8, 0, $BF);
+	poke(^$47f8, 1, $BF);
 	if(time = 2) then begin
+		CycleWater();
 		moveto(0,24,screen);
 		fillfast(screenmemory,$20,40);
 	end;
-	@ENDIF
 		
-	RasterIRQ(RasterTopLevel(),10,@USE_KERNAL);
+	RasterIRQ(RasterTopLevel(),0,@USE_KERNAL);
 	closeIrq();
 end;
 
@@ -1722,8 +2012,9 @@ interrupt RasterMainTop();
 begin
 	startirq(@USE_KERNAL);
 	setmulticolormode();
-	setcharsetlocation(@tilesetLoc1);
+	SetCharsetAndScreenLocation(@logoLoc,@screenLoc1);
 	
+	// #TODO
 	//setcharsetlocation(@logoLoc);
 
 	multicolor_char_col[1]:=green;
@@ -1743,8 +2034,9 @@ var
 	len: byte;
 begin
 	startirq(@USE_KERNAL);
-	setregularcolormode();
-	setcharsetlocation(@charsetLoc1);
+    setregularcolormode();
+	SetCharsetAndScreenLocation(@charsetLoc2,@screenLoc1);
+///	setcharsetlocation(@charsetLoc2);
 	
 	ReadJoy2();
 	inc(time);
@@ -1756,12 +2048,7 @@ begin
 		str::itoa(levelSingle + 1, #levStr + pos, 10);
 		if(levelCoop >= 9) then pos := 0 else pos := 1; 
 		str::itoa(levelCoop + 1, #levStr2 + pos, 10);
-		@ifdef IS_DEMO 
 		Call(^$2003);
-		@endif
-		@ifdef CRT_VERSION 
-		Call(^$2003);
-		@endif
 		
 		if(mod(time,8) = 0 and (joy2 & JOY_FIRE = JOY_FIRE)) then begin
 			if(menuItem = 0 or menuItem = 3) then InitGame(levelSingle, levelCoop, @MODE_SINGLE);
@@ -1778,8 +2065,8 @@ begin
 			if(menuItem = 4) then IncLevel(@MODE_COOP);
 		end;
 		
-		Screen::PrintStringColor(#levStr,33,15,@WHITE);
-		Screen::PrintStringColor(#levStr2,31,16,@WHITE);
+		PrintStringColor(#levStr,33,15,@WHITE);
+		PrintStringColor(#levStr2,31,16,@WHITE);
 		
 		MenuMove(5, menuItem);
 		RasterIRQ(RasterMainTop(),28,@USE_KERNAL);
@@ -2066,10 +2353,10 @@ var
 begin
 	preventirq();
 	ScreenOff();
-	SetBank(VIC_BANK0);
-	setcharsetlocation(@charsetLoc1);
-	screen := hi(screen_char_loc);
-	clearscreen($20,^$0400);
+//	SetBank(VIC_BANK1);
+	SetCharsetAndScreenLocation(@charsetLoc2,@screenLoc1);
+	screen := $40;
+	clearscreen($20,^$4000);
 	clearscreen($20,^$4400);
 	clearscreen(BLACK,^$D800);
 	SCREEN_FG_COL:=BLACK;
@@ -2080,6 +2367,19 @@ begin
 	levStr[0] := '0';
 	if(state = @STATE_OPEN_SCENE) then begin 
 		InitLevel();
+		@ifdef CRT_VERSION
+		LoadMusicFromCrt(MUSIC1);
+		@endif  
+		@ifdef IS_DEMO
+		asm( 
+	"
+		ldx #<ingameMusicStr
+		ldy #>ingameMusicStr
+		jsr $200
+	");
+		@endif
+		InitSid(^$2000);
+		
 		if(gameMode = @MODE_SINGLE) then begin
 			if(levelSingle >= 9) then pos := 0 else pos := 1; 
 			str::itoa(levelSingle + 1, #levStr + pos, 10)
@@ -2088,24 +2388,23 @@ begin
 			if(levelCoop >= 9) then pos := 0 else pos := 1; 
 			str::itoa(levelCoop + 1, #levStr + pos, 10)
 		end;
-		
-		Screen::PrintStringColor("LEVEL: ",16,8,5);
-		Screen::PrintStringColor(#levStr,23,8,5);
+		PrintStringColor("LEVEL: ",16,8,5);
+		PrintStringColor(#levStr,23,8,5);
 		
 		len := str::strlen(levStrings[0]);
 		pos := 20 - (len / 2);
 	
-		Screen::PrintStringColor(levStrings[0],pos,10,5);
+		PrintStringColor(levStrings[0],pos,10,5);
 
-		Screen::PrintStringColor("START LEVEL",15,12,@DARK_GREY);
-		Screen::PrintStringColor("MAIN MENU",16,13,@DARK_GREY);
+		PrintStringColor("START LEVEL",15,12,@DARK_GREY);
+		PrintStringColor("MAIN MENU",16,13,@DARK_GREY);
 	
-		Screen::PrintStringColor("PRESS 'DEL' TO RETRY",10,22,@DARK_GREY);
+		PrintStringColor("PRESS 'DEL' TO RETRY",10,22,@DARK_GREY);
 		PlaySfx(@SOUND_END);	
-		if(gameMode = @MODE_SINGLE_2CHAR) then Screen::PrintStringColor("PRESS 'SPACE' TO SWAP CHARACTER",4,23,@DARK_GREY);
+		if(gameMode = @MODE_SINGLE_2CHAR) then PrintStringColor("PRESS 'SPACE' TO SWAP CHARACTER",4,23,@DARK_GREY);
 		if(gameMode <> @MODE_SINGLE) then begin
-			if(levBothMustComplete = true) then Screen::PrintStringColor("BOTH PLAYERS MUST EXIT",9,24,@DARK_GREY) 
-			else Screen::PrintStringColor("ONLY ONE PLAYER MUST EXIT",9,24,@DARK_GREY);
+			if(levBothMustComplete = true) then PrintStringColor("BOTH PLAYERS MUST EXIT",9,24,@DARK_GREY) 
+			else PrintStringColor("ONLY ONE PLAYER MUST EXIT",9,24,@DARK_GREY);
 		end;
 		state := @STATE_OPEN_SCENE_INPUT;
 		ScreenOn();
@@ -2113,8 +2412,7 @@ begin
 	end
 	else begin
 		@ifdef CRT_VERSION
-		LoadMusicFromCrt();
-		InitSid(^$2000);
+		LoadMusicFromCrt(MUSIC0);
 		@endif  
 		@ifdef IS_DEMO
 		asm( 
@@ -2123,11 +2421,10 @@ begin
 		ldy #>musicStr
 		jsr $200
 	");
-		InitSid(^$2000);
 		@endif
+		InitSid(^$2000);
 
-
-		BlockMemCpy(^@logoLoc , ^@tilesetLoc1, 4);
+		//BlockMemCpy(^@logoLoc , ^@tilesetLoc1, 4);
 		for i:=0 to 24 do begin
 			moveto(i+8,1,screen);
 			
@@ -2143,21 +2440,21 @@ begin
 			screenmemory[120]:= $AE;
 			screenmemory[160]:= $AE;
 		end;	
-		Screen::PrintStringColor(#txtSelectGameMode,12,9,5);
+		PrintStringColor(#txtSelectGameMode,12,9,5);
 
-		Screen::PrintStringColor(#txtSinglePlayer,14,12,@DARK_GREY);
-		Screen::PrintStringColor(#txtSinglePlayer2Chars,6,13,@DARK_GREY);
-		Screen::PrintStringColor(#txtCoop,12,14,@DARK_GREY);
+		PrintStringColor(#txtSinglePlayer,14,12,@DARK_GREY);
+		PrintStringColor(#txtSinglePlayer2Chars,6,13,@DARK_GREY);
+		PrintStringColor(#txtCoop,12,14,@DARK_GREY);
 
-		Screen::PrintStringColor(#txtSingleStart,6,15,@DARK_GREY);
-		Screen::PrintStringColor(#txtCoopStart,11,16,@DARK_GREY);
+		PrintStringColor(#txtSingleStart,6,15,@DARK_GREY);
+		PrintStringColor(#txtCoopStart,11,16,@DARK_GREY);
 		
-		Screen::PrintStringColor(#txtAuthor,11,23,@WHITE);
-		Screen::PrintStringColor(#txtMusican,13,24,@WHITE);
+		PrintStringColor(#txtAuthor,11,23,@WHITE);
+		PrintStringColor(#txtMusican,13,24,@WHITE);
 		
 	
 		state := @STATE_MENU_INPUT;
-//		ScreenOn();
+		ScreenOn();
 		StartRasterChain(RasterMainTop(), 0,@USE_KERNAL); // Don't use kernal
 	end;
 	enableirq();
@@ -2168,17 +2465,18 @@ end;
 procedure InitScene();
 begin
 	preventirq();
-	ScreenOff();
+	//ScreenOff();
 	multicolor_char_col[1]:=brown;
 	multicolor_char_col[2]:=grey;
-	clearscreen($FF,^$0400);
+	clearscreen($FF,^$4000);
 	clearscreen($FF,^$4400);
 	clearscreen(BLACK,^$D800);
-	BlockMemCpy(^@tilesetLoc2 , ^@tilesetLoc1, 8);
-	BlockMemCpy(^@spriteLoc2 , ^@spriteLoc1, 16);
+	//BlockMemCpy(^@tilesetLoc2 , ^@tilesetLoc1, 8);
+	//BlockMemCpy(^@spriteLoc2 , ^@spriteLoc1, 16);
 
 	InitMap();
-	InitActors();	
+	InitActors();
+//	AddBreakpoint();	
 	SwitchBank();
 	PaintFull();
 	SwitchBank();
@@ -2195,7 +2493,50 @@ begin
 	DispatchEvent(@EVENT_INIT_LEVEL, $FF, $FF, $FF);
 end;
 
+procedure DoSpriteAnim();
+var
+	i: byte;
+	j: byte;
+	x: integer;
+	y: byte;
+begin
+	if (hasAnimPath1 = false and hasAnimPath2 = false) do begin
+		spriteAnim := false;
+		return;
+	end;
+
+	if(hasAnimPath1 = true) do begin
+		x := animPathList1[pathCounter].x + 24;
+		y := animPathList1[pathCounter].y + 50;
+		SpritePos(x, y, 0);
+		//WrapSprite(x, y, 2);		
+	end;
+	if(hasAnimPath2 = true) do begin
+		x := animPathList2[pathCounter].x + 24;
+		y := animPathList2[pathCounter].y + 50;
+		SpritePos(x, y, 1);
+		//WrapSprite(x, y, 3);		
+	end;
+	
+	i:=0;
+	j:=0;
+	while(j < 2)  do begin
+		inc(i);
+		if(i = 128) then inc(j);
+	end;
+	inc(pathCounter);
+	if(pathCounter >= @MAX_ANIMSTEP) do begin
+		spriteAnim := false;
+		hasAnimPath1 := false;
+		hasAnimPath2 := false;	
+		
+	end;
+end;
+
 procedure GameLoop();
+var
+	i: byte;
+	j: byte;
 begin
 	While(true) do begin
 		case state of
@@ -2206,14 +2547,20 @@ begin
 				frameStatus := 1; // will be updated in raster chain
 				time := 0;
 				while(state = @STATE_PLAY) do begin
-					if(frameStatus = 0)	then begin
-						Update();
-						Animate();
-						CycleWater();
-						DecreaseTextTimer();
-						frameStatus := 1;
-						inc(globaltime);	
-					end;					
+					if(spriteAnim = true) do begin
+						DoSpriteAnim();
+					end
+					else begin
+						inc(globaltime);
+						if(frameStatus = 0)	then begin
+							Update();
+							Animate();
+							DecreaseTextTimer();
+							frameStatus := 1;
+							spriteAnim := true;
+							pathCounter := 0;
+						end;					
+					end;
 				end;
 			end;
 		end;
@@ -2233,10 +2580,13 @@ begin
 		
 	SCREEN_BG_COL:=BLACK;
 	SCREEN_FG_COL:=BLACK;
-	clearscreen($FF,^$0400);
+	SetBank(VIC_BANK1);
+	clearscreen($FF,^$4000);
 	clearscreen($FF,^$4400);
 	clearscreen(BLACK,^$D800);
 	setmemoryconfig(1,0,0);
+	screen := $40;
+
 @ifdef IS_DEMO
 	maxSingleLevels := Peek(^$08fd, 0);
 	maxMultiLevels := Peek(^$08fe, 0);
