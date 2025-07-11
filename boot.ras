@@ -1,19 +1,27 @@
 program boot;
 
+//@define CRT_VERSION 1
+
 // Set disk output
 var	
 	
 	@define useKernal 0
 
-
 	// Make sure that we compile the demo only when pressing ctrl+R here
 	@setvalue "remove_unused_symbols" "0"
 	// always toggle exomizer on
-	@setvalue "exomizer_toggle" 1
-	@setvalue "main_ras_file" "boot.ras"
+	@setvalue "exomizer_toggle" 0
+//	@setvalue "main_ras_file" "boot.ras"
 	// Set disk output
-	@setvalue "output_type" "d64"
+	@setvalue "output_type" "prg"
+	@projectsettings "ignorebasicsysstart" 0
+	@projectsettings "startaddress" $0810	
+	
+	introstr: string = ("A");
+	gamestr: string = ("B");
+	soundstr: string = ("S");
 
+	
 	//@define DEBUG 1	
 	isInitialized: byte = 0;
 	
@@ -21,9 +29,8 @@ var
 	// Loader at $200
 	@use KrillsLoader $0200 $2000 $4000
 
-//interrupt NMI();
-//begin
-//end;
+
+
 begin
 	if (isInitialized<>0) offpage then 
 	begin
@@ -51,14 +58,41 @@ begin
 	end;
 	inc(ldr);
 	if(ldr = 1) then begin 
-		KrillLoadCompressed(#a);
-		KrillLoad(#t1);
+//		asm(
+//		"
+//			ldx #<gamestr
+//			ldy #>gamestr
+//			jsr $200
+//		");
+		asm(
+		"
+			ldx #<introstr
+			ldy #>introstr
+			jsr $020E
+		");
+		
+		//KrillLoadCompressed(#a);
+		//KrillLoad(#t1);
+		
 	end
 	else if(ldr = 2) then begin
 		preventirq();
 		disableciainterrupts();
-		KrillLoad(#b);
-		KrillLoad(#f);
+		asm(
+		"
+			ldx #<soundstr
+			ldy #>soundstr
+			jsr $200
+		");
+		asm(
+		"
+			ldx #<gamestr
+			ldy #>gamestr
+			jsr $200
+		");
+		
+//		KrillLoad(#b);
+//		KrillLoad(#f);
 	end;
-	asm( " jmp @programStartAddress")
+	asm( " jmp $0900")
 end.

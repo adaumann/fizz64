@@ -1,4 +1,16 @@
 program intro;
+
+//@define DISK_VERSION 1
+
+@ifndef DISK_VERSION
+	@setvalue "remove_unused_symbols" "0"
+	@setvalue "exomizer_toggle" 0
+	@projectsettings "exomize" "0"
+	@projectsettings "ignorebasicsysstart" 1
+	@projectsettings "startaddress" $0900	
+@endif
+
+
 @setvalue "exomizer_toggle" 0
 @setvalue "remove_unused_symbols" "0"
 @ifndef IS_DEMO
@@ -52,24 +64,24 @@ begin
 ");
 @endif
 	//poke(^53272,0,23);
-	Screen::PrintStringColor(levStringsHead[0],0,0,@WHITE);
-	Screen::PrintStringColor(levStringsHead[1],0,1,@WHITE);
-	Screen::PrintStringColor(levStringsHead[2],0,3,@WHITE);
-	Screen::PrintStringColor(levStrings[0],11,0,@WHITE);
-	Screen::PrintStringColor(levStrings[1],11,1,@WHITE);
-	Screen::PrintStringColor(levStrings[2],0,3,@WHITE);
-	Screen::PrintStringColor(levStrings[3],0,4,@WHITE);
-	Screen::PrintStringColor(levStrings[4],0,5,@WHITE);
-	exit := false;
-	i := 0;
-	j := 0;
-	while(exit = false and j < 255) do begin
-		inc(i);
-		if(i = 255) then inc(j);
-		ReadJoy2();
-		if(getkey() = KEY_SPACE) then exit := true;
-		if(joy2 & JOY_FIRE = JOY_FIRE) then exit := true;
-	end;
+//	Screen::PrintStringColor(levStringsHead[0],0,0,@WHITE);
+//	Screen::PrintStringColor(levStringsHead[1],0,1,@WHITE);
+//	Screen::PrintStringColor(levStringsHead[2],0,3,@WHITE);
+//	Screen::PrintStringColor(levStrings[0],11,0,@WHITE);
+//	Screen::PrintStringColor(levStrings[1],11,1,@WHITE);
+//	Screen::PrintStringColor(levStrings[2],0,3,@WHITE);
+//	Screen::PrintStringColor(levStrings[3],0,4,@WHITE);
+//	Screen::PrintStringColor(levStrings[4],0,5,@WHITE);
+//	exit := false;
+//	i := 0;
+//	j := 0;
+//	while(exit = false and j < 255) do begin
+//		inc(i);
+//		if(i = 255) then inc(j);
+//		ReadJoy2();
+//		if(getkey() = KEY_SPACE) then exit := true;
+//		if(joy2 & JOY_FIRE = JOY_FIRE) then exit := true;
+//	end;
 	
 	poke(^$08FD,0,maxSingleLevels);
 	poke(^$08FE,0,maxMultiLevels);
@@ -123,6 +135,54 @@ end;
 
 @endblock
 
+procedure Transfer();
+begin	
+	asm("	
+	;--- write your code to switch off interrupts and sid here ---
+	lda #$ea
+	sta $0315
+	lda #$31
+	sta $0314
+	lda #$81
+	sta $dc0d
+	lda #0
+	sta $d01a
+	inc $d019
+	lda $dc0d
+	;Copy relocator code to memory $0200
+	ldx #$00
+reloccodecopy:
+	lda reloccode,x
+	sta $0100,x
+	inx
+	bne reloccodecopy
+	lda #0
+	sta $0800
+	;cli
+	jmp $0100 ;Jump to self-modified relocator code
+	
+reloccode:
+	sei
+	lda #$34 ;If your program goes over $d000, else use '#$35 instead
+	sta $01
+relocate1:  
+	ldx #$00
+relocate2: 
+	lda $7000,x ;Target address to read from
+	sta $0801,x ;Transfer to BASIC load address $0801 - ALWAYS!
+	inx
+	bne relocate2
+	inc $0109 ;Self-mode changing in relocated transfer code
+	inc $010c ;
+	lda $0109 ;Check if hi-byte of target address has expired $ffff
+	bne relocate1
+	lda #$37 ;Restore kernal-
+	sta $01
+	jmp $080d ;Run Exomizer decruncher from BASIC load address
+	cli");
+end;
+
+
 // This effect starts at $0900!	
 begin
 	// Executed in stand-alone
@@ -171,10 +231,30 @@ begin
 	setbank(VIC_BANK2);
 
 	FadeInOut::DefaultFadeOut(#img_col,$8400,#fadedata,2);	
+	asm("
+		jmp $0810
+	");
+
+
 	@ifdef IS_DEMO 
 	asm("
 		jmp @bootStartAddress
 	");
+	@endif
+	@ifdef DISK_VERSION 
+	asm("
+		jmp @bootStartAddress
+	");
+	@endif
+	@ifndef DISK_VERSION
+	preventirq();
+	disableciainterrupts();
+	setmemoryconfig(1,1,1);
+
+	Transfer();
+	
+	Loop();
+	
 	@endif
 	Loop();
 end.

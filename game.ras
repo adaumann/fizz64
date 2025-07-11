@@ -1,5 +1,6 @@
 program game;
 //@define CRT_VERSION 1
+@define IS_DEMO 1
 //@exportprg2bin "game.prg" "game_s.prg" $0900 $E000
 
 @ifdef CRT_VERSION
@@ -54,7 +55,7 @@ var
 	tilesetColors :  incbin("charsets/tileset_color.bin", @tilesetCol);
 @ifndef IS_DEMO 
 	//musicintro: incsid("music/fizz_intro_2000.sid",2);
-	musicintro: incsid("music/fizz_background2_20.sid",2);
+	musicintro: incsid("music/fizz_intro_2000.sid",2);
 //	music: incsid("music/fizz_ingame_e000.sid",2);
   	sfx: incbin("sounds/sounds.prg", @sfxLoc, 2);
 @endif
@@ -2037,8 +2038,10 @@ begin
     setregularcolormode();
 	SetCharsetAndScreenLocation(@charsetLoc2,@screenLoc1);
 ///	setcharsetlocation(@charsetLoc2);
-	
+	poke(^56320, 0, 127);
+	poke(^56322, 0, 224);
 	ReadJoy2();
+	poke(^56322, 0, 255);
 	inc(time);
 //	levStr := "00";
 //	levStr2 := "00";
